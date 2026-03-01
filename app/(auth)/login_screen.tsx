@@ -6,12 +6,12 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    SafeAreaView
 } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { app } from '../../firebaseConfig';
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 // Initialize auth locally to respect your preference for firebaseConfig.ts
 const auth = getAuth(app);

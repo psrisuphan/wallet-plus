@@ -6,12 +6,12 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    SafeAreaView
 } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { app } from '../../firebaseConfig';
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 const auth = getAuth(app);
 
