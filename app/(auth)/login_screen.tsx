@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     },
     button: {
         height: 56,
-        backgroundColor: '#34C759',
+        backgroundColor: '#6eac94ff',
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
         marginTop: -8,
     },
     forgotPasswordText: {
-        color: '#6D9E51',
+        color: '#6eac94ff',
         fontSize: 14,
         fontWeight: '500',
     },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     linkText: {
-        color: '#6D9E51',
+        color: '#6eac94ff',
         textAlign: 'center',
         fontSize: 16,
         fontWeight: '500',

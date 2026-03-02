@@ -1,59 +1,56 @@
 // app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router'
-import { FontAwesome, AntDesign, Feather } from '@expo/vector-icons'
-import { TouchableOpacity, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { View } from 'react-native'
 
 const TabsLayout = () => {
     return (
         <Tabs screenOptions={{
-            tabBarInactiveTintColor: 'black',
-            tabBarActiveTintColor: '#467e26ff',
-            tabBarStyle: { backgroundColor: '#BCD9A2' },
-            headerTitleAlign: 'left',
-            headerTitleStyle: { fontSize: 20 },
-            headerStyle: { backgroundColor: '#BCD9A2' },
-            headerTintColor: 'black',
+            tabBarActiveTintColor: 'green',
+            tabBarStyle: { backgroundColor: '#f3f3f3ff' },
+            headerTitleStyle: { fontSize: 20, color: 'white' },
+            headerStyle: { backgroundColor: '#699e8aff' },
         }}>
             <Tabs.Screen
                 name="index"
                 options={{
-                    headerTitle: "Today",
-                    title: "Home",
-                    tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
-                    headerLeft: () => (
-                        <View style={{ marginLeft: 10 }}>
-                            <Feather name="calendar" size={28} color="black" />
-                        </View>
-                    ),
-                    headerRight: () => (
-                        <View style={{ marginRight: 10 }}>
-                            <TouchableOpacity>
-                                <FontAwesome name="user-circle-o" size={28} color="black" />
-                            </TouchableOpacity>
-                        </View>
-                    ),
+                    headerTitle: "Overview",
+                    title: "Overview",
+                    tabBarIcon: ({ color }) => <Ionicons name="cash-outline" size={28} color={color} />,
+                }}
+            />
+            <Tabs.Screen
+                name="wallet/index"
+                options={{
+                    headerTitle: "Wallet",
+                    title: "Wallet",
+                    tabBarIcon: ({ color }) => <Ionicons name="wallet-outline" size={28} color={color} />
                 }}
             />
             <Tabs.Screen
                 name="new_transaction/index"
                 options={{
-                    headerTitle: "Add Transaction",
-                    title: "New Transaction",
-                    tabBarIcon: ({ color }) => <AntDesign size={28} name="plus-circle" color={color} />,
+                    headerTitle: "New Transaction",
+                    title: "Add",
+                    tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" size={28} color={color} />,
                 }}
             />
             <Tabs.Screen
-                name="statistic/index"
+                name="summary/index"
                 options={{
-                    headerTitle: "Statistics",
-                    title: "Stats",
-                    tabBarIcon: ({ color }) => <AntDesign size={28} name="bar-chart" color={color} />,
-                    headerLeft: () => (
-                        <View style={{ marginLeft: 10 }}>
-                            <AntDesign size={28} name="bar-chart" color={'black'} />
-                        </View>
-                    ),
-                }} />
+                    headerTitle: "Summary",
+                    title: "Summary",
+                    tabBarIcon: ({ color }) => <Ionicons name="bar-chart-outline" size={28} color={color} />,
+                }} 
+            />
+            <Tabs.Screen
+                name="menu/index"
+                options={{
+                    headerTitle: "Menu",
+                    title: "Menu",
+                    tabBarIcon: ({ color }) => <Ionicons name="menu-sharp" size={28} color={color} />,
+                }} 
+            />
         </Tabs>
     )
 }

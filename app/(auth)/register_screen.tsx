@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,6 +56,15 @@ export default function RegisterScreen() {
                 <View style={styles.main}>
                     <Text style={styles.title}>Create Account</Text>
                     <Text style={styles.subtitle}>Join Wallet+ and simplify your finances</Text>
+
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Username"
+                        value={username}
+                        onChangeText={setUsername}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                    />
 
                     <TextInput
                         style={styles.input}
@@ -128,7 +138,7 @@ const styles = StyleSheet.create({
     },
     backButtonText: {
         fontSize: 18,
-        color: '#34C759',
+        color: 'green',
         fontWeight: '500',
     },
     main: {
@@ -178,7 +188,7 @@ const styles = StyleSheet.create({
     },
     button: {
         height: 56,
-        backgroundColor: '#34C759', // iOS Green
+        backgroundColor: '#6eac94ff',
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
