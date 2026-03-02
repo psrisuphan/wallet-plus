@@ -1,8 +1,7 @@
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from 'react-native';
-import { getAuth, signOut } from 'firebase/auth';
-import { app } from '../../firebaseConfig';
-
-const auth = getAuth(app);
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { signOut } from 'firebase/auth';
+import { app, auth } from '../../firebaseConfig';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
     const handleSignOut = () => {
@@ -31,7 +30,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#FEFFD3',
     },
     content: {
         flex: 1,

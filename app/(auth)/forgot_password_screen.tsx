@@ -9,11 +9,9 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
-import { app } from '../../firebaseConfig';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { app, auth } from '../../firebaseConfig';
 import { SafeAreaView } from 'react-native-safe-area-context'
-
-const auth = getAuth(app);
 
 export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
@@ -96,7 +94,7 @@ const styles = StyleSheet.create({
     },
     backButtonText: {
         fontSize: 18,
-        color: '#007AFF',
+        color: '#34C759',
         fontWeight: '500',
     },
     main: {
@@ -128,7 +126,7 @@ const styles = StyleSheet.create({
     },
     button: {
         height: 56,
-        backgroundColor: '#007AFF',
+        backgroundColor: '#34C759',
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',

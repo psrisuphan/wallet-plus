@@ -6,19 +6,20 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
+    Pressable,
 } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { app } from '../../firebaseConfig';
-import { SafeAreaView } from 'react-native-safe-area-context'
-
-// Initialize auth locally to respect your preference for firebaseConfig.ts
-const auth = getAuth(app);
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { app, auth } from '../../firebaseConfig';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
     const handleLogin = async () => {
@@ -41,7 +42,8 @@ export default function LoginScreen() {
                 style={styles.keyboardView}
             >
                 <View style={styles.main}>
-                    <Text style={styles.title}>Welcome Back</Text>
+                    <Image source={require('../../assets/wallet-plus-icon.png')} style={styles.logo} />
+                    <Text style={styles.title}>Welcome Back!</Text>
                     <Text style={styles.subtitle}>Sign in to your Wallet+ account</Text>
 
                     <TextInput
@@ -53,13 +55,25 @@ export default function LoginScreen() {
                         keyboardType="email-address"
                     />
 
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Password"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
+                    <View style={styles.passwordContainer}>
+                        <TextInput
+                            style={styles.passwordInput}
+                            placeholder="Password"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={!showPassword}
+                        />
+                        <TouchableOpacity
+                            style={styles.eyeIcon}
+                            onPress={() => setShowPassword(!showPassword)}
+                        >
+                            <Ionicons
+                                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                                size={24}
+                                color="#666"
+                            />
+                        </TouchableOpacity>
+                    </View>
 
                     <TouchableOpacity
                         style={styles.forgotPasswordContainer}
@@ -115,9 +129,28 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#eee',
     },
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 14,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    passwordInput: {
+        flex: 1,
+        height: 56,
+        paddingHorizontal: 16,
+        fontSize: 16,
+    },
+    eyeIcon: {
+        padding: 10,
+        marginRight: 8,
+    },
     button: {
         height: 56,
-        backgroundColor: '#007AFF',
+        backgroundColor: '#34C759',
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
@@ -136,7 +169,7 @@ const styles = StyleSheet.create({
         marginTop: -8,
     },
     forgotPasswordText: {
-        color: '#007AFF',
+        color: '#6D9E51',
         fontSize: 14,
         fontWeight: '500',
     },
@@ -146,9 +179,16 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     linkText: {
-        color: '#007AFF',
+        color: '#6D9E51',
         textAlign: 'center',
         fontSize: 16,
         fontWeight: '500',
+    },
+    logo: {
+        width: 125,
+        height: 125,
+        alignSelf: 'center',
+        borderRadius: 14,
+        marginBottom: 32,
     },
 });

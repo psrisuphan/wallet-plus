@@ -1,14 +1,14 @@
 {
   "expo": {
     "scheme": "wallet-plus",
-    "name": "wallet-plus",
+    "name": "Wallet+",
     "slug": "wallet-plus",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/wallet-plus-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/wallet-plus-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

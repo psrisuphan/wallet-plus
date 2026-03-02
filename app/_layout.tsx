@@ -1,11 +1,11 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged, User, getAuth } from 'firebase/auth';
-import { app } from '../firebaseConfig'; // Import app from your config
+import {
+  onAuthStateChanged,
+  User,
+} from 'firebase/auth';
+import { app, auth } from '../firebaseConfig'; // Import app and auth from your config
 import { View, ActivityIndicator } from 'react-native';
-
-// Initialize auth here so firebaseConfig.ts remains unchanged
-const auth = getAuth(app);
 
 export default function RootLayout() {
   const [user, setUser] = useState<User | null>(null);
