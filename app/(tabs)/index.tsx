@@ -1,14 +1,7 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { signOut } from 'firebase/auth';
-import { app, auth } from '../../firebaseConfig';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
-    const handleSignOut = () => {
-        signOut(auth);
-        // Root _layout.tsx will automatically redirect to login
-    };
-
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
@@ -19,9 +12,6 @@ export default function HomeScreen() {
                     <Text style={styles.cardText}>You are successfully authenticated!</Text>
                 </View>
 
-                <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                    <Text style={styles.signOutText}>Sign Out</Text>
-                </TouchableOpacity>
             </View>
         </SafeAreaView>
     );
@@ -67,15 +57,4 @@ const styles = StyleSheet.create({
         color: '#333',
         textAlign: 'center',
     },
-    signOutButton: {
-        paddingVertical: 14,
-        paddingHorizontal: 32,
-        backgroundColor: '#FF3B30',
-        borderRadius: 12,
-    },
-    signOutText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    }
 });
