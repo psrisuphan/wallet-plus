@@ -41,6 +41,7 @@ const AddTransactionScreen = () => {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
+    const [showSortDropdown, setShowSortDropdown] = useState(false);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -125,26 +126,36 @@ const AddTransactionScreen = () => {
                             />
                         </View>
 
-                        <View style={styles.sortContainer}>
+                        <View style={styles.resultsHeader}>
+                            <Text style={styles.resultsCount}>{filteredAndSortedWallets.length} wallet{filteredAndSortedWallets.length !== 1 ? 's' : ''} found</Text>
+                            
                             <TouchableOpacity 
-                                style={[styles.sortButton, sortType === 'name' && styles.sortButtonActive]}
-                                onPress={() => setSortType('name')}
+                                style={styles.sortToggle} 
+                                onPress={() => setShowSortDropdown(!showSortDropdown)}
                             >
-                                <Text style={[styles.sortButtonText, sortType === 'name' && styles.sortButtonTextActive]}>Name</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.sortButton, sortType === 'balanceAsc' && styles.sortButtonActive]}
-                                onPress={() => setSortType('balanceAsc')}
-                            >
-                                <Text style={[styles.sortButtonText, sortType === 'balanceAsc' && styles.sortButtonTextActive]}>Low ฿</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.sortButton, sortType === 'balanceDesc' && styles.sortButtonActive]}
-                                onPress={() => setSortType('balanceDesc')}
-                            >
-                                <Text style={[styles.sortButtonText, sortType === 'balanceDesc' && styles.sortButtonTextActive]}>High ฿</Text>
+                                <Text style={styles.sortToggleText}>
+                                    Sort by: {sortType === 'name' ? 'Name' : sortType === 'balanceAsc' ? 'Low ฿' : 'High ฿'}
+                                </Text>
+                                <Ionicons name={showSortDropdown ? "chevron-up" : "chevron-down"} size={16} color="#666" />
                             </TouchableOpacity>
                         </View>
+                        
+                        {showSortDropdown && (
+                            <View style={styles.dropdownMenu}>
+                                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('name'); setShowSortDropdown(false); }}>
+                                    <Text style={[styles.dropdownItemText, sortType === 'name' && styles.dropdownItemTextActive]}>Name</Text>
+                                    {sortType === 'name' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceAsc'); setShowSortDropdown(false); }}>
+                                    <Text style={[styles.dropdownItemText, sortType === 'balanceAsc' && styles.dropdownItemTextActive]}>Low ฿</Text>
+                                    {sortType === 'balanceAsc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceDesc'); setShowSortDropdown(false); }}>
+                                    <Text style={[styles.dropdownItemText, sortType === 'balanceDesc' && styles.dropdownItemTextActive]}>High ฿</Text>
+                                    {sortType === 'balanceDesc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
+                                </TouchableOpacity>
+                            </View>
+                        )}
                         
                         <FlatList
                             data={filteredAndSortedWallets}
@@ -519,31 +530,53 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
-    sortContainer: {
+    resultsHeader: {
         flexDirection: 'row',
-        marginBottom: 16,
         justifyContent: 'space-between',
-    },
-    sortButton: {
-        flex: 1,
-        paddingVertical: 10,
         alignItems: 'center',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#EAEAEA',
-        marginHorizontal: 4,
+        marginBottom: 12,
+        paddingHorizontal: 4,
     },
-    sortButtonActive: {
-        backgroundColor: WHITE_GREEN,
-        borderColor: WHITE_GREEN,
-    },
-    sortButtonText: {
-        fontSize: 13,
+    resultsCount: {
+        fontSize: 14,
         color: '#666',
         fontWeight: '500',
     },
-    sortButtonTextActive: {
-        color: '#FFF',
+    sortToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F5F5F5',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+    },
+    sortToggleText: {
+        fontSize: 13,
+        color: '#666',
+        fontWeight: '600',
+        marginRight: 4,
+    },
+    dropdownMenu: {
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        padding: 8,
+        marginBottom: 16,
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#EAEAEA',
+    },
+    dropdownItemText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    dropdownItemTextActive: {
+        color: WHITE_GREEN,
         fontWeight: 'bold',
     },
     noteInput: {
