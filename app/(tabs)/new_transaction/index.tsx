@@ -561,6 +561,8 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 8,
         marginBottom: 16,
+        alignSelf: 'flex-end',
+        minWidth: 160,
     },
     dropdownItem: {
         flexDirection: 'row',
