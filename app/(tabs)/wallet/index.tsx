@@ -146,6 +146,9 @@ const WalletScreen = () => {
       <View style={styles.headerBackground}>
         <SafeAreaView edges={['top']} style={styles.headerSafe}>
           <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => router.push('/')} style={styles.headerHomeButton}>
+              <Ionicons name="home-outline" size={26} color="#FFFFFF" />
+            </TouchableOpacity>
             <Text style={styles.header}>My Wallets</Text>
             <TouchableOpacity onPress={openAddPage} style={styles.headerAddButton}>
               <Ionicons name="add" size={34} color="#FFFFFF" />
@@ -202,6 +205,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     position: 'relative',
     height: 40,
+  },
+  headerHomeButton: {
+    position: 'absolute',
+    left: 0,
+    padding: 4,
   },
   headerAddButton: {
     position: 'absolute',
