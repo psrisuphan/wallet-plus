@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Text,
   StyleSheet,
@@ -52,6 +52,9 @@ const AddWalletScreen = () => {
   const [color, setColor] = useState(COLORS[0]);
   const [detail, setDetail] = useState('');
   const [balance, setBalance] = useState('');
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [iconSectionY, setIconSectionY] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -148,7 +151,25 @@ const AddWalletScreen = () => {
         </SafeAreaView>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.heroSection}>
+          <TouchableOpacity 
+            activeOpacity={0.8} 
+            style={[styles.mainIconContainer, { backgroundColor: color + '15', borderColor: color + '33' }]}
+            onPress={() => scrollViewRef.current?.scrollTo({ y: iconSectionY - 20, animated: true })}
+          >
+            <Ionicons name={icon as any} size={64} color={color} />
+            <View style={[styles.editBadge, { backgroundColor: color }]}>
+              <Ionicons name="pencil" size={14} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.heroSubText}>Preview</Text>
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.label}>Wallet Name</Text>
           <TextInput
@@ -173,6 +194,22 @@ const AddWalletScreen = () => {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.label}>Wallet Detail</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Optional description"
+            multiline
+            numberOfLines={4}
+            value={detail}
+            onChangeText={setDetail}
+            placeholderTextColor="#AAA"
+          />
+        </View>
+
+        <View 
+          style={styles.section}
+          onLayout={(event) => setIconSectionY(event.nativeEvent.layout.y)}
+        >
           <Text style={styles.label}>Select Icon</Text>
           <View style={styles.iconGrid}>
             {ICONS.map((item) => (
@@ -205,19 +242,6 @@ const AddWalletScreen = () => {
               />
             ))}
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Wallet Detail</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Optional description"
-            multiline
-            numberOfLines={4}
-            value={detail}
-            onChangeText={setDetail}
-            placeholderTextColor="#AAA"
-          />
         </View>
 
         <TouchableOpacity
@@ -266,7 +290,43 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+  },
+  heroSection: {
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+  mainIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  heroSubText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#999',
+    fontWeight: '500',
   },
   section: {
     marginBottom: 20,
