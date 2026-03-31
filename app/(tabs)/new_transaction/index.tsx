@@ -616,9 +616,11 @@ const styles = StyleSheet.create({
         borderColor: '#F0F0F0',
     },
     categoryText: {
-        fontSize: 13,
+        fontSize: 12,
         color: '#888',
         fontWeight: '500',
+        textAlign: 'center',
+        height: 32,
     },
     categoryTextActive: {
         color: WHITE_GREEN,
