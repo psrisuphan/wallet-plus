@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db, auth } from '../../../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const WHITE_GREEN = '#699e8aff';
 const EXPENSE_COLOR = '#FF3B30';
 const INCOME_COLOR = '#34C759';
+
+interface Wallet {
+  id: string;
+  name: string;
+  balance: number;
+  icon: string;
+  color?: string;
+}
 
 // Mock Categories for UI presentation
 const CATEGORIES = [
@@ -16,18 +27,48 @@ const CATEGORIES = [
   { id: '5', name: 'Entertainment', icon: 'film' },
 ];
 
-// Mock Wallets for UI presentation
-const WALLETS = [
-  { id: '1', name: 'Main Wallet', icon: 'wallet' },
-  { id: '2', name: 'Credit Card', icon: 'card' },
-];
-
 const AddTransactionScreen = () => {
     const [type, setType] = useState<'expense' | 'income'>('expense');
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
-    const [selectedWallet, setSelectedWallet] = useState(WALLETS[0].id);
+    
+    // Wallet State
+    const [wallets, setWallets] = useState<Wallet[]>([]);
+    const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
+    const [isWalletModalVisible, setIsWalletModalVisible] = useState(false);
+    const [loadingWallets, setLoadingWallets] = useState(true);
+
+    useEffect(() => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const q = query(collection(db, 'wallets'), where('userId', '==', user.uid));
+                const unsubscribeWallets = onSnapshot(q, (querySnapshot) => {
+                    const walletData = querySnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    })) as Wallet[];
+                    setWallets(walletData);
+                    
+                    // Auto-select first wallet if none selected
+                    if (walletData.length > 0 && !selectedWallet) {
+                        setSelectedWallet(walletData[0]);
+                    }
+                    setLoadingWallets(false);
+                }, (error) => {
+                    console.error("Error fetching wallets: ", error);
+                    setLoadingWallets(false);
+                });
+                return () => unsubscribeWallets();
+            } else {
+                setWallets([]);
+                setSelectedWallet(null);
+                setLoadingWallets(false);
+            }
+        });
+
+        return () => unsubscribeAuth();
+    }, [selectedWallet]);
 
     const handleAmountChange = (text: string) => {
         // Remove any non-numeric characters except for a single decimal point
@@ -42,6 +83,55 @@ const AddTransactionScreen = () => {
             <StatusBar barStyle="light-content" />
             <Header title="Add Transaction" showHome={true} />
             
+            {/* Wallet Selection Modal */}
+            <Modal
+                visible={isWalletModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setIsWalletModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Wallet</Text>
+                            <TouchableOpacity onPress={() => setIsWalletModalVisible(false)}>
+                                <Ionicons name="close" size={24} color="#333" />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <FlatList
+                            data={wallets}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity 
+                                    style={styles.modalWalletItem}
+                                    onPress={() => {
+                                        setSelectedWallet(item);
+                                        setIsWalletModalVisible(false);
+                                    }}
+                                >
+                                    <View style={[styles.modalWalletIcon, { backgroundColor: item.color || WHITE_GREEN }]}>
+                                        <Ionicons name={item.icon as any || 'wallet'} size={24} color="#FFF" />
+                                    </View>
+                                    <View style={styles.modalWalletInfo}>
+                                        <Text style={styles.modalWalletName}>{item.name}</Text>
+                                        <Text style={styles.modalWalletBalance}>฿{item.balance.toLocaleString()}</Text>
+                                    </View>
+                                    {selectedWallet?.id === item.id && (
+                                        <Ionicons name="checkmark-circle" size={24} color={WHITE_GREEN} />
+                                    )}
+                                </TouchableOpacity>
+                            )}
+                            ListEmptyComponent={() => (
+                                <View style={styles.emptyContainer}>
+                                    <Text style={styles.emptyText}>No wallets found. Please create one.</Text>
+                                </View>
+                            )}
+                        />
+                    </View>
+                </View>
+            </Modal>
+
             <KeyboardAvoidingView 
                 style={{ flex: 1 }} 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -106,28 +196,26 @@ const AddTransactionScreen = () => {
 
                     {/* Wallet Selection */}
                     <Text style={styles.sectionTitle}>Wallet</Text>
-                    <View style={styles.walletContainer}>
-                        {WALLETS.map(wallet => (
-                            <TouchableOpacity 
-                                key={wallet.id} 
-                                style={[
-                                    styles.walletButton,
-                                    selectedWallet === wallet.id && styles.walletButtonActive
-                                ]}
-                                onPress={() => setSelectedWallet(wallet.id)}
-                            >
-                                <Ionicons 
-                                    name={wallet.icon as any} 
-                                    size={20} 
-                                    color={selectedWallet === wallet.id ? '#FFF' : '#888'} 
-                                />
-                                <Text style={[
-                                    styles.walletText,
-                                    selectedWallet === wallet.id && styles.walletTextActive
-                                ]}>{wallet.name}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                    <TouchableOpacity 
+                        style={styles.walletSelector}
+                        onPress={() => setIsWalletModalVisible(true)}
+                    >
+                        {loadingWallets ? (
+                            <ActivityIndicator size="small" color={WHITE_GREEN} />
+                        ) : selectedWallet ? (
+                            <>
+                                <View style={styles.walletSelectorInner}>
+                                    <View style={[styles.selectorIconContainer, { backgroundColor: selectedWallet.color || WHITE_GREEN }]}>
+                                        <Ionicons name={selectedWallet.icon as any || 'wallet'} size={20} color="#FFF" />
+                                    </View>
+                                    <Text style={styles.walletSelectorText}>{selectedWallet.name}</Text>
+                                </View>
+                                <Ionicons name="chevron-down" size={20} color="#888" />
+                            </>
+                        ) : (
+                            <Text style={styles.walletSelectorPlaceholder}>Select Wallet</Text>
+                        )}
+                    </TouchableOpacity>
 
                     {/* Note Input */}
                     <Text style={styles.sectionTitle}>Note</Text>
@@ -264,35 +352,96 @@ const styles = StyleSheet.create({
         color: WHITE_GREEN,
         fontWeight: 'bold',
     },
-    walletContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginBottom: 10,
-    },
-    walletButton: {
+    walletSelector: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         backgroundColor: '#FFF',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
+        padding: 16,
         borderRadius: 12,
-        marginRight: 12,
-        marginBottom: 12,
         borderWidth: 1,
         borderColor: '#EAEAEA',
+        marginBottom: 20,
     },
-    walletButtonActive: {
-        backgroundColor: WHITE_GREEN,
-        borderColor: WHITE_GREEN,
+    walletSelectorInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    walletText: {
-        fontSize: 15,
+    selectorIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    walletSelectorText: {
+        fontSize: 16,
         fontWeight: '600',
-        color: '#555',
-        marginLeft: 8,
+        color: '#333',
     },
-    walletTextActive: {
-        color: '#FFF',
+    walletSelectorPlaceholder: {
+        fontSize: 16,
+        color: '#999',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#FFF',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 20,
+        maxHeight: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    modalWalletItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    modalWalletIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    modalWalletInfo: {
+        flex: 1,
+    },
+    modalWalletName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 4,
+    },
+    modalWalletBalance: {
+        fontSize: 14,
+        color: '#888',
+    },
+    emptyContainer: {
+        padding: 20,
+        alignItems: 'center',
+    },
+    emptyText: {
+        color: '#888',
+        fontSize: 16,
     },
     noteInput: {
         backgroundColor: '#FFF',
@@ -308,17 +457,15 @@ const styles = StyleSheet.create({
     },
     footer: {
         padding: 20,
-        paddingBottom: 40, // extra padding for bottom navigation clearance
+        paddingBottom: 40,
         backgroundColor: '#FFF',
         borderTopWidth: 1,
         borderTopColor: '#F0F0F0',
     },
     saveButton: {
-        backgroundColor: WHITE_GREEN,
         paddingVertical: 16,
         borderRadius: 12,
         alignItems: 'center',
-        shadowColor: WHITE_GREEN,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
