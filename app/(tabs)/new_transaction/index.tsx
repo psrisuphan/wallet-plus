@@ -289,32 +289,15 @@ const AddTransactionScreen = () => {
                         />
                     </View>
 
-                    {/* Category Selection */}
-                    <Text style={styles.sectionTitle}>Category</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                        {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
-                            <TouchableOpacity 
-                                key={cat.id} 
-                                style={styles.categoryButton}
-                                onPress={() => setSelectedCategory(cat.id)}
-                            >
-                                <View style={[
-                                    styles.iconContainer, 
-                                    selectedCategory === cat.id ? { backgroundColor: WHITE_GREEN } : null
-                                ]}>
-                                    <Ionicons 
-                                        name={cat.icon as any} 
-                                        size={24} 
-                                        color={selectedCategory === cat.id ? '#FFF' : '#888'} 
-                                    />
-                                </View>
-                                <Text style={[
-                                    styles.categoryText,
-                                    selectedCategory === cat.id && styles.categoryTextActive
-                                ]}>{cat.name}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
+                    {/* Note Input */}
+                    <Text style={styles.sectionTitle}>Note</Text>
+                    <TextInput
+                        style={styles.noteInput}
+                        placeholder="What was this for?"
+                        placeholderTextColor="#999"
+                        value={note}
+                        onChangeText={setNote}
+                    />
 
                     {/* Wallet Selection */}
                     <Text style={styles.sectionTitle}>Wallet</Text>
@@ -350,15 +333,32 @@ const AddTransactionScreen = () => {
                         )}
                     </TouchableOpacity>
 
-                    {/* Note Input */}
-                    <Text style={styles.sectionTitle}>Note</Text>
-                    <TextInput
-                        style={styles.noteInput}
-                        placeholder="What was this for?"
-                        placeholderTextColor="#999"
-                        value={note}
-                        onChangeText={setNote}
-                    />
+                    {/* Category Selection */}
+                    <Text style={styles.sectionTitle}>Category</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+                        {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
+                            <TouchableOpacity 
+                                key={cat.id} 
+                                style={styles.categoryButton}
+                                onPress={() => setSelectedCategory(cat.id)}
+                            >
+                                <View style={[
+                                    styles.iconContainer, 
+                                    selectedCategory === cat.id ? { backgroundColor: WHITE_GREEN } : null
+                                ]}>
+                                    <Ionicons 
+                                        name={cat.icon as any} 
+                                        size={24} 
+                                        color={selectedCategory === cat.id ? '#FFF' : '#888'} 
+                                    />
+                                </View>
+                                <Text style={[
+                                    styles.categoryText,
+                                    selectedCategory === cat.id && styles.categoryTextActive
+                                ]}>{cat.name}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
 
                 </ScrollView>
                 
