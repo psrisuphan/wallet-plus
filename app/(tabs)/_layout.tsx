@@ -50,7 +50,7 @@ const TabsLayout = () => {
                 options={{
                     title: "Add",
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={24} color={color} />
+                        <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={30} color={color} />
                     ),
                 }}
             />
