@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +39,9 @@ const AddTransactionScreen = () => {
     const [isWalletModalVisible, setIsWalletModalVisible] = useState(false);
     const [loadingWallets, setLoadingWallets] = useState(true);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
+
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -63,7 +66,24 @@ const AddTransactionScreen = () => {
         });
 
         return () => unsubscribeAuth();
-    }, [selectedWallet]);
+    }, []);
+
+    const filteredAndSortedWallets = useMemo(() => {
+        let result = wallets.filter(w => w.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        
+        result.sort((a, b) => {
+            if (sortType === 'name') {
+                return a.name.localeCompare(b.name);
+            } else if (sortType === 'balanceAsc') {
+                return a.balance - b.balance;
+            } else if (sortType === 'balanceDesc') {
+                return b.balance - a.balance;
+            }
+            return 0;
+        });
+
+        return result;
+    }, [wallets, searchQuery, sortType]);
 
     const handleAmountChange = (text: string) => {
         // Remove any non-numeric characters except for a single decimal point
@@ -93,9 +113,41 @@ const AddTransactionScreen = () => {
                                 <Ionicons name="close" size={24} color="#333" />
                             </TouchableOpacity>
                         </View>
+
+                        <View style={styles.searchContainer}>
+                            <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Search wallet..."
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                placeholderTextColor="#999"
+                            />
+                        </View>
+
+                        <View style={styles.sortContainer}>
+                            <TouchableOpacity 
+                                style={[styles.sortButton, sortType === 'name' && styles.sortButtonActive]}
+                                onPress={() => setSortType('name')}
+                            >
+                                <Text style={[styles.sortButtonText, sortType === 'name' && styles.sortButtonTextActive]}>Name</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.sortButton, sortType === 'balanceAsc' && styles.sortButtonActive]}
+                                onPress={() => setSortType('balanceAsc')}
+                            >
+                                <Text style={[styles.sortButtonText, sortType === 'balanceAsc' && styles.sortButtonTextActive]}>Low ฿</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.sortButton, sortType === 'balanceDesc' && styles.sortButtonActive]}
+                                onPress={() => setSortType('balanceDesc')}
+                            >
+                                <Text style={[styles.sortButtonText, sortType === 'balanceDesc' && styles.sortButtonTextActive]}>High ฿</Text>
+                            </TouchableOpacity>
+                        </View>
                         
                         <FlatList
-                            data={wallets}
+                            data={filteredAndSortedWallets}
                             keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity 
@@ -390,12 +442,12 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
+        justifyContent: 'center',
+        padding: 20,
     },
     modalContent: {
         backgroundColor: '#FFF',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
+        borderRadius: 24,
         padding: 20,
         maxHeight: '80%',
     },
@@ -445,6 +497,50 @@ const styles = StyleSheet.create({
     emptyText: {
         color: '#888',
         fontSize: 16,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        marginBottom: 12,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        height: 48,
+        fontSize: 16,
+        color: '#333',
+    },
+    sortContainer: {
+        flexDirection: 'row',
+        marginBottom: 16,
+        justifyContent: 'space-between',
+    },
+    sortButton: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        marginHorizontal: 4,
+    },
+    sortButtonActive: {
+        backgroundColor: WHITE_GREEN,
+        borderColor: WHITE_GREEN,
+    },
+    sortButtonText: {
+        fontSize: 13,
+        color: '#666',
+        fontWeight: '500',
+    },
+    sortButtonTextActive: {
+        color: '#FFF',
+        fontWeight: 'bold',
     },
     noteInput: {
         backgroundColor: '#FFF',
