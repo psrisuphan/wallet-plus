@@ -272,7 +272,10 @@ const AddTransactionScreen = () => {
                                     <View style={[styles.selectorIconContainer, { backgroundColor: selectedWallet.color || WHITE_GREEN }]}>
                                         <Ionicons name={selectedWallet.icon as any || 'wallet'} size={20} color="#FFF" />
                                     </View>
-                                    <Text style={styles.walletSelectorText}>{selectedWallet.name}</Text>
+                                    <View>
+                                        <Text style={styles.walletSelectorText}>{selectedWallet.name}</Text>
+                                        <Text style={{ fontSize: 13, color: '#888', marginTop: 2 }}>฿{selectedWallet.balance.toLocaleString()}</Text>
+                                    </View>
                                 </View>
                                 <Ionicons name="chevron-down" size={20} color="#888" />
                             </>
