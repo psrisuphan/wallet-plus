@@ -141,7 +141,7 @@ const AddWalletScreen = () => {
         });
         Alert.alert('Success', 'Wallet created successfully!');
       }
-      router.back();
+      router.replace('/(tabs)/wallet');
     } catch (error) {
       console.error('Error saving wallet:', error);
       Alert.alert('Error', 'Failed to save wallet.');
@@ -161,7 +161,11 @@ const AddWalletScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <Header title={id ? 'Edit Wallet' : 'Add New Wallet'} showBack={true} />
+      <Header 
+        title={id ? 'Edit Wallet' : 'Add New Wallet'} 
+        showBack={true} 
+        onBackPress={() => router.replace('/(tabs)/wallet')}
+      />
 
       <ScrollView 
         ref={scrollViewRef}
