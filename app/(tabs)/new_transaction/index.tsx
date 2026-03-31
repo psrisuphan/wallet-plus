@@ -171,7 +171,11 @@ const AddTransactionScreen = () => {
                             )}
                             ListEmptyComponent={() => (
                                 <View style={styles.emptyContainer}>
-                                    <Text style={styles.emptyText}>No wallets found. Please create one.</Text>
+                                    <Text style={styles.emptyText}>
+                                        {wallets.length === 0 
+                                            ? "No wallets found. Please create one."
+                                            : "No matching wallets found."}
+                                    </Text>
                                 </View>
                             )}
                         />
