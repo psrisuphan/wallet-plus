@@ -356,50 +356,6 @@ const AddTransactionScreen = () => {
                         />
                     </View>
 
-                    {/* Note Input */}
-                    <Text style={styles.sectionTitle}>Note</Text>
-                    <TextInput
-                        style={styles.noteInput}
-                        placeholder="What was this for?"
-                        placeholderTextColor="#999"
-                        value={note}
-                        onChangeText={setNote}
-                    />
-
-                    {/* Wallet Selection */}
-                    <Text style={styles.sectionTitle}>Wallet</Text>
-                    <TouchableOpacity 
-                        style={styles.walletSelector}
-                        onPress={() => setIsWalletModalVisible(true)}
-                    >
-                        {loadingWallets ? (
-                            <ActivityIndicator size="small" color={WHITE_GREEN} />
-                        ) : selectedWallet ? (
-                            <>
-                                <View style={styles.walletSelectorInner}>
-                                    <View style={[styles.selectorIconContainer, { backgroundColor: selectedWallet.color || WHITE_GREEN }]}>
-                                        <Ionicons name={selectedWallet.icon as any || 'wallet'} size={20} color="#FFF" />
-                                    </View>
-                                    <View>
-                                        <Text style={styles.walletSelectorText}>{selectedWallet.name}</Text>
-                                        <Text style={{ fontSize: 13, color: '#888', marginTop: 2 }}>฿{selectedWallet.balance.toLocaleString()}</Text>
-                                    </View>
-                                </View>
-                                <Ionicons name="chevron-down" size={20} color="#888" />
-                            </>
-                        ) : (
-                            <>
-                                <View style={styles.walletSelectorInner}>
-                                    <View style={[styles.selectorIconContainer, { backgroundColor: '#E8F5E9' }]}>
-                                        <Ionicons name="add" size={20} color={WHITE_GREEN} />
-                                    </View>
-                                    <Text style={[styles.walletSelectorPlaceholder, { color: WHITE_GREEN, fontWeight: 'bold' }]}>Select Wallet</Text>
-                                </View>
-                                <Ionicons name="chevron-down" size={20} color={WHITE_GREEN} />
-                            </>
-                        )}
-                    </TouchableOpacity>
-
                     {/* Category Selection */}
                     <Text style={styles.sectionTitle}>Category</Text>
                     <View style={styles.categoryScrollWrapper}>
@@ -448,6 +404,50 @@ const AddTransactionScreen = () => {
                             </View>
                         )}
                     </View>
+
+                    {/* Note Input */}
+                    <Text style={styles.sectionTitle}>Note</Text>
+                    <TextInput
+                        style={styles.noteInput}
+                        placeholder="What was this for?"
+                        placeholderTextColor="#999"
+                        value={note}
+                        onChangeText={setNote}
+                    />
+
+                    {/* Wallet Selection */}
+                    <Text style={styles.sectionTitle}>Wallet</Text>
+                    <TouchableOpacity 
+                        style={styles.walletSelector}
+                        onPress={() => setIsWalletModalVisible(true)}
+                    >
+                        {loadingWallets ? (
+                            <ActivityIndicator size="small" color={WHITE_GREEN} />
+                        ) : selectedWallet ? (
+                            <>
+                                <View style={styles.walletSelectorInner}>
+                                    <View style={[styles.selectorIconContainer, { backgroundColor: selectedWallet.color || WHITE_GREEN }]}>
+                                        <Ionicons name={selectedWallet.icon as any || 'wallet'} size={20} color="#FFF" />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.walletSelectorText}>{selectedWallet.name}</Text>
+                                        <Text style={{ fontSize: 13, color: '#888', marginTop: 2 }}>฿{selectedWallet.balance.toLocaleString()}</Text>
+                                    </View>
+                                </View>
+                                <Ionicons name="chevron-down" size={20} color="#888" />
+                            </>
+                        ) : (
+                            <>
+                                <View style={styles.walletSelectorInner}>
+                                    <View style={[styles.selectorIconContainer, { backgroundColor: '#E8F5E9' }]}>
+                                        <Ionicons name="add" size={20} color={WHITE_GREEN} />
+                                    </View>
+                                    <Text style={[styles.walletSelectorPlaceholder, { color: WHITE_GREEN, fontWeight: 'bold' }]}>Select Wallet</Text>
+                                </View>
+                                <Ionicons name="chevron-down" size={20} color={WHITE_GREEN} />
+                            </>
+                        )}
+                    </TouchableOpacity>
 
                 </ScrollView>
                 
