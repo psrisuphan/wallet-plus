@@ -126,36 +126,38 @@ const AddTransactionScreen = () => {
                             />
                         </View>
 
-                        <View style={styles.resultsHeader}>
-                            <Text style={styles.resultsCount}>{filteredAndSortedWallets.length} wallet{filteredAndSortedWallets.length !== 1 ? 's' : ''} found</Text>
-                            
-                            <TouchableOpacity 
-                                style={styles.sortToggle} 
-                                onPress={() => setShowSortDropdown(!showSortDropdown)}
-                            >
-                                <Text style={styles.sortToggleText}>
-                                    Sort by: {sortType === 'name' ? 'Name' : sortType === 'balanceAsc' ? 'Low ฿' : 'High ฿'}
-                                </Text>
-                                <Ionicons name={showSortDropdown ? "chevron-up" : "chevron-down"} size={16} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-                        
-                        {showSortDropdown && (
-                            <View style={styles.dropdownMenu}>
-                                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('name'); setShowSortDropdown(false); }}>
-                                    <Text style={[styles.dropdownItemText, sortType === 'name' && styles.dropdownItemTextActive]}>Name</Text>
-                                    {sortType === 'name' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceAsc'); setShowSortDropdown(false); }}>
-                                    <Text style={[styles.dropdownItemText, sortType === 'balanceAsc' && styles.dropdownItemTextActive]}>Low ฿</Text>
-                                    {sortType === 'balanceAsc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceDesc'); setShowSortDropdown(false); }}>
-                                    <Text style={[styles.dropdownItemText, sortType === 'balanceDesc' && styles.dropdownItemTextActive]}>High ฿</Text>
-                                    {sortType === 'balanceDesc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
+                        <View style={{ zIndex: 10 }}>
+                            <View style={styles.resultsHeader}>
+                                <Text style={styles.resultsCount}>{filteredAndSortedWallets.length} wallet{filteredAndSortedWallets.length !== 1 ? 's' : ''} found</Text>
+                                
+                                <TouchableOpacity 
+                                    style={styles.sortToggle} 
+                                    onPress={() => setShowSortDropdown(!showSortDropdown)}
+                                >
+                                    <Text style={styles.sortToggleText}>
+                                        Sort by: {sortType === 'name' ? 'Name' : sortType === 'balanceAsc' ? 'Low ฿' : 'High ฿'}
+                                    </Text>
+                                    <Ionicons name={showSortDropdown ? "chevron-up" : "chevron-down"} size={16} color="#666" />
                                 </TouchableOpacity>
                             </View>
-                        )}
+                            
+                            {showSortDropdown && (
+                                <View style={styles.dropdownMenu}>
+                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('name'); setShowSortDropdown(false); }}>
+                                        <Text style={[styles.dropdownItemText, sortType === 'name' && styles.dropdownItemTextActive]}>Name</Text>
+                                        {sortType === 'name' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceAsc'); setShowSortDropdown(false); }}>
+                                        <Text style={[styles.dropdownItemText, sortType === 'balanceAsc' && styles.dropdownItemTextActive]}>Low ฿</Text>
+                                        {sortType === 'balanceAsc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceDesc'); setShowSortDropdown(false); }}>
+                                        <Text style={[styles.dropdownItemText, sortType === 'balanceDesc' && styles.dropdownItemTextActive]}>High ฿</Text>
+                                        {sortType === 'balanceDesc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
                         
                         <FlatList
                             data={filteredAndSortedWallets}
@@ -557,12 +559,21 @@ const styles = StyleSheet.create({
         marginRight: 4,
     },
     dropdownMenu: {
-        backgroundColor: '#F5F5F5',
+        position: 'absolute',
+        top: '100%',
+        right: 0,
+        backgroundColor: '#FFF',
         borderRadius: 12,
         padding: 8,
-        marginBottom: 16,
-        alignSelf: 'flex-end',
         minWidth: 160,
+        zIndex: 1000,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
     },
     dropdownItem: {
         flexDirection: 'row',
