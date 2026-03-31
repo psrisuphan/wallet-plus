@@ -97,6 +97,24 @@ const AddWalletScreen = () => {
 
     const startingBalance = parseFloat(balance) || 0;
 
+    if (startingBalance < 0) {
+      Alert.alert(
+        'Negative Balance',
+        `You've entered a negative balance: ฿${startingBalance.toFixed(2)}. Do you want to continue?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Continue', onPress: () => performSave(startingBalance) },
+        ]
+      );
+    } else {
+      performSave(startingBalance);
+    }
+  };
+
+  const performSave = async (startingBalance: number) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
     setLoading(true);
     try {
       const walletData = {
