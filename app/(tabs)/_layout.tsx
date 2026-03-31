@@ -50,7 +50,7 @@ const TabsLayout = () => {
                 options={{
                     title: "Add",
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={24} color={color} />
+                        <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={30} color={color} />
                     ),
                 }}
             />
@@ -71,6 +71,14 @@ const TabsLayout = () => {
                         <Ionicons name={focused ? "settings" : "settings-outline"} size={24} color={color} />
                     ),
                 }} 
+            />
+            <Tabs.Screen
+                name="wallet/add"
+                options={{
+                    href: null,
+                    headerShown: false,
+                    tabBarStyle: { display: 'none' }
+                }}
             />
         </Tabs>
     )

@@ -89,24 +89,14 @@ const AddTransactionScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
     const [showSortDropdown, setShowSortDropdown] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
             if (user) {
-                const q = query(collection(db, 'wallets'), where('userId', '==', user.uid));
-                const unsubscribeWallets = onSnapshot(q, (querySnapshot) => {
-                    const walletData = querySnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    })) as Wallet[];
-                    setWallets(walletData);
-                    setLoadingWallets(false);
-                }, (error) => {
-                    console.error("Error fetching wallets: ", error);
-                    setLoadingWallets(false);
-                });
-                return () => unsubscribeWallets();
+                setUserId(user.uid);
             } else {
+                setUserId(null);
                 setWallets([]);
                 setSelectedWallet(null);
                 setLoadingWallets(false);
@@ -115,6 +105,29 @@ const AddTransactionScreen = () => {
 
         return () => unsubscribeAuth();
     }, []);
+
+    useEffect(() => {
+        if (!userId) {
+            setLoadingWallets(false);
+            return;
+        }
+
+        setLoadingWallets(true);
+        const q = query(collection(db, 'wallets'), where('userId', '==', userId));
+        const unsubscribeWallets = onSnapshot(q, (querySnapshot) => {
+            const walletData = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Wallet[];
+            setWallets(walletData);
+            setLoadingWallets(false);
+        }, (error) => {
+            console.error("Error fetching wallets: ", error);
+            setLoadingWallets(false);
+        });
+
+        return () => unsubscribeWallets();
+    }, [userId]);
 
     // Sync selected wallet with real-time updates from Firestore
     useEffect(() => {

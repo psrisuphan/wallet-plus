@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
@@ -21,6 +21,8 @@ interface Wallet {
 const WalletScreen = () => {
   const router = useRouter();
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -61,6 +63,32 @@ const WalletScreen = () => {
     return () => unsubscribeFirestore();
   }, [userId]);
 
+  // Handle Search and Sorting
+  const filteredAndSortedWallets = useMemo(() => {
+    let result = [...wallets];
+    
+    // Search filter
+    if (searchQuery.trim() !== '') {
+      result = result.filter(wallet => 
+        wallet.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Sort logic
+    result.sort((a, b) => {
+      if (sortType === 'name') {
+        return a.name.localeCompare(b.name);
+      } else if (sortType === 'balanceAsc') {
+        return a.balance - b.balance;
+      } else if (sortType === 'balanceDesc') {
+        return b.balance - a.balance;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [wallets, searchQuery, sortType]);
+
   const handleDeleteWallet = (walletId: string) => {
     Alert.alert(
       'Delete Wallet',
@@ -92,11 +120,11 @@ const WalletScreen = () => {
   };
 
   const openEditPage = (walletId: string) => {
-    router.push({ pathname: '/wallet_add', params: { id: walletId } });
+    router.push({ pathname: '/(tabs)/wallet/add', params: { id: walletId } });
   };
 
   const openAddPage = () => {
-    router.push('/wallet_add');
+    router.push('/(tabs)/wallet/add');
   };
 
   const renderWalletItem = ({ item }: { item: Wallet }) => (
@@ -150,28 +178,78 @@ const WalletScreen = () => {
         onAddPress={openAddPage} 
       />
       <View style={styles.content}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search-outline" size={20} color="#888" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search wallets by name..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#AAA"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color="#AAA" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.sortContainer}>
+          <Text style={styles.sortLabel}>Sort by:</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortScroll}>
+            <TouchableOpacity 
+              style={[styles.sortButton, sortType === 'name' && styles.sortButtonActive]}
+              onPress={() => setSortType('name')}
+            >
+              <Text style={[styles.sortButtonText, sortType === 'name' && styles.sortButtonTextActive]}>Name</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.sortButton, sortType === 'balanceDesc' && styles.sortButtonActive]}
+              onPress={() => setSortType('balanceDesc')}
+            >
+              <Ionicons name="arrow-down" size={12} color={sortType === 'balanceDesc' ? WHITE_GREEN : '#888'} />
+              <Text style={[styles.sortButtonText, sortType === 'balanceDesc' && styles.sortButtonTextActive]}>Highest Balance</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.sortButton, sortType === 'balanceAsc' && styles.sortButtonActive]}
+              onPress={() => setSortType('balanceAsc')}
+            >
+              <Ionicons name="arrow-up" size={12} color={sortType === 'balanceAsc' ? WHITE_GREEN : '#888'} />
+              <Text style={[styles.sortButtonText, sortType === 'balanceAsc' && styles.sortButtonTextActive]}>Lowest Balance</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
         <FlatList
-          data={wallets}
+          data={filteredAndSortedWallets}
           renderItem={renderWalletItem}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
-            wallets.length > 0 ? (
+            filteredAndSortedWallets.length > 0 ? (
               <View style={styles.listHeader}>
-                <Text style={styles.walletCountText}>Found {wallets.length} {wallets.length === 1 ? 'wallet' : 'wallets'}</Text>
+                <Text style={styles.walletCountText}>
+                  {searchQuery 
+                    ? `Searching: ${filteredAndSortedWallets.length} found` 
+                    : `${wallets.length} ${wallets.length === 1 ? 'wallet' : 'wallets'} found`}
+                </Text>
               </View>
             ) : null
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="wallet-outline" size={80} color="#D1D1D1" />
-              <Text style={styles.emptyListText}>No wallets found.</Text>
-              <TouchableOpacity onPress={openAddPage}>
-                <Text style={styles.addOneText}>Add your first wallet!</Text>
-              </TouchableOpacity>
+              <Ionicons name={searchQuery ? "search-outline" : "wallet-outline"} size={80} color="#D1D1D1" />
+              <Text style={styles.emptyListText}>
+                {searchQuery ? `No wallets matching "${searchQuery}"` : "No wallets found."}
+              </Text>
+              {!searchQuery && (
+                <TouchableOpacity onPress={openAddPage}>
+                  <Text style={styles.addOneText}>Add your first wallet!</Text>
+                </TouchableOpacity>
+              )}
             </View>
           }
           ListFooterComponent={
-            wallets.length > 0 ? (
+            filteredAndSortedWallets.length > 0 && !searchQuery ? (
               <TouchableOpacity style={styles.footerAddLink} onPress={openAddPage}>
                 <Text style={styles.footerAddTitle}>Want to add a new wallet?</Text>
                 <Text style={styles.footerAddSubtitle}>Click here!</Text>
@@ -199,6 +277,66 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F3F5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    padding: 0, // Remove default padding on Android
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sortLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginRight: 10,
+  },
+  sortScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+  },
+  sortButtonActive: {
+    backgroundColor: WHITE_GREEN + '10',
+    borderColor: WHITE_GREEN,
+  },
+  sortButtonText: {
+    fontSize: 12,
+    color: '#888',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  sortButtonTextActive: {
+    color: WHITE_GREEN,
+    fontWeight: '700',
   },
   noUserText: {
     fontSize: 18,
