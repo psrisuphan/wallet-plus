@@ -158,7 +158,15 @@ const WalletScreen = () => {
           data={wallets}
           renderItem={renderWalletItem}
           keyExtractor={(item) => item.id}
-          ListEmptyComponent={<Text style={styles.emptyListText}>No wallets found. Add one!</Text>}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="wallet-outline" size={80} color="#D1D1D1" />
+              <Text style={styles.emptyListText}>No wallets found.</Text>
+              <TouchableOpacity onPress={openAddPage}>
+                <Text style={styles.addOneText}>Add your first wallet!</Text>
+              </TouchableOpacity>
+            </View>
+          }
           showsVerticalScrollIndicator={false}
         />
       </View>
@@ -272,11 +280,22 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
   },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 80,
+  },
   emptyListText: {
-    textAlign: 'center',
-    marginTop: 30,
+    fontSize: 18,
+    color: '#888',
+    marginTop: 15,
+  },
+  addOneText: {
     fontSize: 16,
-    color: '#777',
+    color: WHITE_GREEN,
+    fontWeight: 'bold',
+    marginTop: 8,
+    textDecorationLine: 'underline',
   },
   modalOverlay: {
     flex: 1,
