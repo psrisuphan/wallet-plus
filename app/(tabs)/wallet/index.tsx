@@ -228,7 +228,9 @@ const WalletScreen = () => {
             filteredAndSortedWallets.length > 0 ? (
               <View style={styles.listHeader}>
                 <Text style={styles.walletCountText}>
-                  {searchQuery ? `Searching: ${filteredAndSortedWallets.length} found` : `${wallets.length} total wallets`}
+                  {searchQuery 
+                    ? `Searching: ${filteredAndSortedWallets.length} found` 
+                    : `${wallets.length} ${wallets.length === 1 ? 'wallet' : 'wallets'} found`}
                 </Text>
               </View>
             ) : null
