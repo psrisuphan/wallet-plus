@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -52,9 +53,9 @@ const AddWalletScreen = () => {
   const [color, setColor] = useState(COLORS[0]);
   const [detail, setDetail] = useState('');
   const [balance, setBalance] = useState('');
+  const [pickerModalVisible, setPickerModalVisible] = useState(false);
   
   const scrollViewRef = useRef<ScrollView>(null);
-  const [iconSectionY, setIconSectionY] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -160,7 +161,7 @@ const AddWalletScreen = () => {
           <TouchableOpacity 
             activeOpacity={0.8} 
             style={[styles.mainIconContainer, { backgroundColor: color + '15', borderColor: color + '33' }]}
-            onPress={() => scrollViewRef.current?.scrollTo({ y: iconSectionY - 20, animated: true })}
+            onPress={() => setPickerModalVisible(true)}
           >
             <Ionicons name={icon as any} size={64} color={color} />
             <View style={[styles.editBadge, { backgroundColor: color }]}>
@@ -206,44 +207,6 @@ const AddWalletScreen = () => {
           />
         </View>
 
-        <View 
-          style={styles.section}
-          onLayout={(event) => setIconSectionY(event.nativeEvent.layout.y)}
-        >
-          <Text style={styles.label}>Select Icon</Text>
-          <View style={styles.iconGrid}>
-            {ICONS.map((item) => (
-              <TouchableOpacity
-                key={item}
-                style={[
-                  styles.iconItem,
-                  icon === item && { backgroundColor: color + '22', borderColor: color },
-                ]}
-                onPress={() => setIcon(item)}
-              >
-                <Ionicons name={item as any} size={24} color={icon === item ? color : '#555'} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Select Color</Text>
-          <View style={styles.colorGrid}>
-            {COLORS.map((item) => (
-              <TouchableOpacity
-                key={item}
-                style={[
-                  styles.colorItem,
-                  { backgroundColor: item },
-                  color === item && styles.selectedColor,
-                ]}
-                onPress={() => setColor(item)}
-              />
-            ))}
-          </View>
-        </View>
-
         <TouchableOpacity
           style={[styles.saveButton, { backgroundColor: color }]}
           onPress={handleSave}
@@ -257,6 +220,69 @@ const AddWalletScreen = () => {
         </TouchableOpacity>
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={pickerModalVisible}
+        onRequestClose={() => setPickerModalVisible(false)}
+      >
+        <View style={styles.pickerModalOverlay}>
+          <View style={styles.pickerModalContent}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Customize Wallet</Text>
+              <TouchableOpacity onPress={() => setPickerModalVisible(false)}>
+                <Ionicons name="close-circle" size={28} color="#AAA" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.pickerSection}>
+                <Text style={styles.label}>Select Icon</Text>
+                <View style={styles.iconGrid}>
+                  {ICONS.map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      style={[
+                        styles.iconItem,
+                        icon === item && { backgroundColor: color + '22', borderColor: color },
+                      ]}
+                      onPress={() => setIcon(item)}
+                    >
+                      <Ionicons name={item as any} size={24} color={icon === item ? color : '#555'} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.pickerSection}>
+                <Text style={styles.label}>Select Color</Text>
+                <View style={styles.colorGrid}>
+                  {COLORS.map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      style={[
+                        styles.colorItem,
+                        { backgroundColor: item },
+                        color === item && styles.selectedColor,
+                      ]}
+                      onPress={() => setColor(item)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.doneButton, { backgroundColor: color }]}
+                onPress={() => setPickerModalVisible(false)}
+              >
+                <Text style={styles.doneButtonText}>Done</Text>
+              </TouchableOpacity>
+              <View style={{ height: 20 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -401,6 +427,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
+  },
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  pickerModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    padding: 25,
+    maxHeight: '80%',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  pickerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  pickerSection: {
+    marginBottom: 25,
+  },
+  doneButton: {
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  doneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
