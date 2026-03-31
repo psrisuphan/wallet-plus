@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList } from 'react-native';
+import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -92,6 +92,45 @@ const AddTransactionScreen = () => {
         // Prevent multiple dots
         if (sanitized.split('.').length > 2) return;
         setAmount(sanitized);
+    };
+
+    const handleSave = () => {
+        if (!amount || parseFloat(amount) <= 0) {
+            Alert.alert("Invalid Amount", "Please enter a valid amount greater than zero.");
+            return;
+        }
+
+        if (!selectedWallet) {
+            Alert.alert("Select Wallet", "Please select a wallet to proceed.");
+            return;
+        }
+
+        const parsedAmount = parseFloat(amount);
+
+        // Check for insufficient balance on expenses
+        if (type === 'expense' && parsedAmount > selectedWallet.balance) {
+            Alert.alert(
+                "Insufficient Balance",
+                `Your expense (฿${parsedAmount.toLocaleString()}) exceeds the balance of ${selectedWallet.name} (฿${selectedWallet.balance.toLocaleString()}). Do you want to continue anyway?`,
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { 
+                        text: "Continue", 
+                        style: "destructive",
+                        onPress: () => submitTransaction() 
+                    }
+                ]
+            );
+            return;
+        }
+
+        // Otherwise, save normally
+        submitTransaction();
+    };
+
+    const submitTransaction = () => {
+        // Placeholder for actual Firestore logic
+        Alert.alert("Success", "Transaction ready to be saved!");
     };
 
     return (
@@ -314,6 +353,7 @@ const AddTransactionScreen = () => {
                                 shadowColor: type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN 
                             }
                         ]}
+                        onPress={handleSave}
                     >
                         <Text style={styles.saveButtonText}>Save Transaction</Text>
                     </TouchableOpacity>
