@@ -106,6 +106,16 @@ const AddTransactionScreen = () => {
         return () => unsubscribeAuth();
     }, []);
 
+    // Sync selected wallet with real-time updates from Firestore
+    useEffect(() => {
+        if (selectedWallet && wallets.length > 0) {
+            const updated = wallets.find(w => w.id === selectedWallet.id);
+            if (updated && (updated.balance !== selectedWallet.balance || updated.name !== selectedWallet.name)) {
+                setSelectedWallet(updated);
+            }
+        }
+    }, [wallets, selectedWallet]);
+
     const filteredAndSortedWallets = useMemo(() => {
         let result = wallets.filter(w => w.name.toLowerCase().includes(searchQuery.toLowerCase()));
         
