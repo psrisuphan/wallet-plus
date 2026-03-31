@@ -64,11 +64,11 @@ const TabsLayout = () => {
                 }} 
             />
             <Tabs.Screen
-                name="menu/index"
+                name="settings/index"
                 options={{
-                    title: "Menu",
+                    title: "Settings",
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons name={focused ? "menu" : "menu-outline"} size={24} color={color} />
+                        <Ionicons name={focused ? "settings" : "settings-outline"} size={24} color={color} />
                     ),
                 }} 
             />

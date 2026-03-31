@@ -18,7 +18,7 @@ const index = () => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <Header title="Menu" showHome={true} />
+            <Header title="Settings" showHome={true} />
             <View style={styles.content}>
                 <Text style={styles.thaiText}>ออกจากระบบ</Text>
                 <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
@@ -33,8 +33,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFF',
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     signOutButton: {
         marginTop: 20,
