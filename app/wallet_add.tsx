@@ -201,7 +201,7 @@ const AddWalletScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Starting Balance (฿THB)</Text>
+          <Text style={styles.label}>{id ? 'Balance' : 'Starting Balance'} (฿THB)</Text>
           <TextInput
             style={styles.input}
             placeholder="0.00"
