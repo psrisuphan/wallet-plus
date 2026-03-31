@@ -186,7 +186,6 @@ const WalletScreen = () => {
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#AAA"
-            clearButtonMode="while-editing"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
