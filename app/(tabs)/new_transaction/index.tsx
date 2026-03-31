@@ -298,7 +298,7 @@ const AddTransactionScreen = () => {
                             style={[styles.amountInput, { color: '#333' }]}
                             placeholder="0.00"
                             placeholderTextColor="#ccc"
-                            keyboardType="numeric"
+                            keyboardType="decimal-pad"
                             value={amount}
                             onChangeText={handleAmountChange}
                         />
