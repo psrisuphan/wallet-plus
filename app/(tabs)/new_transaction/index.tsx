@@ -29,6 +29,14 @@ const AddTransactionScreen = () => {
     const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
     const [selectedWallet, setSelectedWallet] = useState(WALLETS[0].id);
 
+    const handleAmountChange = (text: string) => {
+        // Remove any non-numeric characters except for a single decimal point
+        const sanitized = text.replace(/[^0-9.]/g, '');
+        // Prevent multiple dots
+        if (sanitized.split('.').length > 2) return;
+        setAmount(sanitized);
+    };
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
@@ -65,7 +73,7 @@ const AddTransactionScreen = () => {
                             placeholderTextColor="#ccc"
                             keyboardType="numeric"
                             value={amount}
-                            onChangeText={setAmount}
+                            onChangeText={handleAmountChange}
                         />
                     </View>
 
