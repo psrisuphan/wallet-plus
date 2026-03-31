@@ -9,7 +9,9 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  StatusBar,
 } from 'react-native';
+import Header from '../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -158,17 +160,8 @@ const AddWalletScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerBackground}>
-        <SafeAreaView edges={['top']} style={styles.headerSafe}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>{id ? 'Edit Wallet' : 'Add New Wallet'}</Text>
-            <View style={{ width: 28 }} />
-          </View>
-        </SafeAreaView>
-      </View>
+      <StatusBar barStyle="light-content" />
+      <Header title={id ? 'Edit Wallet' : 'Add New Wallet'} showBack={true} />
 
       <ScrollView 
         ref={scrollViewRef}

@@ -1,9 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import Header from '../../components/Header';
 
 export default function HomeScreen() {
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" />
+            <Header title="Overview" showLogo={true} />
             <View style={styles.content}>
                 <Text style={styles.title}>Home Screen</Text>
                 <Text style={styles.subtitle}>Welcome back to Wallet+</Text>
@@ -11,9 +13,8 @@ export default function HomeScreen() {
                 <View style={styles.card}>
                     <Text style={styles.cardText}>You are successfully authenticated!</Text>
                 </View>
-
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator } from 'react-native';
+import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { db, auth } from '../../../firebaseConfig'; // Adjust path if necessary
+import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import Header from '../../../components/Header';
 
 const WHITE_GREEN = '#699e8aff';
-
 interface Wallet {
   id: string;
   name: string;
@@ -143,19 +142,13 @@ const WalletScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerBackground}>
-        <SafeAreaView edges={['top']} style={styles.headerSafe}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => router.push('/')} style={styles.headerHomeButton}>
-              <Ionicons name="home" size={26} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.header}>My Wallets</Text>
-            <TouchableOpacity onPress={openAddPage} style={styles.headerAddButton}>
-              <Ionicons name="add" size={34} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
+      <StatusBar barStyle="light-content" />
+      <Header 
+        title="My Wallets" 
+        showHome={true} 
+        showAdd={true} 
+        onAddPress={openAddPage} 
+      />
       <View style={styles.content}>
         <FlatList
           data={wallets}
@@ -196,32 +189,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF', // White background
-  },
-  headerBackground: {
-    backgroundColor: WHITE_GREEN,
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-  },
-  headerSafe: {
-    width: '100%',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-    position: 'relative',
-    height: 40,
-  },
-  headerHomeButton: {
-    position: 'absolute',
-    left: 0,
-    padding: 4,
-  },
-  headerAddButton: {
-    position: 'absolute',
-    right: 0,
-    padding: 4,
   },
   content: {
     flex: 1,

@@ -1,6 +1,6 @@
-// app/(tabs)/tab_2/index.js
-import { Text, StyleSheet, View, TouchableOpacity } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import React from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, StatusBar } from 'react-native';
+import Header from '../../../components/Header';
 import { auth } from '../../../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
@@ -16,12 +16,16 @@ const index = () => {
         }
     };
     return (
-        <SafeAreaView style={styles.container}>
-            <Text>ออกจากระบบ</Text>
-            <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                <Text style={styles.signOutText}>Sign Out</Text>
-            </TouchableOpacity>
-        </SafeAreaView>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" />
+            <Header title="Menu" showHome={true} />
+            <View style={styles.content}>
+                <Text style={styles.thaiText}>ออกจากระบบ</Text>
+                <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+                    <Text style={styles.signOutText}>Sign Out</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
     )
 }
 
@@ -43,6 +47,16 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    content: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    thaiText: {
+        fontSize: 18,
+        color: '#555',
+        marginBottom: 10,
     }
 })
 
