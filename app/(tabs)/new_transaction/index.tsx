@@ -68,7 +68,7 @@ const AddTransactionScreen = () => {
                     <View style={styles.amountContainer}>
                         <Text style={styles.currencySymbol}>฿</Text>
                         <TextInput
-                            style={[styles.amountInput, { color: type === 'expense' ? EXPENSE_COLOR : INCOME_COLOR }]}
+                            style={[styles.amountInput, { color: '#333' }]}
                             placeholder="0.00"
                             placeholderTextColor="#ccc"
                             keyboardType="numeric"
@@ -143,7 +143,15 @@ const AddTransactionScreen = () => {
                 
                 {/* Fixed Save Button Footer */}
                 <View style={styles.footer}>
-                    <TouchableOpacity style={styles.saveButton}>
+                    <TouchableOpacity 
+                        style={[
+                            styles.saveButton,
+                            { 
+                                backgroundColor: type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN,
+                                shadowColor: type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN 
+                            }
+                        ]}
+                    >
                         <Text style={styles.saveButtonText}>Save Transaction</Text>
                     </TouchableOpacity>
                 </View>
