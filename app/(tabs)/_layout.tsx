@@ -6,10 +6,9 @@ import { View } from 'react-native'
 const TabsLayout = () => {
     return (
         <Tabs screenOptions={{
+            headerShown: false,
             tabBarActiveTintColor: 'green',
             tabBarStyle: { backgroundColor: '#f3f3f3ff' },
-            headerTitleStyle: { fontSize: 20, color: 'white' },
-            headerStyle: { backgroundColor: '#699e8aff' },
         }}>
             <Tabs.Screen
                 name="index"
