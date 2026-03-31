@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const WHITE_GREEN = '#699e8aff';
@@ -53,6 +53,16 @@ const AddTransactionScreen = () => {
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
     
+    // Reset form when the screen is focused (e.g. when switching back to this tab)
+    useFocusEffect(
+        useCallback(() => {
+            setAmount('');
+            setNote('');
+            setSelectedWallet(null);
+            setSelectedCategory(type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id);
+        }, [type])
+    );
+
     // Auto-switch category selection when toggling between expense and income
     useEffect(() => {
         setSelectedCategory(type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id);
