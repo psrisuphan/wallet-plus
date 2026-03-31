@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig'; // Adjust path if necessary
@@ -185,8 +186,13 @@ const WalletScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerBackground}>
-        <SafeAreaView edges={['top']}>
-          <Text style={styles.header}>My Wallets</Text>
+        <SafeAreaView edges={['top']} style={styles.headerSafe}>
+          <View style={styles.headerContent}>
+            <Text style={styles.header}>My Wallets</Text>
+            <TouchableOpacity onPress={openAddModal} style={styles.headerAddButton}>
+              <Ionicons name="add" size={34} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </View>
       <View style={styles.content}>
@@ -196,10 +202,6 @@ const WalletScreen = () => {
           keyExtractor={(item) => item.id}
           ListEmptyComponent={<Text style={styles.emptyListText}>No wallets found. Add one!</Text>}
         />
-
-        <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
-          <Text style={styles.addButtonText}>Add New Wallet</Text>
-        </TouchableOpacity>
       </View>
 
       <Modal
@@ -261,7 +263,23 @@ const styles = StyleSheet.create({
   headerBackground: {
     backgroundColor: WHITE_GREEN,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 15,
+  },
+  headerSafe: {
+    width: '100%',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    position: 'relative',
+    height: 40,
+  },
+  headerAddButton: {
+    position: 'absolute',
+    right: 0,
+    padding: 4,
   },
   content: {
     flex: 1,
@@ -279,11 +297,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   header: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#FFFFFF', // White text for green background
+    color: '#FFFFFF',
     textAlign: 'center',
-    marginTop: 10,
   },
   walletItem: {
     flexDirection: 'row',
