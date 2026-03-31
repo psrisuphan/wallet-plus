@@ -1,13 +1,17 @@
-// app/(tabs)/tab_2/index.js
-import { Text, StyleSheet, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import React from 'react';
+import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import Header from '../../../components/Header';
 
 const index = () => {
     return (
-        <SafeAreaView style={styles.container}>
-            <Text>Tab 2</Text>
-        </SafeAreaView>
-    )
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" />
+            <Header title="Summary" showHome={true} />
+            <View style={styles.content}>
+                <Text style={styles.text}>Financial Summary coming soon</Text>
+            </View>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -15,6 +19,15 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFF',
     },
+    content: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    text: {
+        fontSize: 18,
+        color: '#555',
+    }
 })
 
 export default index

@@ -7,47 +7,69 @@ const TabsLayout = () => {
     return (
         <Tabs screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: 'green',
-            tabBarStyle: { backgroundColor: '#f3f3f3ff' },
+            tabBarActiveTintColor: '#699e8aff',
+            tabBarInactiveTintColor: '#888',
+            tabBarLabelStyle: {
+                fontSize: 12,
+                fontWeight: '500',
+            },
+            tabBarStyle: { 
+                backgroundColor: '#FFFFFF',
+                height: 90,
+                paddingBottom: 30,
+                paddingTop: 10,
+                borderTopWidth: 1,
+                borderTopColor: '#F0F0F0',
+                elevation: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: -2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 10,
+            },
         }}>
             <Tabs.Screen
                 name="index"
                 options={{
-                    headerTitle: "Overview",
                     title: "Overview",
-                    tabBarIcon: ({ color }) => <Ionicons name="cash-outline" size={28} color={color} />,
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "cash" : "cash-outline"} size={24} color={color} />
+                    ),
                 }}
             />
             <Tabs.Screen
                 name="wallet/index"
                 options={{
-                    headerTitle: "Wallet",
-                    title: "Wallet",
-                    tabBarIcon: ({ color }) => <Ionicons name="wallet-outline" size={28} color={color} />
+                    title: "Wallets",
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "wallet" : "wallet-outline"} size={24} color={color} />
+                    )
                 }}
             />
             <Tabs.Screen
                 name="new_transaction/index"
                 options={{
-                    headerTitle: "New Transaction",
                     title: "Add",
-                    tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" size={28} color={color} />,
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={24} color={color} />
+                    ),
                 }}
             />
             <Tabs.Screen
                 name="summary/index"
                 options={{
-                    headerTitle: "Summary",
                     title: "Summary",
-                    tabBarIcon: ({ color }) => <Ionicons name="bar-chart-outline" size={28} color={color} />,
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "bar-chart" : "bar-chart-outline"} size={24} color={color} />
+                    ),
                 }} 
             />
             <Tabs.Screen
-                name="menu/index"
+                name="settings/index"
                 options={{
-                    headerTitle: "Menu",
-                    title: "Menu",
-                    tabBarIcon: ({ color }) => <Ionicons name="menu-sharp" size={28} color={color} />,
+                    title: "Settings",
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "settings" : "settings-outline"} size={24} color={color} />
+                    ),
                 }} 
             />
         </Tabs>
