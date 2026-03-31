@@ -214,6 +214,8 @@ const AddTransactionScreen = () => {
             Alert.alert("Success", "Transaction saved successfully!");
             setAmount('');
             setNote('');
+            setSelectedWallet(null);
+            setSelectedCategory(type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id);
             
             if (router.canGoBack()) {
                 router.back();
