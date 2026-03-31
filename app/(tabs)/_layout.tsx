@@ -27,6 +27,13 @@ const TabsLayout = () => {
                 }}
             />
             <Tabs.Screen
+                name="wallet/add_wallet"
+                options={{
+                    href: null,
+                    headerShown: false,
+                }}
+            />
+            <Tabs.Screen
                 name="new_transaction/index"
                 options={{
                     headerTitle: "New Transaction",
