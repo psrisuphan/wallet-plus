@@ -18,21 +18,40 @@ interface Wallet {
   color?: string;
 }
 
-// Mock Categories for UI presentation
-const CATEGORIES = [
+// Pre-defined Categories based on transaction type
+const EXPENSE_CATEGORIES = [
   { id: '1', name: 'Food', icon: 'fast-food' },
   { id: '2', name: 'Transport', icon: 'car' },
   { id: '3', name: 'Shopping', icon: 'cart' },
   { id: '4', name: 'Bills', icon: 'receipt' },
-  { id: '5', name: 'Entertainment', icon: 'film' },
+  { id: '5', name: 'Health', icon: 'medkit' },
+  { id: '6', name: 'Education', icon: 'school' },
+  { id: '7', name: 'Groceries', icon: 'basket' },
+  { id: '8', name: 'Housing', icon: 'home' },
+  { id: '9', name: 'Utilities', icon: 'flash' },
+  { id: '10', name: 'Entertainment', icon: 'film' },
+];
+
+const INCOME_CATEGORIES = [
+  { id: '11', name: 'Salary', icon: 'cash' },
+  { id: '12', name: 'Business', icon: 'briefcase' },
+  { id: '13', name: 'Investment', icon: 'trending-up' },
+  { id: '14', name: 'Bonus', icon: 'gift' },
+  { id: '15', name: 'Freelance', icon: 'laptop' },
+  { id: '16', name: 'Other', icon: 'add-circle' },
 ];
 
 const AddTransactionScreen = () => {
     const [type, setType] = useState<'expense' | 'income'>('expense');
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
+    const [selectedCategory, setSelectedCategory] = useState(EXPENSE_CATEGORIES[0].id);
     
+    // Auto-switch category selection when toggling between expense and income
+    useEffect(() => {
+        setSelectedCategory(type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id);
+    }, [type]);
+
     // Wallet State
     const [wallets, setWallets] = useState<Wallet[]>([]);
     const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
@@ -273,7 +292,7 @@ const AddTransactionScreen = () => {
                     {/* Category Selection */}
                     <Text style={styles.sectionTitle}>Category</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                        {CATEGORIES.map(cat => (
+                        {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
                             <TouchableOpacity 
                                 key={cat.id} 
                                 style={styles.categoryButton}
