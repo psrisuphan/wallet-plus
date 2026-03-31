@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
+import { useRouter } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const WHITE_GREEN = '#699e8aff';
@@ -42,10 +43,12 @@ const INCOME_CATEGORIES = [
 ];
 
 const AddTransactionScreen = () => {
+    const router = useRouter();
     const [type, setType] = useState<'expense' | 'income'>('expense');
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(EXPENSE_CATEGORIES[0].id);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
@@ -162,9 +165,58 @@ const AddTransactionScreen = () => {
         submitTransaction();
     };
 
-    const submitTransaction = () => {
-        // Placeholder for actual Firestore logic
-        Alert.alert("Success", "Transaction ready to be saved!");
+    const submitTransaction = async () => {
+        if (!auth.currentUser || !selectedWallet) return;
+
+        setIsSaving(true);
+        const parsedAmount = parseFloat(amount);
+        
+        try {
+            // Find category details to save along with transaction for easier reading later
+            const activeCategories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+            const categoryData = activeCategories.find(c => c.id === selectedCategory);
+
+            // 1. Create transaction document
+            const transactionData = {
+                userId: auth.currentUser.uid,
+                walletId: selectedWallet.id,
+                walletName: selectedWallet.name,
+                type: type, // 'expense' or 'income'
+                amount: parsedAmount,
+                categoryId: selectedCategory,
+                categoryName: categoryData?.name || 'Unknown',
+                categoryIcon: categoryData?.icon || 'help',
+                note: note.trim() || null,
+                date: serverTimestamp(),
+            };
+            
+            await addDoc(collection(db, 'transactions'), transactionData);
+
+            // 2. Update the respective wallet balance
+            const walletRef = doc(db, 'wallets', selectedWallet.id);
+            const newBalance = type === 'expense' 
+                ? selectedWallet.balance - parsedAmount 
+                : selectedWallet.balance + parsedAmount;
+                
+            await updateDoc(walletRef, { balance: newBalance });
+
+            // 3. Reset and navigate back
+            Alert.alert("Success", "Transaction saved successfully!");
+            setAmount('');
+            setNote('');
+            
+            if (router.canGoBack()) {
+                router.back();
+            } else {
+                router.push("/(tabs)");
+            }
+            
+        } catch (error) {
+            console.error("Error saving transaction: ", error);
+            Alert.alert("Error", "Could not save transaction. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -406,12 +458,18 @@ const AddTransactionScreen = () => {
                             styles.saveButton,
                             { 
                                 backgroundColor: type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN,
-                                shadowColor: type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN 
+                                shadowColor: type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN,
+                                opacity: isSaving ? 0.7 : 1
                             }
                         ]}
                         onPress={handleSave}
+                        disabled={isSaving}
                     >
-                        <Text style={styles.saveButtonText}>Save Transaction</Text>
+                        {isSaving ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <Text style={styles.saveButtonText}>Save Transaction</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
