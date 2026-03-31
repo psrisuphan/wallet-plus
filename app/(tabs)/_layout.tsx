@@ -48,9 +48,9 @@ const TabsLayout = () => {
             <Tabs.Screen
                 name="new_transaction/index"
                 options={{
-                    title: "Add",
+                    tabBarLabel: () => null,
                     tabBarIcon: ({ color, focused }) => (
-                        <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={28} color={color} />
+                        <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={36} color={color} />
                     ),
                 }}
             />

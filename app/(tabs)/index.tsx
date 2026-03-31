@@ -5,7 +5,7 @@ export default function HomeScreen() {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <Header title="Overview" showLogo={true} />
+            <Header title="Overview" showLogo={false} />
             <View style={styles.content}>
                 <Text style={styles.title}>Home Screen</Text>
                 <Text style={styles.subtitle}>Welcome back to Wallet+</Text>
