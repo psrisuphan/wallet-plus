@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig'; // Adjust path if necessary
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -10,16 +13,16 @@ interface Wallet {
   id: string;
   name: string;
   balance: number;
+  icon: string;
+  color: string;
+  detail?: string;
   userId: string;
 }
 
 const WalletScreen = () => {
+  const router = useRouter();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [currentWallet, setCurrentWallet] = useState<Wallet | null>(null);
-  const [walletName, setWalletName] = useState('');
-  const [walletBalance, setWalletBalance] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,45 +62,6 @@ const WalletScreen = () => {
     return () => unsubscribeFirestore();
   }, [userId]);
 
-  const handleAddEditWallet = async () => {
-    if (!userId) {
-      Alert.alert('Error', 'You must be logged in to add/edit wallets.');
-      return;
-    }
-
-    if (!walletName || isNaN(parseFloat(walletBalance))) {
-      Alert.alert('Error', 'Please enter a valid wallet name and balance.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      if (currentWallet) {
-        // Edit existing wallet
-        await updateDoc(doc(db, 'wallets', currentWallet.id), {
-          name: walletName,
-          balance: parseFloat(walletBalance),
-        });
-        Alert.alert('Success', 'Wallet updated successfully!');
-      } else {
-        // Add new wallet
-        await addDoc(collection(db, 'wallets'), {
-          name: walletName,
-          balance: parseFloat(walletBalance),
-          userId: userId,
-        });
-        Alert.alert('Success', 'Wallet added successfully!');
-      }
-      setModalVisible(false);
-      resetForm();
-    } catch (error) {
-      console.error('Error adding/editing wallet:', error);
-      Alert.alert('Error', 'Failed to save wallet.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteWallet = (walletId: string) => {
     Alert.alert(
       'Delete Wallet',
@@ -128,40 +92,36 @@ const WalletScreen = () => {
     );
   };
 
-  const openEditModal = (wallet: Wallet) => {
-    setCurrentWallet(wallet);
-    setWalletName(wallet.name);
-    setWalletBalance(wallet.balance.toString());
-    setModalVisible(true);
+  const openEditPage = (walletId: string) => {
+    router.push({ pathname: '/wallet_add', params: { id: walletId } });
   };
 
-  const openAddModal = () => {
-    setCurrentWallet(null);
-    resetForm();
-    setModalVisible(true);
-  };
-
-  const resetForm = () => {
-    setWalletName('');
-    setWalletBalance('');
-    setCurrentWallet(null);
+  const openAddPage = () => {
+    router.push('/wallet_add');
   };
 
   const renderWalletItem = ({ item }: { item: Wallet }) => (
-    <View style={styles.walletItem}>
-      <View>
-        <Text style={styles.walletName}>{item.name}</Text>
-        <Text style={styles.walletBalance}>Balance: ${item.balance.toFixed(2)}</Text>
-      </View>
-      <View style={styles.actions}>
-        <TouchableOpacity onPress={() => openEditModal(item)} style={[styles.button, styles.editButton]}>
-          <Text style={styles.buttonText}>Edit</Text>
+    <TouchableOpacity 
+      style={styles.walletItem}
+      onPress={() => openEditPage(item.id)}
+    >
+      <View style={styles.walletHeader}>
+        <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
+          <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#333'} />
+        </View>
+        <View style={styles.walletInfo}>
+          <Text style={styles.walletName}>{item.name}</Text>
+          {item.detail ? <Text style={styles.walletDetail} numberOfLines={1}>{item.detail}</Text> : null}
+        </View>
+        <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={styles.deleteIconButton}>
+          <Ionicons name="trash-outline" size={20} color="#DC3545" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={[styles.button, styles.deleteButton]}>
-          <Text style={styles.buttonText}>Delete</Text>
-        </TouchableOpacity>
       </View>
-    </View>
+      <View style={styles.walletBody}>
+        <Text style={styles.balanceLabel}>Balance</Text>
+        <Text style={[styles.walletBalance, { color: item.color }]}>฿{item.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -183,65 +143,51 @@ const WalletScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>My Wallets</Text>
-      <FlatList
-        data={wallets}
-        renderItem={renderWalletItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.emptyListText}>No wallets found. Add one!</Text>}
-      />
-
-      <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
-        <Text style={styles.addButtonText}>Add New Wallet</Text>
-      </TouchableOpacity>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-          resetForm();
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{currentWallet ? 'Edit Wallet' : 'Add New Wallet'}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Wallet Name"
-              value={walletName}
-              onChangeText={setWalletName}
-              placeholderTextColor="#ccc"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Balance"
-              keyboardType="numeric"
-              value={walletBalance}
-              onChangeText={setWalletBalance}
-              placeholderTextColor="#ccc"
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(false);
-                  resetForm();
-                }}
-                style={[styles.button, styles.cancelButton]}
-              >
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleAddEditWallet}
-                style={[styles.button, styles.saveButton]}
-              >
-                <Text style={styles.buttonText}>{currentWallet ? 'Save Changes' : 'Add Wallet'}</Text>
+      <View style={styles.headerBackground}>
+        <SafeAreaView edges={['top']} style={styles.headerSafe}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => router.push('/')} style={styles.headerHomeButton}>
+              <Ionicons name="home" size={26} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.header}>My Wallets</Text>
+            <TouchableOpacity onPress={openAddPage} style={styles.headerAddButton}>
+              <Ionicons name="add" size={34} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+      <View style={styles.content}>
+        <FlatList
+          data={wallets}
+          renderItem={renderWalletItem}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            wallets.length > 0 ? (
+              <View style={styles.listHeader}>
+                <Text style={styles.walletCountText}>Found {wallets.length} {wallets.length === 1 ? 'wallet' : 'wallets'}</Text>
+              </View>
+            ) : null
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="wallet-outline" size={80} color="#D1D1D1" />
+              <Text style={styles.emptyListText}>No wallets found.</Text>
+              <TouchableOpacity onPress={openAddPage}>
+                <Text style={styles.addOneText}>Add your first wallet!</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
+          }
+          ListFooterComponent={
+            wallets.length > 0 ? (
+              <TouchableOpacity style={styles.footerAddLink} onPress={openAddPage}>
+                <Text style={styles.footerAddTitle}>Want to add a new wallet?</Text>
+                <Text style={styles.footerAddSubtitle}>Click here!</Text>
+              </TouchableOpacity>
+            ) : null
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
     </View>
   );
 };
@@ -249,14 +195,43 @@ const WalletScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F4F8', // Light background for contrast
+    backgroundColor: '#FFFFFF', // White background
+  },
+  headerBackground: {
+    backgroundColor: WHITE_GREEN,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+  },
+  headerSafe: {
+    width: '100%',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    position: 'relative',
+    height: 40,
+  },
+  headerHomeButton: {
+    position: 'absolute',
+    left: 0,
+    padding: 4,
+  },
+  headerAddButton: {
+    position: 'absolute',
+    right: 0,
+    padding: 4,
+  },
+  content: {
+    flex: 1,
     padding: 20,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F0F4F8',
+    backgroundColor: '#FFFFFF',
   },
   noUserText: {
     fontSize: 18,
@@ -264,75 +239,116 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   header: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   walletItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    padding: 18,
+    borderRadius: 15,
+    marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 5,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  walletHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  walletInfo: {
+    flex: 1,
+    marginLeft: 15,
   },
   walletName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#333',
   },
-  walletBalance: {
-    fontSize: 16,
-    color: '#555',
-    marginTop: 5,
+  walletDetail: {
+    fontSize: 13,
+    color: '#777',
+    marginTop: 2,
   },
-  actions: {
+  deleteIconButton: {
+    padding: 8,
+  },
+  walletBody: {
+    borderTopWidth: 1,
+    borderTopColor: '#F5F5F5',
+    paddingTop: 12,
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
-  button: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    marginLeft: 10,
-    minWidth: 70,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#FFFFFF',
+  balanceLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
+    color: '#999',
+    fontWeight: '500',
   },
-  editButton: {
-    backgroundColor: WHITE_GREEN,
+  walletBalance: {
+    fontSize: 20,
+    fontWeight: '700',
   },
-  deleteButton: {
-    backgroundColor: '#DC3545', // Red for delete
+  listHeader: {
+    paddingVertical: 10,
+    paddingHorizontal: 5,
   },
-  addButton: {
-    backgroundColor: WHITE_GREEN,
-    padding: 15,
-    borderRadius: 10,
+  walletCountText: {
+    fontSize: 14,
+    color: '#888',
+    fontStyle: 'italic',
+  },
+  footerAddLink: {
+    marginVertical: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#CCC',
+    borderRadius: 15,
     alignItems: 'center',
-    marginTop: 20,
+    backgroundColor: '#FAFAFA',
   },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
+  footerAddTitle: {
+    fontSize: 15,
+    color: '#666',
+    fontWeight: '500',
+  },
+  footerAddSubtitle: {
+    fontSize: 15,
+    color: WHITE_GREEN,
     fontWeight: 'bold',
+    marginTop: 4,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 80,
   },
   emptyListText: {
-    textAlign: 'center',
-    marginTop: 30,
+    fontSize: 18,
+    color: '#888',
+    marginTop: 15,
+  },
+  addOneText: {
     fontSize: 16,
-    color: '#777',
+    color: WHITE_GREEN,
+    fontWeight: 'bold',
+    marginTop: 8,
+    textDecorationLine: 'underline',
   },
   modalOverlay: {
     flex: 1,

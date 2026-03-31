@@ -1,5 +1,6 @@
 // app/(tabs)/tab_2/index.js
 import { Text, StyleSheet, View, TouchableOpacity } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { auth } from '../../../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
@@ -15,12 +16,12 @@ const index = () => {
         }
     };
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <Text>ออกจากระบบ</Text>
             <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
                 <Text style={styles.signOutText}>Sign Out</Text>
             </TouchableOpacity>
-        </View>
+        </SafeAreaView>
     )
 }
 
