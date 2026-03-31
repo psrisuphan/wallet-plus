@@ -167,6 +167,14 @@ const WalletScreen = () => {
               </TouchableOpacity>
             </View>
           }
+          ListFooterComponent={
+            wallets.length > 0 ? (
+              <TouchableOpacity style={styles.footerAddLink} onPress={openAddPage}>
+                <Text style={styles.footerAddTitle}>Want to add a new wallet?</Text>
+                <Text style={styles.footerAddSubtitle}>Click here!</Text>
+              </TouchableOpacity>
+            ) : null
+          }
           showsVerticalScrollIndicator={false}
         />
       </View>
@@ -279,6 +287,27 @@ const styles = StyleSheet.create({
   walletBalance: {
     fontSize: 20,
     fontWeight: '700',
+  },
+  footerAddLink: {
+    marginVertical: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#CCC',
+    borderRadius: 15,
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
+  },
+  footerAddTitle: {
+    fontSize: 15,
+    color: '#666',
+    fontWeight: '500',
+  },
+  footerAddSubtitle: {
+    fontSize: 15,
+    color: WHITE_GREEN,
+    fontWeight: 'bold',
+    marginTop: 4,
   },
   emptyContainer: {
     alignItems: 'center',
