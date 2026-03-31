@@ -161,6 +161,13 @@ const WalletScreen = () => {
           data={wallets}
           renderItem={renderWalletItem}
           keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            wallets.length > 0 ? (
+              <View style={styles.listHeader}>
+                <Text style={styles.walletCountText}>Found {wallets.length} {wallets.length === 1 ? 'wallet' : 'wallets'}</Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="wallet-outline" size={80} color="#D1D1D1" />
@@ -295,6 +302,15 @@ const styles = StyleSheet.create({
   walletBalance: {
     fontSize: 20,
     fontWeight: '700',
+  },
+  listHeader: {
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  walletCountText: {
+    fontSize: 14,
+    color: '#888',
+    fontStyle: 'italic',
   },
   footerAddLink: {
     marginVertical: 20,
