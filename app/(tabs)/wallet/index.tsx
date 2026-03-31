@@ -70,8 +70,7 @@ const WalletScreen = () => {
     // Search filter
     if (searchQuery.trim() !== '') {
       result = result.filter(wallet => 
-        wallet.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (wallet.detail && wallet.detail.toLowerCase().includes(searchQuery.toLowerCase()))
+        wallet.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
