@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { collection, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
-import { db, auth } from '../../../firebaseConfig';
+import { db, auth } from '../firebaseConfig';
 
 const COLORS = [
   '#699e8aff', // Theme Green
