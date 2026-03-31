@@ -208,7 +208,15 @@ const AddTransactionScreen = () => {
                                 <Ionicons name="chevron-down" size={20} color="#888" />
                             </>
                         ) : (
-                            <Text style={styles.walletSelectorPlaceholder}>Select Wallet</Text>
+                            <>
+                                <View style={styles.walletSelectorInner}>
+                                    <View style={[styles.selectorIconContainer, { backgroundColor: '#E8F5E9' }]}>
+                                        <Ionicons name="add" size={20} color={WHITE_GREEN} />
+                                    </View>
+                                    <Text style={[styles.walletSelectorPlaceholder, { color: WHITE_GREEN, fontWeight: 'bold' }]}>Select Wallet</Text>
+                                </View>
+                                <Ionicons name="chevron-down" size={20} color={WHITE_GREEN} />
+                            </>
                         )}
                     </TouchableOpacity>
 
