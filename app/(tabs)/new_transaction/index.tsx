@@ -49,11 +49,6 @@ const AddTransactionScreen = () => {
                         ...doc.data()
                     })) as Wallet[];
                     setWallets(walletData);
-                    
-                    // Auto-select first wallet if none selected
-                    if (walletData.length > 0 && !selectedWallet) {
-                        setSelectedWallet(walletData[0]);
-                    }
                     setLoadingWallets(false);
                 }, (error) => {
                     console.error("Error fetching wallets: ", error);
