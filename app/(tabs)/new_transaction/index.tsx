@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert } from 'react-native';
+import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -46,11 +46,26 @@ const AddTransactionScreen = () => {
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(EXPENSE_CATEGORIES[0].id);
+
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(true);
     
     // Auto-switch category selection when toggling between expense and income
     useEffect(() => {
         setSelectedCategory(type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id);
+        setCanScrollLeft(false);
+        setCanScrollRight(true);
     }, [type]);
+
+    const handleCategoryScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const xOffset = event.nativeEvent.contentOffset.x;
+        const layoutWidth = event.nativeEvent.layoutMeasurement.width;
+        const contentWidth = event.nativeEvent.contentSize.width;
+
+        setCanScrollLeft(xOffset > 0);
+        // 5px tolerance because precision issues can prevent exact equality
+        setCanScrollRight(xOffset < contentWidth - layoutWidth - 5);
+    };
 
     // Wallet State
     const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -335,30 +350,52 @@ const AddTransactionScreen = () => {
 
                     {/* Category Selection */}
                     <Text style={styles.sectionTitle}>Category</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-                        {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
-                            <TouchableOpacity 
-                                key={cat.id} 
-                                style={styles.categoryButton}
-                                onPress={() => setSelectedCategory(cat.id)}
-                            >
-                                <View style={[
-                                    styles.iconContainer, 
-                                    selectedCategory === cat.id ? { backgroundColor: WHITE_GREEN } : null
-                                ]}>
-                                    <Ionicons 
-                                        name={cat.icon as any} 
-                                        size={24} 
-                                        color={selectedCategory === cat.id ? '#FFF' : '#888'} 
-                                    />
-                                </View>
-                                <Text style={[
-                                    styles.categoryText,
-                                    selectedCategory === cat.id && styles.categoryTextActive
-                                ]}>{cat.name}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
+                    <View style={styles.categoryScrollWrapper}>
+                        <ScrollView 
+                            horizontal 
+                            showsHorizontalScrollIndicator={false} 
+                            style={styles.categoryScroll}
+                            onScroll={handleCategoryScroll}
+                            scrollEventThrottle={16}
+                        >
+                            {(type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map(cat => (
+                                <TouchableOpacity 
+                                    key={cat.id} 
+                                    style={styles.categoryButton}
+                                    onPress={() => setSelectedCategory(cat.id)}
+                                >
+                                    <View style={[
+                                        styles.iconContainer, 
+                                        selectedCategory === cat.id ? { backgroundColor: WHITE_GREEN } : null
+                                    ]}>
+                                        <Ionicons 
+                                            name={cat.icon as any} 
+                                            size={24} 
+                                            color={selectedCategory === cat.id ? '#FFF' : '#888'} 
+                                        />
+                                    </View>
+                                    <Text style={[
+                                        styles.categoryText,
+                                        selectedCategory === cat.id && styles.categoryTextActive
+                                    ]}>{cat.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                            {/* Extra padding to prevent right-most item from being covered by the indicator */}
+                            <View style={{ width: 30 }} />
+                        </ScrollView>
+                        
+                        {/* Scroll Affordance Indicators */}
+                        {canScrollLeft && (
+                            <View style={[styles.scrollIndicatorHint, styles.scrollIndicatorHintLeft]}>
+                                <Ionicons name="chevron-back" size={20} color="#bbb" />
+                            </View>
+                        )}
+                        {canScrollRight && (
+                            <View style={[styles.scrollIndicatorHint, styles.scrollIndicatorHintRight]}>
+                                <Ionicons name="chevron-forward" size={20} color="#bbb" />
+                            </View>
+                        )}
+                    </View>
 
                 </ScrollView>
                 
@@ -453,8 +490,29 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         marginTop: 10,
     },
-    categoryScroll: {
+    categoryScrollWrapper: {
+        position: 'relative',
         marginBottom: 20,
+    },
+    categoryScroll: {
+        paddingRight: 10,
+    },
+    scrollIndicatorHint: {
+        position: 'absolute',
+        top: 0,
+        height: 60,
+        width: 30,
+        justifyContent: 'center',
+    },
+    scrollIndicatorHintLeft: {
+        left: -10,
+        alignItems: 'flex-start',
+        backgroundColor: 'rgba(250,250,250,0.8)',
+    },
+    scrollIndicatorHintRight: {
+        right: -10,
+        alignItems: 'flex-end',
+        backgroundColor: 'rgba(250,250,250,0.8)',
     },
     categoryButton: {
         alignItems: 'center',
