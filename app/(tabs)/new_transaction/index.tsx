@@ -657,13 +657,12 @@ const styles = StyleSheet.create({
     noteInput: {
         backgroundColor: '#FFF',
         borderRadius: 12,
-        padding: 16,
+        padding: 14,
+        paddingHorizontal: 16,
         fontSize: 16,
         color: '#333',
         borderWidth: 1,
         borderColor: '#EAEAEA',
-        minHeight: 80,
-        textAlignVertical: 'top',
         marginBottom: 20,
     },
     footer: {
