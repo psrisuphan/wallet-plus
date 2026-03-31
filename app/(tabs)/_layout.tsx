@@ -72,6 +72,14 @@ const TabsLayout = () => {
                     ),
                 }} 
             />
+            <Tabs.Screen
+                name="wallet/add"
+                options={{
+                    href: null,
+                    headerShown: false,
+                    tabBarStyle: { display: 'none' }
+                }}
+            />
         </Tabs>
     )
 }

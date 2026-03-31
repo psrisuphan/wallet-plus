@@ -120,11 +120,11 @@ const WalletScreen = () => {
   };
 
   const openEditPage = (walletId: string) => {
-    router.push({ pathname: '/wallet_add', params: { id: walletId } });
+    router.push({ pathname: '/(tabs)/wallet/add', params: { id: walletId } });
   };
 
   const openAddPage = () => {
-    router.push('/wallet_add');
+    router.push('/(tabs)/wallet/add');
   };
 
   const renderWalletItem = ({ item }: { item: Wallet }) => (
