@@ -6,6 +6,7 @@ import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
+import { useLocalSearchParams } from 'expo-router';
 
 const WHITE_GREEN = '#699e8aff';
 interface Wallet {
@@ -31,6 +32,7 @@ interface Transaction {
 
 const WalletScreen = () => {
   const router = useRouter();
+  const params = useLocalSearchParams<{ search?: string }>();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
@@ -55,6 +57,12 @@ const WalletScreen = () => {
 
     return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    if (params.search) {
+      setSearchQuery(params.search);
+    }
+  }, [params.search]);
 
   useEffect(() => {
     if (!userId) {

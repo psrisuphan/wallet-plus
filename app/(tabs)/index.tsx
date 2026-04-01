@@ -223,7 +223,12 @@ export default function HomeScreen() {
                                                 <React.Fragment key={item.id}>
                                                     <TouchableOpacity 
                                                         style={styles.walletRow}
-                                                        onPress={() => {}}
+                                                        onPress={() => {
+                                                            router.push({
+                                                                pathname: '/(tabs)/wallet',
+                                                                params: { search: item.name }
+                                                            });
+                                                        }}
                                                     >
                                                         <View style={[
                                                             styles.walletIconContainer, 
