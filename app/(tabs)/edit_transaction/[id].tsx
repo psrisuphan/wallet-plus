@@ -242,7 +242,7 @@ const EditTransactionScreen = () => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <Header title="Edit Transaction" showHome={true} />
+            <Header title="Edit Transaction" showBack={true} />
             
             <Modal
                 visible={isWalletModalVisible}
