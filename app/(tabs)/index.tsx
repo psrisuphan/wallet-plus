@@ -146,7 +146,7 @@ export default function HomeScreen() {
                         </View>
                         
                         <FlatList
-                            data={wallets}
+                            data={wallets.slice(0, 3)}
                             keyExtractor={(item) => item.id}
                             scrollEnabled={false}
                             contentContainerStyle={styles.walletsList}
@@ -160,7 +160,7 @@ export default function HomeScreen() {
                                     <View style={styles.walletCardHeader}>
                                         <View style={[
                                             styles.walletIconContainer, 
-                                            { backgroundColor: `${item.color || '#2E7D32'}20` } // 20 is for 12% opacity roughly
+                                            { backgroundColor: `${item.color || '#2E7D32'}20` }
                                         ]}>
                                             <Ionicons 
                                                 name={(item.icon || 'wallet') as any} 
@@ -178,6 +178,15 @@ export default function HomeScreen() {
                                 </TouchableOpacity>
                             )}
                         />
+                        
+                        {wallets.length > 3 && (
+                            <TouchableOpacity 
+                                style={styles.moreWalletsHint}
+                                onPress={() => router.push('/(tabs)/wallet')}
+                            >
+                                <Text style={styles.moreWalletsText}>+ {wallets.length - 3} more wallets</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </View>
             </ScrollView>
@@ -305,6 +314,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         color: '#1a1a1a',
+    },
+    moreWalletsHint: {
+        alignItems: 'center',
+        paddingVertical: 12,
+        marginTop: 4,
+    },
+    moreWalletsText: {
+        fontSize: 14,
+        color: '#999',
+        fontWeight: '500',
     },
     todayLabel: {
         fontSize: 12,
