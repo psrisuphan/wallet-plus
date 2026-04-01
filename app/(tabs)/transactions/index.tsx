@@ -76,17 +76,9 @@ export default function TransactionsScreen() {
 
     return (
         <View style={styles.mainContainer}>
-            <Header />
+            <Header title="All Transactions" showBack={true} />
             <StatusBar barStyle="light-content" />
             <View style={styles.content}>
-                <View style={styles.headerRow}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#1a1a1a" />
-                    </TouchableOpacity>
-                    <Text style={styles.screenTitle}>All Transactions</Text>
-                    <View style={{ width: 24 }} />
-                </View>
-
                 {loading ? (
                     <View style={styles.centerContainer}>
                         <ActivityIndicator size="large" color={PRIMARY_GREEN} />
@@ -118,21 +110,7 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         paddingHorizontal: 20,
-    },
-    headerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: 20,
-        marginBottom: 20,
-    },
-    backButton: {
-        padding: 5,
-    },
-    screenTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
+        paddingTop: 20,
     },
     listContainer: {
         paddingBottom: 40,
