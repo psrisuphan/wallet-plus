@@ -15,13 +15,13 @@ export default function HomeScreen() {
     const [totalBalance, setTotalBalance] = useState(0);
     const [todayChange, setTodayChange] = useState(0);
     const [wallets, setWallets] = useState<any[]>([]);
-    const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+    const [todayTransactions, setTodayTransactions] = useState<any[]>([]);
     const [walletDailyChanges, setWalletDailyChanges] = useState<{[key: string]: number}>({});
     const [loading, setLoading] = useState(true);
     const [showTopArrow, setShowTopArrow] = useState(false);
     const [showBottomArrow, setShowBottomArrow] = useState(false);
-    const [showRecentTopArrow, setShowRecentTopArrow] = useState(false);
-    const [showRecentBottomArrow, setShowRecentBottomArrow] = useState(false);
+    const [showTodayTopArrow, setShowTodayTopArrow] = useState(false);
+    const [showTodayBottomArrow, setShowTodayBottomArrow] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -53,59 +53,42 @@ export default function HomeScreen() {
             setWallets(walletsList);
         });
 
-        const qTransactions = query(
-            collection(db, 'transactions'),
-            where('userId', '==', user.uid),
-            orderBy('date', 'desc'),
-            import('firebase/firestore').then(f => f.limit(10)) as any // I'll use limit properly below
-        );
-        
-        // Actually, since I can't use await here, I'll just use limit(10) directly assuming it's imported
-        const { limit } = require('firebase/firestore');
-        const qRecent = query(
-            collection(db, 'transactions'),
-            where('userId', '==', user.uid),
-            orderBy('date', 'desc'),
-            limit(10)
-        );
-
-        const unsubscribeTransactions = onSnapshot(qRecent, (snapshot) => {
-            const list: any[] = [];
-            snapshot.forEach((doc) => {
-                list.push({ id: doc.id, ...doc.data() });
-            });
-            
-            setRecentTransactions(list);
-            setLoading(false);
-        });
-
-        // Separate query for today's change balance
+        // Combined listener for today's transactions and total net change
         const start = new Date();
         start.setHours(0, 0, 0, 0);
+
         const qToday = query(
             collection(db, 'transactions'),
             where('userId', '==', user.uid),
-            where('date', '>=', Timestamp.fromDate(start))
+            where('date', '>=', Timestamp.fromDate(start)),
+            orderBy('date', 'desc')
         );
-        
-        const unsubscribeToday = onSnapshot(qToday, (snapshot) => {
+
+        const unsubscribeTransactions = onSnapshot(qToday, (snapshot) => {
+            const list: any[] = [];
             let totalNet = 0;
             const deltas: {[key: string]: number} = {};
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                const net = data.type === 'income' ? data.amount : -data.amount;
+                const amount = data.amount || 0;
+                const type = data.type;
+                const net = type === 'income' ? amount : -amount;
                 totalNet += net;
                 if (data.walletId) deltas[data.walletId] = (deltas[data.walletId] || 0) + net;
+                list.push({ id: doc.id, ...data });
             });
+            
+            setTodayTransactions(list);
             setTodayChange(totalNet);
             setWalletDailyChanges(deltas);
+            setLoading(false);
         });
 
         fetchUserData();
         return () => {
             unsubscribeWallets();
             unsubscribeTransactions();
-            unsubscribeToday();
         };
     }, []);
 
@@ -115,10 +98,10 @@ export default function HomeScreen() {
         setShowBottomArrow(contentOffset.y < contentSize.height - layoutMeasurement.height - 10);
     };
 
-    const handleRecentScroll = (event: any) => {
+    const handleTodayScroll = (event: any) => {
         const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-        setShowRecentTopArrow(contentOffset.y > 10);
-        setShowRecentBottomArrow(contentOffset.y < contentSize.height - layoutMeasurement.height - 10);
+        setShowTodayTopArrow(contentOffset.y > 10);
+        setShowTodayBottomArrow(contentOffset.y < contentSize.height - layoutMeasurement.height - 10);
     };
 
     return (
@@ -294,11 +277,11 @@ export default function HomeScreen() {
                         </View>
                     </View>
 
-                    {/* Recent Activity Section */}
+                    {/* Today's Activity Section */}
                     <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Text style={styles.sectionTitle}>Recent Activity</Text>
+                                <Text style={styles.sectionTitle}>Today's Activity</Text>
                             </View>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/transactions')}>
                                 <Text style={styles.viewAllText}>View All</Text>
@@ -306,9 +289,9 @@ export default function HomeScreen() {
                         </View>
                         
                         <View style={styles.walletsList}>
-                            {recentTransactions.length > 0 && (
+                            {todayTransactions.length > 0 && (
                                 <View>
-                                    {showRecentTopArrow && (
+                                    {showTodayTopArrow && (
                                         <View style={styles.scrollIndicatorTop}>
                                             <Ionicons name="chevron-up" size={16} color={PRIMARY_GREEN} />
                                         </View>
@@ -317,13 +300,13 @@ export default function HomeScreen() {
                                         style={{ maxHeight: 200 }} 
                                         showsVerticalScrollIndicator={false}
                                         nestedScrollEnabled={true}
-                                        onScroll={handleRecentScroll}
+                                        onScroll={handleTodayScroll}
                                         scrollEventThrottle={16}
                                         onContentSizeChange={(w, h) => {
-                                            if (h > 200) setShowRecentBottomArrow(true);
+                                            if (h > 200) setShowTodayBottomArrow(true);
                                         }}
                                     >
-                                        {recentTransactions.map((item, index) => (
+                                        {todayTransactions.map((item, index) => (
                                             <React.Fragment key={item.id}>
                                                 <TouchableOpacity 
                                                     style={styles.walletRow}
@@ -344,7 +327,8 @@ export default function HomeScreen() {
                                                             {item.note || item.categoryName || 'Transaction'}
                                                         </Text>
                                                         <Text style={{ fontSize: 12, color: '#999' }}>
-                                                            {item.date?.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} • {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                            {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                            {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                                                         </Text>
                                                     </View>
                                                     <Text style={[
@@ -354,24 +338,24 @@ export default function HomeScreen() {
                                                         {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
                                                     </Text>
                                                 </TouchableOpacity>
-                                                {index < recentTransactions.length - 1 && (
+                                                {index < todayTransactions.length - 1 && (
                                                     <View style={styles.rowDivider} />
                                                 )}
                                             </React.Fragment>
                                         ))}
                                     </ScrollView>
-                                    {showRecentBottomArrow && (
+                                    {showTodayBottomArrow && (
                                         <View style={styles.scrollIndicatorBottom}>
                                             <Ionicons name="chevron-down" size={16} color={PRIMARY_GREEN} />
                                         </View>
                                     )}
                                 </View>
                             )}
-                            {recentTransactions.length === 0 && (
+                            {todayTransactions.length === 0 && (
                                 <View style={{ alignItems: 'center', paddingVertical: 24 }}>
                                     <Ionicons name="receipt-outline" size={48} color="#EEE" />
                                     <Text style={{ textAlign: 'center', color: '#999', marginTop: 8 }}>
-                                        No recent activity
+                                        No activity today
                                     </Text>
                                 </View>
                             )}
