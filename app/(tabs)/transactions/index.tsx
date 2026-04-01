@@ -281,23 +281,34 @@ export default function TransactionsScreen() {
                         <Ionicons name="filter-outline" size={64} color="#E0E0E0" />
                         <Text style={styles.emptyText}>No transactions match filters</Text>
                     </View>
-                ) : (
-                    <SectionList
-                        sections={processTransactions()}
-                        keyExtractor={(item) => item.id}
-                        renderItem={renderTransactionItem}
-                        renderSectionHeader={({ section: { title } }) => (
-                            <View style={styles.dateHeaderContainer}>
-                                <View style={styles.dateHeaderLine} />
-                                <Text style={styles.sectionHeader}>{title}</Text>
-                                <View style={styles.dateHeaderLine} />
-                            </View>
-                        )}
-                        contentContainerStyle={styles.listContainer}
-                        showsVerticalScrollIndicator={false}
-                        stickySectionHeadersEnabled={false}
-                    />
-                )}
+                ) : (() => {
+                    const sections = processTransactions();
+                    const totalCount = sections.reduce((acc, s) => acc + s.data.length, 0);
+                    return (
+                        <SectionList
+                            sections={sections}
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderTransactionItem}
+                            ListHeaderComponent={() => (
+                                <View style={styles.listHeader}>
+                                    <Text style={styles.transactionCountText}>
+                                        {totalCount} {totalCount === 1 ? 'Transaction' : 'Transactions'} found
+                                    </Text>
+                                </View>
+                            )}
+                            renderSectionHeader={({ section: { title } }) => (
+                                <View style={styles.dateHeaderContainer}>
+                                    <View style={styles.dateHeaderLine} />
+                                    <Text style={styles.sectionHeader}>{title}</Text>
+                                    <View style={styles.dateHeaderLine} />
+                                </View>
+                            )}
+                            contentContainerStyle={styles.listContainer}
+                            showsVerticalScrollIndicator={false}
+                            stickySectionHeadersEnabled={false}
+                        />
+                    );
+                })()}
             </View>
         </View>
     );
@@ -333,6 +344,16 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 1,
         backgroundColor: '#E0E0E0',
+    },
+    listHeader: {
+        alignItems: 'flex-start',
+        marginTop: 20,
+        marginBottom: 0,
+    },
+    transactionCountText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#888',
     },
     filterContainer: {
         backgroundColor: '#FFFFFF',
