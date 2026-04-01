@@ -34,7 +34,7 @@ export default function HomeScreen() {
                 showLogo={false} 
                 profileImage={profileImage}
                 onProfilePress={() => {
-                    router.push('/(tabs)/settings'); // Correct path to main settings
+                    router.push('/(tabs)/settings?edit=true'); 
                 }}
             />
             <View style={styles.content}>

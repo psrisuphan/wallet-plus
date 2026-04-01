@@ -15,7 +15,7 @@ import {
 import Header from '../../../components/Header';
 import { auth, db } from '../../../firebaseConfig';
 import { signOut } from 'firebase/auth';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -38,6 +38,7 @@ const SettingsIndex = () => {
     const [tempImage, setTempImage] = useState<string | null>(null);
 
     const router = useRouter();
+    const params = useLocalSearchParams();
 
     const fetchUserData = async () => {
         const user = auth.currentUser;
@@ -69,6 +70,15 @@ const SettingsIndex = () => {
     useEffect(() => {
         fetchUserData();
     }, []);
+
+    // Effect to handle navigation param 'edit=true'
+    useEffect(() => {
+        if (params.edit === 'true' && !loading) {
+            setTempName(displayName);
+            setTempImage(profileImageBase64);
+            setIsEditModalVisible(true);
+        }
+    }, [params.edit, loading]);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
