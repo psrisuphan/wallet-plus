@@ -84,7 +84,6 @@ export default function HomeScreen() {
             />
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
-                    <Text style={styles.welcomeText}>Hi, {displayName || 'User'}</Text>
                     
                     {/* Total Balance Section */}
                     <View style={styles.balanceCard}>
