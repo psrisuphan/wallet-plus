@@ -204,7 +204,7 @@ const EditTransactionScreen = () => {
 
             await batch.commit();
             Alert.alert("Success", "Transaction updated successfully!");
-            router.back();
+            router.push('/(tabs)/transactions');
             
         } catch (error) {
             console.error("Error updating transaction: ", error);
@@ -242,7 +242,11 @@ const EditTransactionScreen = () => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <Header title="Edit Transaction" showBack={true} />
+            <Header 
+                title="Edit Transaction" 
+                showBack={true} 
+                onBackPress={() => router.push('/(tabs)/transactions')}
+            />
             
             <Modal
                 visible={isWalletModalVisible}
