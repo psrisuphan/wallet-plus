@@ -41,6 +41,7 @@ const WalletScreen = () => {
   const [walletTransactions, setWalletTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [transactionSort, setTransactionSort] = useState<'newest' | 'oldest'>('newest');
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'day' | 'week' | 'month'>('all');
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -113,7 +114,34 @@ const WalletScreen = () => {
     });
 
     return () => unsubscribeTransactions();
-  }, [selectedWalletForTransactions, userId]);
+  }, [selectedWalletForTransactions, userId, transactionSort]);
+
+  // Handle transaction filtering based on selected date range
+  const filteredTransactions = useMemo(() => {
+    if (transactionFilter === 'all') return walletTransactions;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    
+    // Calculate start of week (Monday)
+    const dayOfWeek = now.getDay(); // 0 is Sunday
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
+    const startOfWeek = new Date(now.setDate(diff)).setHours(0, 0, 0, 0);
+    
+    // Reset date for month calculation
+    const currentNow = new Date();
+    const startOfMonth = new Date(currentNow.getFullYear(), currentNow.getMonth(), 1).getTime();
+
+    return walletTransactions.filter(item => {
+      if (!item.date?.seconds) return false;
+      const transTime = item.date.seconds * 1000;
+
+      if (transactionFilter === 'day') return transTime >= startOfToday;
+      if (transactionFilter === 'week') return transTime >= startOfWeek;
+      if (transactionFilter === 'month') return transTime >= startOfMonth;
+      return true;
+    });
+  }, [walletTransactions, transactionFilter]);
 
   // Handle Search and Sorting
   const filteredAndSortedWallets = useMemo(() => {
@@ -401,12 +429,34 @@ const WalletScreen = () => {
           </View>
 
           <View style={styles.modalBody}>
+            <View style={styles.modalFilterContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {(['all', 'day', 'week', 'month'] as const).map((filter) => (
+                  <TouchableOpacity
+                    key={filter}
+                    style={[
+                      styles.modalFilterButton,
+                      transactionFilter === filter && styles.modalFilterButtonActive
+                    ]}
+                    onPress={() => setTransactionFilter(filter)}
+                  >
+                    <Text style={[
+                      styles.modalFilterButtonText,
+                      transactionFilter === filter && styles.modalFilterButtonTextActive
+                    ]}>
+                      {filter === 'all' ? 'All Time' : filter === 'day' ? 'Today' : filter === 'week' ? 'This Week' : 'This Month'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
             <View style={styles.modalBodyHeader}>
               <View>
                 <Text style={styles.modalSectionTitle}>Transactions</Text>
                 {!loadingTransactions && (
                   <Text style={styles.modalSubTitle}>
-                    {walletTransactions.length} {walletTransactions.length === 1 ? 'transaction' : 'transactions'} found
+                    {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transaction' : 'transactions'} found
                   </Text>
                 )}
               </View>
@@ -429,9 +479,9 @@ const WalletScreen = () => {
                 <ActivityIndicator size="small" color={WHITE_GREEN} />
                 <Text style={styles.modalLoadingText}>Loading transactions...</Text>
               </View>
-            ) : walletTransactions.length > 0 ? (
+            ) : filteredTransactions.length > 0 ? (
               <FlatList
-                data={walletTransactions}
+                data={filteredTransactions}
                 renderItem={renderTransactionItem}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
@@ -440,7 +490,11 @@ const WalletScreen = () => {
             ) : (
               <View style={styles.modalEmpty}>
                 <Ionicons name="receipt-outline" size={60} color="#EEE" />
-                <Text style={styles.modalEmptyText}>No transactions for this wallet yet.</Text>
+                <Text style={styles.modalEmptyText}>
+                  {transactionFilter === 'all' 
+                    ? 'No transactions for this wallet yet.' 
+                    : `No transactions found for this ${transactionFilter === 'day' ? 'day' : transactionFilter}.`}
+                </Text>
               </View>
             )}
           </View>
@@ -738,7 +792,9 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     flex: 1,
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 20,
   },
   modalSectionTitle: {
     fontSize: 18,
@@ -751,11 +807,40 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontStyle: 'italic',
   },
+  modalFilterContainer: {
+    marginBottom: 20,
+    backgroundColor: '#F8F9FA',
+    padding: 8,
+    borderRadius: 12,
+  },
+  modalFilterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginRight: 8,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  modalFilterButtonActive: {
+    backgroundColor: WHITE_GREEN,
+  },
+  modalFilterButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+  modalFilterButtonTextActive: {
+    color: 'white',
+  },
   modalBodyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalSortToggle: {
     flexDirection: 'row',
