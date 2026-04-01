@@ -310,7 +310,7 @@ export default function HomeScreen() {
                                             <React.Fragment key={item.id}>
                                                 <TouchableOpacity 
                                                     style={styles.walletRow}
-                                                    onPress={() => router.push('/(tabs)/transactions')}
+                                                    onPress={() => router.push(`/(tabs)/edit_transaction/${item.id}`)}
                                                 >
                                                     <View style={[
                                                         styles.walletIconContainer, 

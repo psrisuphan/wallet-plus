@@ -88,6 +88,13 @@ const TabsLayout = () => {
                     tabBarStyle: { display: 'none' }
                 }}
             />
+            <Tabs.Screen
+                name="edit_transaction/[id]"
+                options={{
+                    href: null,
+                    headerShown: false,
+                }}
+            />
         </Tabs>
     )
 }

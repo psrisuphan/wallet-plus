@@ -173,7 +173,11 @@ export default function TransactionsScreen() {
         const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
         return (
-            <View style={styles.transactionRow}>
+            <TouchableOpacity 
+                style={styles.transactionRow}
+                onPress={() => router.push(`/(tabs)/edit_transaction/${item.id}`)}
+                activeOpacity={0.7}
+            >
                 <View style={[
                     styles.iconContainer, 
                     { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
@@ -211,7 +215,7 @@ export default function TransactionsScreen() {
                 ]}>
                     {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </Text>
-            </View>
+                </TouchableOpacity>
         );
     };
 
