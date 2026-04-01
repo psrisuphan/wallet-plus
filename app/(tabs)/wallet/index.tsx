@@ -40,6 +40,7 @@ const WalletScreen = () => {
   const [isTransactionsModalVisible, setIsTransactionsModalVisible] = useState(false);
   const [walletTransactions, setWalletTransactions] = useState<Transaction[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [transactionSort, setTransactionSort] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -97,11 +98,11 @@ const WalletScreen = () => {
         ...doc.data(),
       })) as Transaction[];
       
-      // Sort by date descending
+      // Sort based on transactionSort state
       transactionsData.sort((a, b) => {
         const dateA = a.date?.seconds || 0;
         const dateB = b.date?.seconds || 0;
-        return dateB - dateA;
+        return transactionSort === 'newest' ? dateB - dateA : dateA - dateB;
       });
       
       setWalletTransactions(transactionsData);
@@ -394,7 +395,31 @@ const WalletScreen = () => {
           </View>
 
           <View style={styles.modalBody}>
-            <Text style={styles.modalSectionTitle}>Recent Transactions</Text>
+            <View style={styles.modalBodyHeader}>
+              <View>
+                <Text style={styles.modalSectionTitle}>Transactions</Text>
+                {!loadingTransactions && (
+                  <Text style={styles.modalSubTitle}>
+                    {walletTransactions.length} {walletTransactions.length === 1 ? 'transaction' : 'transactions'} found
+                  </Text>
+                )}
+              </View>
+              {walletTransactions.length > 1 && (
+                <TouchableOpacity 
+                  style={styles.modalSortToggle} 
+                  onPress={() => setTransactionSort(prev => prev === 'newest' ? 'oldest' : 'newest')}
+                >
+                  <Ionicons 
+                    name={transactionSort === 'newest' ? "arrow-down" : "arrow-up"} 
+                    size={14} 
+                    color={WHITE_GREEN} 
+                  />
+                  <Text style={styles.modalSortToggleText}>
+                    {transactionSort === 'newest' ? 'Newest' : 'Oldest'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
             {loadingTransactions ? (
               <View style={styles.modalLoading}>
                 <ActivityIndicator size="small" color={WHITE_GREEN} />
@@ -712,10 +737,37 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalSectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#333',
-    marginBottom: 16,
+  },
+  modalSubTitle: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  modalBodyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  modalSortToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: WHITE_GREEN + '10',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: WHITE_GREEN + '30',
+  },
+  modalSortToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: WHITE_GREEN,
+    marginLeft: 4,
   },
   modalLoading: {
     flex: 1,
