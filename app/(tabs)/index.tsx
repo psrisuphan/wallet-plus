@@ -15,11 +15,13 @@ export default function HomeScreen() {
     const [totalBalance, setTotalBalance] = useState(0);
     const [todayChange, setTodayChange] = useState(0);
     const [wallets, setWallets] = useState<any[]>([]);
-    const [todayTransactions, setTodayTransactions] = useState<any[]>([]);
+    const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
     const [walletDailyChanges, setWalletDailyChanges] = useState<{[key: string]: number}>({});
     const [loading, setLoading] = useState(true);
     const [showTopArrow, setShowTopArrow] = useState(false);
     const [showBottomArrow, setShowBottomArrow] = useState(false);
+    const [showRecentTopArrow, setShowRecentTopArrow] = useState(false);
+    const [showRecentBottomArrow, setShowRecentBottomArrow] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -51,58 +53,72 @@ export default function HomeScreen() {
             setWallets(walletsList);
         });
 
-        // Listen to today's transactions
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-
         const qTransactions = query(
             collection(db, 'transactions'),
             where('userId', '==', user.uid),
-            where('date', '>=', Timestamp.fromDate(start)),
-            orderBy('date', 'desc')
+            orderBy('date', 'desc'),
+            import('firebase/firestore').then(f => f.limit(10)) as any // I'll use limit properly below
+        );
+        
+        // Actually, since I can't use await here, I'll just use limit(10) directly assuming it's imported
+        const { limit } = require('firebase/firestore');
+        const qRecent = query(
+            collection(db, 'transactions'),
+            where('userId', '==', user.uid),
+            orderBy('date', 'desc'),
+            limit(10)
         );
 
-        const unsubscribeTransactions = onSnapshot(qTransactions, (snapshot) => {
+        const unsubscribeTransactions = onSnapshot(qRecent, (snapshot) => {
             const list: any[] = [];
-            let totalNet = 0;
-            const deltas: {[key: string]: number} = {};
-
             snapshot.forEach((doc) => {
-                const data = doc.data();
-                const amount = data.amount || 0;
-                const type = data.type;
-                const walletId = data.walletId;
-                
-                const net = type === 'income' ? amount : -amount;
-                totalNet += net;
-                
-                if (walletId) {
-                    deltas[walletId] = (deltas[walletId] || 0) + net;
-                }
-                
-                list.push({ id: doc.id, ...data });
+                list.push({ id: doc.id, ...doc.data() });
             });
             
-            setTodayTransactions(list);
+            setRecentTransactions(list);
+            setLoading(false);
+        });
+
+        // Separate query for today's change balance
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const qToday = query(
+            collection(db, 'transactions'),
+            where('userId', '==', user.uid),
+            where('date', '>=', Timestamp.fromDate(start))
+        );
+        
+        const unsubscribeToday = onSnapshot(qToday, (snapshot) => {
+            let totalNet = 0;
+            const deltas: {[key: string]: number} = {};
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const net = data.type === 'income' ? data.amount : -data.amount;
+                totalNet += net;
+                if (data.walletId) deltas[data.walletId] = (deltas[data.walletId] || 0) + net;
+            });
             setTodayChange(totalNet);
             setWalletDailyChanges(deltas);
-            setLoading(false);
         });
 
         fetchUserData();
         return () => {
             unsubscribeWallets();
             unsubscribeTransactions();
+            unsubscribeToday();
         };
     }, []);
 
     const handleWalletScroll = (event: any) => {
         const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-        const isAtTop = contentOffset.y <= 0;
+        setShowTopArrow(contentOffset.y > 10);
+        setShowBottomArrow(contentOffset.y < contentSize.height - layoutMeasurement.height - 10);
+    };
 
-        setShowTopArrow(!isAtTop);
-        setShowBottomArrow(contentSize.height > layoutMeasurement.height && !isCloseToBottom);
+    const handleRecentScroll = (event: any) => {
+        const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+        setShowRecentTopArrow(contentOffset.y > 10);
+        setShowRecentBottomArrow(contentOffset.y < contentSize.height - layoutMeasurement.height - 10);
     };
 
     return (
@@ -278,11 +294,11 @@ export default function HomeScreen() {
                         </View>
                     </View>
 
-                    {/* Today's Transactions Section */}
+                    {/* Recent Activity Section */}
                     <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Text style={styles.sectionTitle}>Today's Activity</Text>
+                                <Text style={styles.sectionTitle}>Recent Activity</Text>
                             </View>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/transactions')}>
                                 <Text style={styles.viewAllText}>View All</Text>
@@ -290,51 +306,72 @@ export default function HomeScreen() {
                         </View>
                         
                         <View style={styles.walletsList}>
-                            <ScrollView 
-                                style={{ maxHeight: 250 }} 
-                                showsVerticalScrollIndicator={false}
-                                nestedScrollEnabled={true}
-                            >
-                                {todayTransactions.map((item, index) => (
-                                    <React.Fragment key={item.id}>
-                                        <View style={styles.walletRow}>
-                                            <View style={[
-                                                styles.walletIconContainer, 
-                                                { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
-                                            ]}>
-                                                <Ionicons 
-                                                    name={(item.categoryIcon || (item.type === 'income' ? "arrow-up" : "arrow-down")) as any} 
-                                                    size={18} 
-                                                    color={item.type === 'income' ? PRIMARY_GREEN : '#C62828'} 
-                                                />
-                                            </View>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.walletRowName} numberOfLines={1}>
-                                                    {item.note || item.categoryName || 'Transaction'}
-                                                </Text>
-                                                <Text style={{ fontSize: 12, color: '#999' }}>
-                                                    {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                                                    {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
-                                                </Text>
-                                            </View>
-                                            <Text style={[
-                                                styles.walletRowBalance,
-                                                { color: item.type === 'income' ? PRIMARY_GREEN : '#C62828' }
-                                            ]}>
-                                                {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
-                                            </Text>
+                            {recentTransactions.length > 0 && (
+                                <View>
+                                    {showRecentTopArrow && (
+                                        <View style={styles.scrollIndicatorTop}>
+                                            <Ionicons name="chevron-up" size={16} color={PRIMARY_GREEN} />
                                         </View>
-                                        {index < todayTransactions.length - 1 && (
-                                            <View style={styles.rowDivider} />
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </ScrollView>
-                            {todayTransactions.length === 0 && (
+                                    )}
+                                    <ScrollView 
+                                        style={{ maxHeight: 200 }} 
+                                        showsVerticalScrollIndicator={false}
+                                        nestedScrollEnabled={true}
+                                        onScroll={handleRecentScroll}
+                                        scrollEventThrottle={16}
+                                        onContentSizeChange={(w, h) => {
+                                            if (h > 200) setShowRecentBottomArrow(true);
+                                        }}
+                                    >
+                                        {recentTransactions.map((item, index) => (
+                                            <React.Fragment key={item.id}>
+                                                <TouchableOpacity 
+                                                    style={styles.walletRow}
+                                                    onPress={() => router.push('/(tabs)/transactions')}
+                                                >
+                                                    <View style={[
+                                                        styles.walletIconContainer, 
+                                                        { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
+                                                    ]}>
+                                                        <Ionicons 
+                                                            name={(item.categoryIcon || (item.type === 'income' ? "arrow-up" : "arrow-down")) as any} 
+                                                            size={18} 
+                                                            color={item.type === 'income' ? PRIMARY_GREEN : '#C62828'} 
+                                                        />
+                                                    </View>
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={styles.walletRowName} numberOfLines={1}>
+                                                            {item.note || item.categoryName || 'Transaction'}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 12, color: '#999' }}>
+                                                            {item.date?.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} • {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                        </Text>
+                                                    </View>
+                                                    <Text style={[
+                                                        styles.walletRowBalance,
+                                                        { color: item.type === 'income' ? PRIMARY_GREEN : '#C62828' }
+                                                    ]}>
+                                                        {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                                {index < recentTransactions.length - 1 && (
+                                                    <View style={styles.rowDivider} />
+                                                )}
+                                            </React.Fragment>
+                                        ))}
+                                    </ScrollView>
+                                    {showRecentBottomArrow && (
+                                        <View style={styles.scrollIndicatorBottom}>
+                                            <Ionicons name="chevron-down" size={16} color={PRIMARY_GREEN} />
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+                            {recentTransactions.length === 0 && (
                                 <View style={{ alignItems: 'center', paddingVertical: 24 }}>
                                     <Ionicons name="receipt-outline" size={48} color="#EEE" />
                                     <Text style={{ textAlign: 'center', color: '#999', marginTop: 8 }}>
-                                        No activity today
+                                        No recent activity
                                     </Text>
                                 </View>
                             )}
