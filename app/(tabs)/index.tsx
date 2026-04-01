@@ -1,11 +1,38 @@
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
+import { auth, db } from '../../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function HomeScreen() {
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    setProfileImage(userDoc.data().profilePictureBase64);
+                }
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <Header title="Overview" showLogo={false} />
+            <Header 
+                title="Overview" 
+                showLogo={false} 
+                profileImage={profileImage}
+                onProfilePress={() => {
+                    // We can add profile page navigation later as requested
+                    console.log('Profile icon pressed');
+                }}
+            />
             <View style={styles.content}>
                 <Text style={styles.title}>Home Screen</Text>
                 <Text style={styles.subtitle}>Welcome back to Wallet+</Text>

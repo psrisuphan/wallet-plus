@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-const WHITE_GREEN = '#699e8aff';
+const ACCENT = '#699e8aff';
 
 interface HeaderProps {
   title?: string;
@@ -14,6 +14,8 @@ interface HeaderProps {
   showAdd?: boolean;
   onAddPress?: () => void;
   showLogo?: boolean;
+  profileImage?: string | null;
+  onProfilePress?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -23,7 +25,9 @@ const Header: React.FC<HeaderProps> = ({
   onBackPress,
   showAdd = false, 
   onAddPress,
-  showLogo = false 
+  showLogo = false,
+  profileImage,
+  onProfilePress,
 }) => {
   const router = useRouter();
 
@@ -55,11 +59,24 @@ const Header: React.FC<HeaderProps> = ({
 
           <Text style={styles.header}>{title}</Text>
 
-          {showAdd && (
-            <TouchableOpacity onPress={onAddPress} style={styles.headerAddButton}>
+          {showAdd ? (
+            <TouchableOpacity onPress={onAddPress} style={styles.headerRightButton}>
               <Ionicons name="add" size={34} color="#FFFFFF" />
             </TouchableOpacity>
-          )}
+          ) : (onProfilePress || profileImage !== undefined) ? (
+            <TouchableOpacity onPress={onProfilePress} style={styles.headerRightButton}>
+              {profileImage ? (
+                <Image 
+                  source={{ uri: `data:image/jpeg;base64,${profileImage}` }} 
+                  style={styles.profileAvatar} 
+                />
+              ) : (
+                <View style={styles.profilePlaceholder}>
+                  <Ionicons name="person" size={20} color={ACCENT} />
+                </View>
+              )}
+            </TouchableOpacity>
+          ) : null}
         </View>
       </SafeAreaView>
     </View>
@@ -68,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerBackground: {
-    backgroundColor: WHITE_GREEN,
+    backgroundColor: ACCENT,
     paddingHorizontal: 20,
     paddingBottom: 15,
   },
@@ -88,10 +105,27 @@ const styles = StyleSheet.create({
     left: 0,
     padding: 4,
   },
-  headerAddButton: {
+  headerRightButton: {
     position: 'absolute',
     right: 0,
     padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  profilePlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     fontSize: 22,
