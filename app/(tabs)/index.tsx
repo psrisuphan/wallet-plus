@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 
 const PRIMARY_GREEN = '#699E8A';
@@ -16,6 +16,7 @@ export default function HomeScreen() {
     const [todayChange, setTodayChange] = useState(0);
     const [wallets, setWallets] = useState<any[]>([]);
     const [todayTransactions, setTodayTransactions] = useState<any[]>([]);
+    const [walletDailyChanges, setWalletDailyChanges] = useState<{[key: string]: number}>({});
     const [loading, setLoading] = useState(true);
     const [showTopArrow, setShowTopArrow] = useState(false);
     const [showBottomArrow, setShowBottomArrow] = useState(false);
@@ -51,39 +52,40 @@ export default function HomeScreen() {
         });
 
         // Listen to today's transactions
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
 
         const qTransactions = query(
             collection(db, 'transactions'),
             where('userId', '==', user.uid),
-            where('date', '>=', startOfDay)
-        );
-
-        const unsubscribeTransactions = onSnapshot(qTransactions, (snapshot) => {
-            let change = 0;
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.type === 'income') change += data.amount || 0;
-                else if (data.type === 'expense') change -= data.amount || 0;
-            });
-            setTodayChange(change);
-        });
-
-        // Listen to today's transactions list
-        const qTodayList = query(
-            collection(db, 'transactions'), 
-            where('userId', '==', user.uid),
-            where('date', '>=', startOfDay),
+            where('date', '>=', Timestamp.fromDate(start)),
             orderBy('date', 'desc')
         );
 
-        const unsubscribeTodayList = onSnapshot(qTodayList, (snapshot) => {
+        const unsubscribeTransactions = onSnapshot(qTransactions, (snapshot) => {
             const list: any[] = [];
+            let totalNet = 0;
+            const deltas: {[key: string]: number} = {};
+
             snapshot.forEach((doc) => {
-                list.push({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+                const amount = data.amount || 0;
+                const type = data.type;
+                const walletId = data.walletId;
+                
+                const net = type === 'income' ? amount : -amount;
+                totalNet += net;
+                
+                if (walletId) {
+                    deltas[walletId] = (deltas[walletId] || 0) + net;
+                }
+                
+                list.push({ id: doc.id, ...data });
             });
+            
             setTodayTransactions(list);
+            setTodayChange(totalNet);
+            setWalletDailyChanges(deltas);
             setLoading(false);
         });
 
@@ -91,7 +93,6 @@ export default function HomeScreen() {
         return () => {
             unsubscribeWallets();
             unsubscribeTransactions();
-            unsubscribeTodayList();
         };
     }, []);
 
@@ -208,7 +209,6 @@ export default function HomeScreen() {
                                         onScroll={handleWalletScroll}
                                         scrollEventThrottle={16}
                                         onContentSizeChange={(w, h) => {
-                                            // Initial check if content is scrollable
                                             if (h > 200) setShowBottomArrow(true);
                                         }}
                                     >
@@ -216,9 +216,7 @@ export default function HomeScreen() {
                                             <React.Fragment key={item.id}>
                                                 <TouchableOpacity 
                                                     style={styles.walletRow}
-                                                    onPress={() => {
-                                                        // TODO: navigate to wallet transactions view
-                                                    }}
+                                                    onPress={() => {}}
                                                 >
                                                     <View style={[
                                                         styles.walletIconContainer, 
@@ -240,9 +238,19 @@ export default function HomeScreen() {
                                                             </Text>
                                                         )}
                                                     </View>
-                                                    <Text style={styles.walletRowBalance}>
-                                                        ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                    </Text>
+                                                    <View style={{ alignItems: 'flex-end' }}>
+                                                        <Text style={styles.walletRowBalance}>
+                                                            ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                        </Text>
+                                                        {walletDailyChanges[item.id] !== undefined && walletDailyChanges[item.id] !== 0 && (
+                                                            <Text style={[
+                                                                styles.walletRowDelta,
+                                                                { color: walletDailyChanges[item.id] > 0 ? PRIMARY_GREEN : '#C62828' }
+                                                            ]}>
+                                                                {walletDailyChanges[item.id] > 0 ? '+' : '-'}฿{Math.abs(walletDailyChanges[item.id]).toLocaleString(undefined, { minimumFractionDigits: 1 })}
+                                                            </Text>
+                                                        )}
+                                                    </View>
                                                 </TouchableOpacity>
                                                 {index < wallets.length - 1 && (
                                                     <View style={styles.rowDivider} />
@@ -258,8 +266,6 @@ export default function HomeScreen() {
                                 </View>
                             )}
                         </View>
-                        
-
                     </View>
 
                     {/* Today's Transactions Section */}
@@ -334,9 +340,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
-    },
-    scrollContent: {
-        paddingBottom: 40,
     },
     content: {
         padding: 20,
@@ -450,12 +453,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#1a1a1a',
     },
-    moreWalletsHint: {
-        alignItems: 'center',
-        paddingTop: 12,
-        marginTop: 4,
-        borderTopWidth: 1,
-        borderTopColor: '#F5F5F5',
+    walletRowDelta: {
+        fontSize: 11,
+        fontWeight: '600',
+        marginTop: 2,
     },
     moreWalletsText: {
         fontSize: 14,
