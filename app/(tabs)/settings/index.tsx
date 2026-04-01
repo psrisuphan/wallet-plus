@@ -194,30 +194,6 @@ const SettingsIndex = () => {
                     <Ionicons name="chevron-forward" size={24} color="#CCC" />
                 </TouchableOpacity>
 
-                {/* Other Settings (Placeholder sections) */}
-                <View style={styles.menuSection}>
-                    <Text style={styles.menuTitle}>General</Text>
-                    <TouchableOpacity style={styles.menuItem}>
-                        <View style={styles.menuItemLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
-                                <Ionicons name="notifications" size={20} color="#2196F3" />
-                            </View>
-                            <Text style={styles.menuText}>Notifications</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#CCC" />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity style={styles.menuItem}>
-                        <View style={styles.menuItemLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: '#F3E5F5' }]}>
-                                <Ionicons name="lock-closed" size={20} color="#9C27B0" />
-                            </View>
-                            <Text style={styles.menuText}>Privacy & Security</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color="#CCC" />
-                    </TouchableOpacity>
-                </View>
-
                 {/* Sign Out Section */}
                 <View style={styles.logoutSection}>
                     <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
