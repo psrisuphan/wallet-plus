@@ -308,10 +308,7 @@ export default function HomeScreen() {
                                     >
                                         {todayTransactions.map((item, index) => (
                                             <React.Fragment key={item.id}>
-                                                <TouchableOpacity 
-                                                    style={styles.walletRow}
-                                                    onPress={() => router.push(`/(tabs)/edit_transaction/${item.id}`)}
-                                                >
+                                                <View style={styles.walletRow}>
                                                     <View style={[
                                                         styles.walletIconContainer, 
                                                         { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
@@ -342,7 +339,7 @@ export default function HomeScreen() {
                                                     ]}>
                                                         {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
                                                     </Text>
-                                                </TouchableOpacity>
+                                                </View>
                                                 {index < todayTransactions.length - 1 && (
                                                     <View style={styles.rowDivider} />
                                                 )}
