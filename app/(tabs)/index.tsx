@@ -123,7 +123,6 @@ export default function HomeScreen() {
                     <View style={styles.balanceCard}>
                         <View style={styles.balanceHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Ionicons name="cash" size={20} color={PRIMARY_GREEN} />
                                 <Text style={styles.balanceLabel}>Total Balance</Text>
                             </View>
                             <Text style={styles.balanceDate}>
@@ -173,7 +172,6 @@ export default function HomeScreen() {
                     <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Ionicons name="wallet" size={20} color={PRIMARY_GREEN} />
                                 <Text style={styles.sectionTitle}>Your Wallets</Text>
                             </View>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/wallet')}>
@@ -284,7 +282,6 @@ export default function HomeScreen() {
                     <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Ionicons name="time" size={20} color={PRIMARY_GREEN} />
                                 <Text style={styles.sectionTitle}>Today's Activity</Text>
                             </View>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/transactions')}>
