@@ -242,15 +242,15 @@ const WalletScreen = () => {
 
   const renderTransactionItem = ({ item }: { item: Transaction }) => (
     <View style={styles.transactionItem}>
-      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? '#FF3B3015' : '#34C75915' }]}>
-        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? '#FF3B30' : '#34C759'} />
+      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? '#FF3B3015' : '#699E8A15' }]}>
+        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? '#FF3B30' : '#699E8A'} />
       </View>
       <View style={styles.transactionInfo}>
         <Text style={styles.transactionCategory}>{item.categoryName}</Text>
         {item.note ? <Text style={styles.transactionNote} numberOfLines={1}>{item.note}</Text> : null}
       </View>
       <View style={styles.transactionAmountContainer}>
-        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#34C759' }]}>
+        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#699E8A' }]}>
           {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
