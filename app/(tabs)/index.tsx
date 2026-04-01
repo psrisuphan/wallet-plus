@@ -287,7 +287,7 @@ export default function HomeScreen() {
                                 <Ionicons name="time" size={20} color={PRIMARY_GREEN} />
                                 <Text style={styles.sectionTitle}>Today's Activity</Text>
                             </View>
-                            <TouchableOpacity onPress={() => router.push('/(tabs)/new_transaction')}>
+                            <TouchableOpacity onPress={() => router.push('/(tabs)/transactions')}>
                                 <Text style={styles.viewAllText}>View All</Text>
                             </TouchableOpacity>
                         </View>
