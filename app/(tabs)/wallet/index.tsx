@@ -404,21 +404,19 @@ const WalletScreen = () => {
                   </Text>
                 )}
               </View>
-              {walletTransactions.length > 1 && (
-                <TouchableOpacity 
-                  style={styles.modalSortToggle} 
-                  onPress={() => setTransactionSort(prev => prev === 'newest' ? 'oldest' : 'newest')}
-                >
-                  <Ionicons 
-                    name={transactionSort === 'newest' ? "arrow-down" : "arrow-up"} 
-                    size={14} 
-                    color={WHITE_GREEN} 
-                  />
-                  <Text style={styles.modalSortToggleText}>
-                    {transactionSort === 'newest' ? 'Newest' : 'Oldest'}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity 
+                style={styles.modalSortToggle} 
+                onPress={() => setTransactionSort(prev => prev === 'newest' ? 'oldest' : 'newest')}
+              >
+                <Ionicons 
+                  name={transactionSort === 'newest' ? "arrow-down" : "arrow-up"} 
+                  size={14} 
+                  color={WHITE_GREEN} 
+                />
+                <Text style={styles.modalSortToggleText}>
+                  {transactionSort === 'newest' ? 'Newest' : 'Oldest'}
+                </Text>
+              </TouchableOpacity>
             </View>
             {loadingTransactions ? (
               <View style={styles.modalLoading}>
