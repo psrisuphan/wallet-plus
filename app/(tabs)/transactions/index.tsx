@@ -267,12 +267,10 @@ export default function TransactionsScreen() {
                                     <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All Types</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={[styles.filterPill, filterType === 'income' && styles.filterPillActive]} onPress={() => setFilterType('income')}>
-                                    <Ionicons name="trending-up" size={14} color={filterType === 'income' ? '#FFF' : '#666'} />
-                                    <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income Only</Text>
+                                    <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={[styles.filterPill, filterType === 'expense' && styles.filterPillActive]} onPress={() => setFilterType('expense')}>
-                                    <Ionicons name="trending-down" size={14} color={filterType === 'expense' ? '#FFF' : '#666'} />
-                                    <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense Only</Text>
+                                    <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense</Text>
                                 </TouchableOpacity>
                             </ScrollView>
                         </View>
