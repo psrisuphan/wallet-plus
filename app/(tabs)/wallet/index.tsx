@@ -251,14 +251,14 @@ const WalletScreen = () => {
       </View>
       <View style={styles.transactionAmountContainer}>
         <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#34C759' }]}>
-          {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+          {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
           {item.date?.seconds ? (
-            `${new Date(item.date.seconds * 1000).toLocaleDateString('th-TH', { 
+            `${new Date(item.date.seconds * 1000).toLocaleDateString('en-US', { 
               day: 'numeric', 
               month: 'short' 
-            })} ${new Date(item.date.seconds * 1000).toLocaleTimeString('th-TH', {
+            })} ${new Date(item.date.seconds * 1000).toLocaleTimeString('en-US', {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false
@@ -294,7 +294,7 @@ const WalletScreen = () => {
       </View>
       <View style={styles.walletBody}>
         <Text style={styles.balanceLabel}>Balance</Text>
-        <Text style={[styles.walletBalance, { color: item.color }]}>฿{item.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</Text>
+        <Text style={[styles.walletBalance, { color: item.color }]}>฿{item.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -431,7 +431,7 @@ const WalletScreen = () => {
             <View style={styles.modalBalanceSection}>
               <Text style={styles.modalBalanceLabel}>Current Balance</Text>
               <Text style={[styles.modalBalanceAmount, { color: selectedWalletForTransactions?.color }]}>
-                ฿{selectedWalletForTransactions?.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                ฿{selectedWalletForTransactions?.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </Text>
             </View>
           </View>
