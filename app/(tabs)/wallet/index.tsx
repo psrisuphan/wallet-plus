@@ -159,10 +159,10 @@ const WalletScreen = () => {
         </View>
         <View style={styles.actionButtons}>
           <TouchableOpacity onPress={() => openEditPage(item.id)} style={styles.actionIconButton}>
-            <Ionicons name="pencil-outline" size={20} color="#666" />
+            <Ionicons name="create" size={20} color="#666" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={[styles.actionIconButton, { marginLeft: 8 }]}>
-            <Ionicons name="trash-outline" size={20} color="#DC3545" />
+            <Ionicons name="trash" size={20} color="#DC3545" />
           </TouchableOpacity>
         </View>
       </View>
