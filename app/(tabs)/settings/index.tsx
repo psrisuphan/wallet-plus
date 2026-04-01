@@ -252,6 +252,8 @@ const SettingsIndex = () => {
                             <TouchableOpacity onPress={pickImage}>
                                 <Text style={styles.changePhotoText}>Change Profile Photo</Text>
                             </TouchableOpacity>
+                            {/* Display email here since it's uneditable */}
+                            <Text style={styles.modalEmailDisplay}>{email}</Text>
                         </View>
 
                         <View style={styles.editForm}>
@@ -264,13 +266,6 @@ const SettingsIndex = () => {
                                     placeholder="Enter your name"
                                     autoFocus
                                 />
-                            </View>
-                            
-                            <View style={styles.editInputGroup}>
-                                <Text style={styles.editLabel}>EMAIL (UNEDITABLE)</Text>
-                                <View style={[styles.editInput, { backgroundColor: '#F0F0F0' }]}>
-                                    <Text style={{ color: '#999', fontSize: 16 }}>{email}</Text>
-                                </View>
                             </View>
                         </View>
                     </ScrollView>
@@ -472,6 +467,12 @@ const styles = StyleSheet.create({
         color: ACCENT,
         fontSize: 15,
         fontWeight: '600',
+        marginBottom: 8,
+    },
+    modalEmailDisplay: {
+        fontSize: 14,
+        color: '#888',
+        fontWeight: '500',
     },
     editForm: {
         padding: 20,
