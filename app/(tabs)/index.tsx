@@ -90,7 +90,7 @@ export default function HomeScreen() {
                     <View style={styles.balanceCard}>
                         <View style={styles.balanceHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Ionicons name="wallet" size={20} color="#2E7D32" />
+                                <Ionicons name="cash" size={20} color="#2E7D32" />
                                 <Text style={styles.balanceLabel}>Total Balance</Text>
                             </View>
                             <Text style={styles.balanceDate}>
@@ -139,7 +139,10 @@ export default function HomeScreen() {
                     {/* Wallets Section */}
                     <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Your Wallets</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Ionicons name="wallet" size={20} color="#2E7D32" />
+                                <Text style={styles.sectionTitle}>Your Wallets</Text>
+                            </View>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/wallet')}>
                                 <Text style={styles.viewAllText}>View All</Text>
                             </TouchableOpacity>
