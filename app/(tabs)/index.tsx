@@ -158,8 +158,15 @@ export default function HomeScreen() {
                                     }}
                                 >
                                     <View style={styles.walletCardHeader}>
-                                        <View style={styles.walletIconContainer}>
-                                            <Ionicons name="card" size={18} color="#2E7D32" />
+                                        <View style={[
+                                            styles.walletIconContainer, 
+                                            { backgroundColor: `${item.color || '#2E7D32'}20` } // 20 is for 12% opacity roughly
+                                        ]}>
+                                            <Ionicons 
+                                                name={(item.icon || 'wallet') as any} 
+                                                size={20} 
+                                                color={item.color || '#2E7D32'} 
+                                            />
                                         </View>
                                         <Text style={styles.walletCardName} numberOfLines={1}>
                                             {item.name}
