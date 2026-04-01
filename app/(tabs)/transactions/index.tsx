@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, StatusBar, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, StatusBar, TouchableOpacity, ScrollView, SectionList, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
@@ -14,6 +15,11 @@ export default function TransactionsScreen() {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [wallets, setWallets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filterType, setFilterType] = useState<string>('all');
+    const [sortOrder, setSortOrder] = useState<string>('newest');
+    const [timeFilter, setTimeFilter] = useState<string>('all');
+    const [customDate, setCustomDate] = useState<Date>(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     useEffect(() => {
         const user = auth.currentUser;
@@ -56,9 +62,65 @@ export default function TransactionsScreen() {
         };
     }, []);
 
+    const processTransactions = () => {
+        let filtered = transactions.filter(t => {
+            if (filterType !== 'all' && t.type !== filterType) return false;
+            
+            const dateObj = t.date?.toDate ? t.date.toDate() : new Date();
+            const today = new Date();
+            
+            if (timeFilter === 'today') {
+                if (dateObj.toDateString() !== today.toDateString()) return false;
+            } else if (timeFilter === 'thisWeek') {
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                startOfWeek.setHours(0, 0, 0, 0);
+                if (dateObj < startOfWeek) return false;
+            } else if (timeFilter === 'thisMonth') {
+                if (dateObj.getMonth() !== today.getMonth() || dateObj.getFullYear() !== today.getFullYear()) return false;
+            } else if (timeFilter === 'custom') {
+                if (dateObj.toDateString() !== customDate.toDateString()) return false;
+            }
+            
+            return true;
+        });
+
+        filtered.sort((a, b) => {
+            const dateA = a.date?.toMillis ? a.date.toMillis() : Date.now();
+            const dateB = b.date?.toMillis ? b.date.toMillis() : Date.now();
+            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+        const groups: { [key: string]: any[] } = {};
+        filtered.forEach(t => {
+            const d = t.date?.toDate ? t.date.toDate() : new Date();
+            const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            
+            let headerStr = dateStr;
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (d.toDateString() === today.toDateString()) {
+                headerStr = 'Today';
+            } else if (d.toDateString() === yesterday.toDateString()) {
+                headerStr = 'Yesterday';
+            }
+            
+            if (!groups[headerStr]) {
+                groups[headerStr] = [];
+            }
+            groups[headerStr].push(t);
+        });
+
+        return Object.keys(groups).map(key => ({
+            title: key,
+            data: groups[key]
+        }));
+    };
+
     const renderTransactionItem = ({ item }: { item: any }) => {
         const dateObj = item.date?.toDate ? item.date.toDate() : new Date();
-        const dateStr = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
         const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
         return (
@@ -78,7 +140,7 @@ export default function TransactionsScreen() {
                         {item.note || item.categoryName || 'Transaction'}
                     </Text>
                     <Text style={styles.transactionTime}>
-                        {dateStr} • {timeStr}
+                        {timeStr}
                     </Text>
                     {item.walletId && (
                         <View style={styles.walletTagContainer}>
@@ -103,6 +165,70 @@ export default function TransactionsScreen() {
         <View style={styles.mainContainer}>
             <Header title="All Transactions" showBack={true} />
             <StatusBar barStyle="light-content" />
+            
+            <View style={styles.filterContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
+                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
+                        <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
+                        <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
+                        <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
+                        <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
+                        onPress={() => setShowDatePicker(true)}
+                    >
+                        <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
+                        <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
+                            {timeFilter === 'custom' ? customDate.toLocaleDateString('en-GB') : 'Custom'}
+                        </Text>
+                    </TouchableOpacity>
+                    
+                    <View style={styles.filterDivider} />
+
+                    <TouchableOpacity style={[styles.filterPill, filterType === 'all' && styles.filterPillActive]} onPress={() => setFilterType('all')}>
+                        <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All Types</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.filterPill, filterType === 'income' && styles.filterPillActive]} onPress={() => setFilterType('income')}>
+                        <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.filterPill, filterType === 'expense' && styles.filterPillActive]} onPress={() => setFilterType('expense')}>
+                        <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense</Text>
+                    </TouchableOpacity>
+                    
+                    <View style={styles.filterDivider} />
+                    
+                    <TouchableOpacity style={[styles.filterPill, sortOrder !== 'newest' && styles.filterPillActive]} onPress={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}>
+                        <Ionicons name={sortOrder === 'newest' ? "arrow-down" : "arrow-up"} size={14} color={sortOrder !== 'newest' ? '#FFF' : '#666'} />
+                        <Text style={[styles.filterText, sortOrder !== 'newest' && styles.filterTextActive]}>{sortOrder === 'newest' ? 'Newest' : 'Oldest'}</Text>
+                    </TouchableOpacity>
+                </ScrollView>
+            </View>
+
+            {showDatePicker && (
+                <DateTimePicker
+                    value={customDate}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                        setShowDatePicker(Platform.OS === 'ios');
+                        if (selectedDate) {
+                            setCustomDate(selectedDate);
+                            setTimeFilter('custom');
+                        }
+                        if (Platform.OS === 'android' || event.type === 'set' || event.type === 'dismissed') {
+                             setShowDatePicker(false);
+                        }
+                    }}
+                />
+            )}
+
             <View style={styles.content}>
                 {loading ? (
                     <View style={styles.centerContainer}>
@@ -113,13 +239,22 @@ export default function TransactionsScreen() {
                         <Ionicons name="receipt-outline" size={64} color="#E0E0E0" />
                         <Text style={styles.emptyText}>No transactions yet</Text>
                     </View>
+                ) : processTransactions().length === 0 ? (
+                    <View style={styles.centerContainer}>
+                        <Ionicons name="filter-outline" size={64} color="#E0E0E0" />
+                        <Text style={styles.emptyText}>No transactions match filters</Text>
+                    </View>
                 ) : (
-                    <FlatList
-                        data={transactions}
+                    <SectionList
+                        sections={processTransactions()}
                         keyExtractor={(item) => item.id}
                         renderItem={renderTransactionItem}
+                        renderSectionHeader={({ section: { title } }) => (
+                            <Text style={styles.sectionHeader}>{title}</Text>
+                        )}
                         contentContainerStyle={styles.listContainer}
                         showsVerticalScrollIndicator={false}
+                        stickySectionHeadersEnabled={false}
                     />
                 )}
             </View>
@@ -134,11 +269,55 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 20,
     },
     listContainer: {
         paddingBottom: 40,
+        paddingHorizontal: 20,
+    },
+    sectionHeader: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1a1a1a',
+        marginTop: 16,
+        marginBottom: 12,
+    },
+    filterContainer: {
+        paddingVertical: 12,
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    filterScrollContent: {
+        paddingHorizontal: 20,
+        gap: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    filterPill: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    filterPillActive: {
+        backgroundColor: PRIMARY_GREEN,
+    },
+    filterText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#666',
+    },
+    filterTextActive: {
+        color: '#FFFFFF',
+    },
+    filterDivider: {
+        width: 1,
+        height: 20,
+        backgroundColor: '#E0E0E0',
+        marginHorizontal: 4,
     },
     transactionRow: {
         flexDirection: 'row',
