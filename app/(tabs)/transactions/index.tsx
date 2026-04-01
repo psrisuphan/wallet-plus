@@ -239,19 +239,17 @@ export default function TransactionsScreen() {
                             </TouchableOpacity>
                         </View>
                         
-                        {activeFilterCount > 0 && (
-                            <TouchableOpacity 
-                                style={styles.resetFilterButton}
-                                onPress={() => {
-                                    setTimeFilter('all');
-                                    setFilterType('all');
-                                    setSortOrder('newest');
-                                }}
-                            >
-                                <Ionicons name="refresh-outline" size={16} color="#C62828" />
-                                <Text style={styles.resetFilterText}>Reset Filters</Text>
-                            </TouchableOpacity>
-                        )}
+                        <TouchableOpacity 
+                            style={styles.resetFilterButton}
+                            onPress={() => {
+                                setTimeFilter('all');
+                                setFilterType('all');
+                                setSortOrder('newest');
+                            }}
+                        >
+                            <Ionicons name="refresh-outline" size={16} color="#C62828" />
+                            <Text style={styles.resetFilterText}>Reset Filters</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
             </View>
