@@ -334,7 +334,7 @@ const SummaryScreen = () => {
                             <View style={styles.card}>
                                 <View style={styles.sectionHeader}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                        <Ionicons name="pie-chart-outline" size={18} color="#333" />
+                                        <Ionicons name="pie-chart-outline" size={18} color={EXPENSE_COLOR} />
                                         <Text style={styles.sectionTitle}>Expense Breakdown</Text>
                                     </View>
                                 </View>
@@ -351,34 +351,45 @@ const SummaryScreen = () => {
                                             </View>
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.breakdownName}>{cat.name}</Text>
+                                                <View style={styles.breakdownTrack}>
+                                                    <View style={[styles.breakdownFill, { width: `${cat.percentage}%`, backgroundColor: cat.color }]} />
+                                                </View>
                                             </View>
                                             <Text style={styles.breakdownAmount}>฿{cat.total.toLocaleString()}</Text>
                                         </View>
                                     ))
                                 )}
                             </View>
-                            
-                            {/* Top Expenses */}
-                            {topExpenses.length > 0 && (
-                                <View style={styles.card}>
-                                    <View style={styles.sectionHeader}>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                            <Ionicons name="flame-outline" size={18} color={EXPENSE_COLOR} />
-                                            <Text style={styles.sectionTitle}>Top Expenses</Text>
-                                        </View>
+
+                            <View style={styles.card}>
+                                <View style={styles.sectionHeader}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <Ionicons name="pie-chart-outline" size={18} color={INCOME_COLOR} />
+                                        <Text style={styles.sectionTitle}>Income Breakdown</Text>
                                     </View>
-                                    {topExpenses.map((t, index) => (
-                                        <View key={t.id} style={styles.topExpenseRow}>
-                                            <View style={styles.rankBadge}><Text style={styles.rankText}>{index+1}</Text></View>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.topExpenseName}>{t.categoryName}</Text>
-                                                <Text style={styles.topExpenseNote}>{t.note || t.walletName}</Text>
-                                            </View>
-                                            <Text style={styles.topExpenseAmount}>-฿{t.amount.toLocaleString()}</Text>
-                                        </View>
-                                    ))}
                                 </View>
-                            )}
+                                {incomeBreakdown.length === 0 ? (
+                                    <View style={styles.emptyState}>
+                                        <Ionicons name="cash-outline" size={40} color="#E0E0E0" />
+                                        <Text style={styles.emptyText}>No income {periodLabel.toLowerCase()}</Text>
+                                    </View>
+                                ) : (
+                                    incomeBreakdown.map((cat) => (
+                                        <View key={cat.name} style={styles.breakdownRow}>
+                                            <View style={[styles.categoryIconBg, { backgroundColor: cat.color + '20' }]}>
+                                                <Ionicons name={cat.icon as any} size={16} color={cat.color} />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.breakdownName}>{cat.name}</Text>
+                                                <View style={styles.breakdownTrack}>
+                                                    <View style={[styles.breakdownFill, { width: `${cat.percentage}%`, backgroundColor: cat.color }]} />
+                                                </View>
+                                            </View>
+                                            <Text style={[styles.breakdownAmount, { color: INCOME_COLOR }]}>฿{cat.total.toLocaleString()}</Text>
+                                        </View>
+                                    ))
+                                )}
+                            </View>
                         </>
                     ) : (
                         <>
@@ -515,7 +526,9 @@ const styles = StyleSheet.create({
     sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },
     breakdownRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
     categoryIconBg: { width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-    breakdownName: { fontSize: 14, fontWeight: '600', color: '#333' },
+    breakdownName: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 4 },
+    breakdownTrack: { height: 4, backgroundColor: '#F0F0F0', borderRadius: 2, overflow: 'hidden', width: '90%' },
+    breakdownFill: { height: '100%', borderRadius: 2 },
     breakdownAmount: { fontSize: 14, fontWeight: '700', color: EXPENSE_COLOR },
     topExpenseRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
     rankBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center' },
