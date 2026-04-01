@@ -18,6 +18,17 @@ interface Wallet {
   userId: string;
 }
 
+interface Transaction {
+  id: string;
+  type: 'expense' | 'income';
+  amount: number;
+  categoryName: string;
+  categoryIcon: string;
+  date: any;
+  note?: string;
+  walletId: string;
+}
+
 const WalletScreen = () => {
   const router = useRouter();
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -25,6 +36,12 @@ const WalletScreen = () => {
   const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedWalletForTransactions, setSelectedWalletForTransactions] = useState<Wallet | null>(null);
+  const [isTransactionsModalVisible, setIsTransactionsModalVisible] = useState(false);
+  const [walletTransactions, setWalletTransactions] = useState<Transaction[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [transactionSort, setTransactionSort] = useState<'newest' | 'oldest'>('newest');
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'day' | 'week' | 'month'>('all');
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -62,6 +79,69 @@ const WalletScreen = () => {
 
     return () => unsubscribeFirestore();
   }, [userId]);
+
+  useEffect(() => {
+    if (!selectedWalletForTransactions) {
+      setWalletTransactions([]);
+      return;
+    }
+
+    setLoadingTransactions(true);
+    const q = query(
+      collection(db, 'transactions'),
+      where('walletId', '==', selectedWalletForTransactions.id),
+      where('userId', '==', userId)
+    );
+
+    const unsubscribeTransactions = onSnapshot(q, (snapshot) => {
+      const transactionsData: Transaction[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Transaction[];
+      
+      // Sort based on transactionSort state
+      transactionsData.sort((a, b) => {
+        const dateA = a.date?.seconds || 0;
+        const dateB = b.date?.seconds || 0;
+        return transactionSort === 'newest' ? dateB - dateA : dateA - dateB;
+      });
+      
+      setWalletTransactions(transactionsData);
+      setLoadingTransactions(false);
+    }, (error) => {
+      console.error('Error fetching transactions:', error);
+      setLoadingTransactions(false);
+    });
+
+    return () => unsubscribeTransactions();
+  }, [selectedWalletForTransactions, userId, transactionSort]);
+
+  // Handle transaction filtering based on selected date range
+  const filteredTransactions = useMemo(() => {
+    if (transactionFilter === 'all') return walletTransactions;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    
+    // Calculate start of week (Monday)
+    const dayOfWeek = now.getDay(); // 0 is Sunday
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
+    const startOfWeek = new Date(now.setDate(diff)).setHours(0, 0, 0, 0);
+    
+    // Reset date for month calculation
+    const currentNow = new Date();
+    const startOfMonth = new Date(currentNow.getFullYear(), currentNow.getMonth(), 1).getTime();
+
+    return walletTransactions.filter(item => {
+      if (!item.date?.seconds) return false;
+      const transTime = item.date.seconds * 1000;
+
+      if (transactionFilter === 'day') return transTime >= startOfToday;
+      if (transactionFilter === 'week') return transTime >= startOfWeek;
+      if (transactionFilter === 'month') return transTime >= startOfMonth;
+      return true;
+    });
+  }, [walletTransactions, transactionFilter]);
 
   // Handle Search and Sorting
   const filteredAndSortedWallets = useMemo(() => {
@@ -147,10 +227,45 @@ const WalletScreen = () => {
     router.push('/(tabs)/wallet/add');
   };
 
+  const openTransactions = (wallet: Wallet) => {
+    setSelectedWalletForTransactions(wallet);
+    setIsTransactionsModalVisible(true);
+  };
+
+  const renderTransactionItem = ({ item }: { item: Transaction }) => (
+    <View style={styles.transactionItem}>
+      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? '#FF3B3015' : '#34C75915' }]}>
+        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? '#FF3B30' : '#34C759'} />
+      </View>
+      <View style={styles.transactionInfo}>
+        <Text style={styles.transactionCategory}>{item.categoryName}</Text>
+        {item.note ? <Text style={styles.transactionNote} numberOfLines={1}>{item.note}</Text> : null}
+      </View>
+      <View style={styles.transactionAmountContainer}>
+        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#34C759' }]}>
+          {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+        </Text>
+        <Text style={styles.transactionDate}>
+          {item.date?.seconds ? (
+            `${new Date(item.date.seconds * 1000).toLocaleDateString('th-TH', { 
+              day: 'numeric', 
+              month: 'short' 
+            })} ${new Date(item.date.seconds * 1000).toLocaleTimeString('th-TH', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            })}`
+          ) : 'Pending'}
+        </Text>
+      </View>
+    </View>
+  );
+
   const renderWalletItem = ({ item }: { item: Wallet }) => (
     <TouchableOpacity 
       style={styles.walletItem}
-      onPress={() => openEditPage(item.id)}
+      onPress={() => openTransactions(item)}
+      activeOpacity={0.7}
     >
       <View style={styles.walletHeader}>
         <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
@@ -160,9 +275,14 @@ const WalletScreen = () => {
           <Text style={styles.walletName}>{item.name}</Text>
           {item.detail ? <Text style={styles.walletDetail} numberOfLines={1}>{item.detail}</Text> : null}
         </View>
-        <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={styles.deleteIconButton}>
-          <Ionicons name="trash-outline" size={20} color="#DC3545" />
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity onPress={() => openEditPage(item.id)} style={styles.actionIconButton}>
+            <Ionicons name="create" size={20} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={[styles.actionIconButton, { marginLeft: 8 }]}>
+            <Ionicons name="trash" size={20} color="#DC3545" />
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.walletBody}>
         <Text style={styles.balanceLabel}>Balance</Text>
@@ -279,6 +399,107 @@ const WalletScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       </View>
+
+      {/* Transactions Modal */}
+      <Modal
+        visible={isTransactionsModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setIsTransactionsModalVisible(false)}
+      >
+        <View style={styles.modalFullContent}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderTop}>
+              <View style={[styles.modalWalletBadge, { backgroundColor: selectedWalletForTransactions?.color + '15' }]}>
+                <Ionicons name={selectedWalletForTransactions?.icon as any} size={20} color={selectedWalletForTransactions?.color} />
+                <Text style={[styles.modalWalletName, { color: selectedWalletForTransactions?.color }]}>
+                  {selectedWalletForTransactions?.name}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsTransactionsModalVisible(false)} style={styles.modalCloseButton}>
+                <Ionicons name="close-circle" size={28} color="#CCC" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBalanceSection}>
+              <Text style={styles.modalBalanceLabel}>Current Balance</Text>
+              <Text style={[styles.modalBalanceAmount, { color: selectedWalletForTransactions?.color }]}>
+                ฿{selectedWalletForTransactions?.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.modalBody}>
+            <View style={styles.modalFilterContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {(['all', 'day', 'week', 'month'] as const).map((filter) => (
+                  <TouchableOpacity
+                    key={filter}
+                    style={[
+                      styles.modalFilterButton,
+                      transactionFilter === filter && styles.modalFilterButtonActive
+                    ]}
+                    onPress={() => setTransactionFilter(filter)}
+                  >
+                    <Text style={[
+                      styles.modalFilterButtonText,
+                      transactionFilter === filter && styles.modalFilterButtonTextActive
+                    ]}>
+                      {filter === 'all' ? 'All Time' : filter === 'day' ? 'Today' : filter === 'week' ? 'This Week' : 'This Month'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.modalBodyHeader}>
+              <View>
+                <Text style={styles.modalSectionTitle}>Transactions</Text>
+                {!loadingTransactions && (
+                  <Text style={styles.modalSubTitle}>
+                    {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transaction' : 'transactions'} found
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity 
+                style={styles.modalSortToggle} 
+                onPress={() => setTransactionSort(prev => prev === 'newest' ? 'oldest' : 'newest')}
+              >
+                <Ionicons 
+                  name={transactionSort === 'newest' ? "arrow-down" : "arrow-up"} 
+                  size={14} 
+                  color={WHITE_GREEN} 
+                />
+                <Text style={styles.modalSortToggleText}>
+                  {transactionSort === 'newest' ? 'Newest' : 'Oldest'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {loadingTransactions ? (
+              <View style={styles.modalLoading}>
+                <ActivityIndicator size="small" color={WHITE_GREEN} />
+                <Text style={styles.modalLoadingText}>Loading transactions...</Text>
+              </View>
+            ) : filteredTransactions.length > 0 ? (
+              <FlatList
+                data={filteredTransactions}
+                renderItem={renderTransactionItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 40 }}
+              />
+            ) : (
+              <View style={styles.modalEmpty}>
+                <Ionicons name="receipt-outline" size={60} color="#EEE" />
+                <Text style={styles.modalEmptyText}>
+                  {transactionFilter === 'all' 
+                    ? 'No transactions for this wallet yet.' 
+                    : `No transactions found for this ${transactionFilter === 'day' ? 'day' : transactionFilter}.`}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -408,7 +629,11 @@ const styles = StyleSheet.create({
     color: '#777',
     marginTop: 2,
   },
-  deleteIconButton: {
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIconButton: {
     padding: 8,
   },
   walletBody: {
@@ -519,6 +744,181 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: WHITE_GREEN,
+  },
+  // Modal Styles
+  modalFullContent: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    padding: 24,
+    backgroundColor: '#FAFAFA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  modalHeaderTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalWalletBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  modalWalletName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalBalanceSection: {
+    alignItems: 'center',
+  },
+  modalBalanceLabel: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  modalBalanceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
+  modalSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  modalSubTitle: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  modalFilterContainer: {
+    marginBottom: 20,
+    backgroundColor: '#F8F9FA',
+    padding: 8,
+    borderRadius: 12,
+  },
+  modalFilterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginRight: 8,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  modalFilterButtonActive: {
+    backgroundColor: WHITE_GREEN,
+  },
+  modalFilterButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+  },
+  modalFilterButtonTextActive: {
+    color: 'white',
+  },
+  modalBodyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  modalSortToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: WHITE_GREEN + '10',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: WHITE_GREEN + '30',
+  },
+  modalSortToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: WHITE_GREEN,
+    marginLeft: 4,
+  },
+  modalLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalLoadingText: {
+    marginTop: 10,
+    color: '#999',
+    fontSize: 14,
+  },
+  modalEmpty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  modalEmptyText: {
+    marginTop: 10,
+    color: '#CCC',
+    fontSize: 16,
+  },
+  // Transaction Item Styles
+  transactionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
+  },
+  transactionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  transactionInfo: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  transactionCategory: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  transactionNote: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  transactionAmountContainer: {
+    alignItems: 'flex-end',
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  transactionDate: {
+    fontSize: 11,
+    color: '#BBB',
+    marginTop: 2,
   },
 });
 

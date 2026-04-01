@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Text,
   StyleSheet,
@@ -14,7 +14,7 @@ import {
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { collection, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 
@@ -59,11 +59,22 @@ const AddWalletScreen = () => {
   
   const scrollViewRef = useRef<ScrollView>(null);
 
-  useEffect(() => {
-    if (id) {
-      loadWalletData(id);
-    }
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        setInitialLoading(true);
+        loadWalletData(id);
+      } else {
+        // Reset state for new wallet
+        setName('');
+        setIcon(ICONS[0]);
+        setColor(COLORS[0]);
+        setDetail('');
+        setBalance('');
+        setInitialLoading(false);
+      }
+    }, [id])
+  );
 
   const loadWalletData = async (walletId: string) => {
     try {
