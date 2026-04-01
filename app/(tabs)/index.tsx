@@ -306,7 +306,7 @@ export default function HomeScreen() {
                                                 { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
                                             ]}>
                                                 <Ionicons 
-                                                    name={item.type === 'income' ? "arrow-up" : "arrow-down"} 
+                                                    name={(item.categoryIcon || (item.type === 'income' ? "arrow-up" : "arrow-down")) as any} 
                                                     size={18} 
                                                     color={item.type === 'income' ? PRIMARY_GREEN : '#C62828'} 
                                                 />
