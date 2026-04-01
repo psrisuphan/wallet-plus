@@ -235,7 +235,7 @@ export default function TransactionsScreen() {
 
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Time Period</Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
                                 <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
                                     <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
                                 </TouchableOpacity>
@@ -260,22 +260,26 @@ export default function TransactionsScreen() {
                             </ScrollView>
                         </View>
 
-                        <Text style={styles.filterCategoryTitle}>Transaction Type</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-                            <TouchableOpacity style={[styles.filterPill, filterType === 'all' && styles.filterPillActive]} onPress={() => setFilterType('all')}>
-                                <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All Types</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterPill, filterType === 'income' && styles.filterPillActive]} onPress={() => setFilterType('income')}>
-                                <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterPill, filterType === 'expense' && styles.filterPillActive]} onPress={() => setFilterType('expense')}>
-                                <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense</Text>
-                            </TouchableOpacity>
-                        </ScrollView>
+                        <View style={styles.filterSection}>
+                            <Text style={styles.filterCategoryTitle}>Transaction Type</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
+                                <TouchableOpacity style={[styles.filterPill, filterType === 'all' && styles.filterPillActive]} onPress={() => setFilterType('all')}>
+                                    <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All Types</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, filterType === 'income' && styles.filterPillActive]} onPress={() => setFilterType('income')}>
+                                    <Ionicons name="trending-up" size={14} color={filterType === 'income' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income Only</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, filterType === 'expense' && styles.filterPillActive]} onPress={() => setFilterType('expense')}>
+                                    <Ionicons name="trending-down" size={14} color={filterType === 'expense' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense Only</Text>
+                                </TouchableOpacity>
+                            </ScrollView>
+                        </View>
                         
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Sort Order</Text>
-                            <View style={{ paddingHorizontal: 20, flexDirection: 'row', gap: 8 }}>
+                            <View style={styles.filterRowContainer}>
                                 <TouchableOpacity style={[styles.filterPill, sortOrder === 'newest' && styles.filterPillActive]} onPress={() => setSortOrder('newest')}>
                                     <Ionicons name="arrow-down" size={14} color={sortOrder === 'newest' ? '#FFF' : '#666'} />
                                     <Text style={[styles.filterText, sortOrder === 'newest' && styles.filterTextActive]}>Newest First</Text>
@@ -289,7 +293,7 @@ export default function TransactionsScreen() {
 
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Category</Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterIconScroll}>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterIconScroll} contentContainerStyle={styles.filterScrollContent}>
                                 <TouchableOpacity 
                                     style={[styles.categoryIconPill, categoryFilter === 'all' && styles.categoryIconPillActive]} 
                                     onPress={() => setCategoryFilter('all')}
@@ -466,8 +470,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     expandedFilters: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
+        padding: 20,
         gap: 16,
     },
     filterSection: {
@@ -489,12 +492,13 @@ const styles = StyleSheet.create({
     },
     filterPillScroll: {
         marginHorizontal: -20,
-        paddingHorizontal: 20,
+    },
+    filterRowContainer: {
+        flexDirection: 'row',
+        gap: 8,
     },
     filterIconScroll: {
         marginHorizontal: -20,
-        paddingHorizontal: 20,
-        marginTop: 4,
     },
     categoryIconPill: {
         width: 44,
@@ -531,7 +535,6 @@ const styles = StyleSheet.create({
         color: '#888',
         marginTop: 10,
         marginBottom: 8,
-        paddingHorizontal: 20,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
