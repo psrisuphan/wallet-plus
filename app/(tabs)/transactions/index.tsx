@@ -95,23 +95,12 @@ export default function TransactionsScreen() {
         const groups: { [key: string]: any[] } = {};
         filtered.forEach(t => {
             const d = t.date?.toDate ? t.date.toDate() : new Date();
-            const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             
-            let headerStr = dateStr;
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            if (d.toDateString() === today.toDateString()) {
-                headerStr = 'Today';
-            } else if (d.toDateString() === yesterday.toDateString()) {
-                headerStr = 'Yesterday';
+            if (!groups[dateStr]) {
+                groups[dateStr] = [];
             }
-            
-            if (!groups[headerStr]) {
-                groups[headerStr] = [];
-            }
-            groups[headerStr].push(t);
+            groups[dateStr].push(t);
         });
 
         return Object.keys(groups).map(key => ({
@@ -293,7 +282,11 @@ export default function TransactionsScreen() {
                         keyExtractor={(item) => item.id}
                         renderItem={renderTransactionItem}
                         renderSectionHeader={({ section: { title } }) => (
-                            <Text style={styles.sectionHeader}>{title}</Text>
+                            <View style={styles.dateHeaderContainer}>
+                                <View style={styles.dateHeaderLine} />
+                                <Text style={styles.sectionHeader}>{title}</Text>
+                                <View style={styles.dateHeaderLine} />
+                            </View>
                         )}
                         contentContainerStyle={styles.listContainer}
                         showsVerticalScrollIndicator={false}
@@ -318,11 +311,23 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     sectionHeader: {
-        fontSize: 18,
+        fontSize: 13,
         fontWeight: '700',
-        color: '#1a1a1a',
-        marginTop: 16,
-        marginBottom: 12,
+        color: '#999',
+        marginHorizontal: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    dateHeaderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 32,
+        marginBottom: 16,
+    },
+    dateHeaderLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E0E0E0',
     },
     filterContainer: {
         backgroundColor: '#FFFFFF',
