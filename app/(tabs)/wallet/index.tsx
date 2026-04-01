@@ -218,10 +218,16 @@ const WalletScreen = () => {
           {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
-          {item.date?.seconds ? new Date(item.date.seconds * 1000).toLocaleDateString('th-TH', { 
-            day: 'numeric', 
-            month: 'short' 
-          }) : 'Pending'}
+          {item.date?.seconds ? (
+            `${new Date(item.date.seconds * 1000).toLocaleDateString('th-TH', { 
+              day: 'numeric', 
+              month: 'short' 
+            })} ${new Date(item.date.seconds * 1000).toLocaleTimeString('th-TH', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            })}`
+          ) : 'Pending'}
         </Text>
       </View>
     </View>
