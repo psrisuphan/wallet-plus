@@ -70,7 +70,7 @@ export default function HomeScreen() {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
             <Header 
-                title="Wallet+" 
+                title="Overview" 
                 showLogo={false} 
                 profileImage={profileImage}
                 onProfilePress={() => {
