@@ -32,7 +32,7 @@ const CATEGORY_COLORS: { [key: string]: string } = {
     'Other': '#D5DBDB',
 };
 
-type Period = 'weekly' | 'monthly' | 'yearly';
+type Period = 'today' | 'weekly' | 'monthly' | 'yearly';
 
 interface Transaction {
     id: string;
@@ -55,7 +55,7 @@ interface CategoryBreakdown {
 }
 
 const SummaryScreen = () => {
-    const [period, setPeriod] = useState<Period>('monthly');
+    const [period, setPeriod] = useState<Period>('today');
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -63,6 +63,9 @@ const SummaryScreen = () => {
         const now = new Date();
         const start = new Date();
         switch (p) {
+            case 'today':
+                // Already at now, just set to start of day
+                break;
             case 'weekly':
                 start.setDate(now.getDate() - 7);
                 break;
@@ -174,7 +177,7 @@ const SummaryScreen = () => {
 
     const maxBarValue = Math.max(totalIncome, totalExpense, 1);
 
-    const periodLabel = period === 'weekly' ? 'This Week' : period === 'monthly' ? 'This Month' : 'This Year';
+    const periodLabel = period === 'today' ? 'Today' : period === 'weekly' ? 'This Week' : period === 'monthly' ? 'This Month' : 'This Year';
 
     if (loading) {
         return (
@@ -198,14 +201,14 @@ const SummaryScreen = () => {
 
                     {/* Period Selector */}
                     <View style={styles.periodContainer}>
-                        {(['weekly', 'monthly', 'yearly'] as Period[]).map((p) => (
+                        {(['today', 'weekly', 'monthly', 'yearly'] as Period[]).map((p) => (
                             <TouchableOpacity
                                 key={p}
                                 style={[styles.periodButton, period === p && styles.periodButtonActive]}
                                 onPress={() => setPeriod(p)}
                             >
                                 <Text style={[styles.periodText, period === p && styles.periodTextActive]}>
-                                    {p === 'weekly' ? 'Week' : p === 'monthly' ? 'Month' : 'Year'}
+                                    {p === 'today' ? 'Today' : p === 'weekly' ? 'Week' : p === 'monthly' ? 'Month' : 'Year'}
                                 </Text>
                             </TouchableOpacity>
                         ))}
