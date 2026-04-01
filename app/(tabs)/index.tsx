@@ -3,9 +3,12 @@ import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [displayName, setDisplayName] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -13,7 +16,9 @@ export default function HomeScreen() {
             if (user) {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
-                    setProfileImage(userDoc.data().profilePictureBase64);
+                    const data = userDoc.data();
+                    setProfileImage(data.profilePictureBase64);
+                    setDisplayName(data.displayName);
                 }
             }
         };
@@ -29,8 +34,7 @@ export default function HomeScreen() {
                 showLogo={false} 
                 profileImage={profileImage}
                 onProfilePress={() => {
-                    // We can add profile page navigation later as requested
-                    console.log('Profile icon pressed');
+                    router.push('/(tabs)/settings'); // Correct path to main settings
                 }}
             />
             <View style={styles.content}>
