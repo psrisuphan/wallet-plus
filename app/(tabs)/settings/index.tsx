@@ -173,9 +173,8 @@ const SettingsIndex = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Danger Zone */}
+                {/* Account Section - Logout */}
                 <View style={[styles.section, { borderBottomWidth: 0, marginTop: 12 }]}>
-                    <Text style={[styles.sectionTitle, { color: '#FF3B30' }]}>Danger Zone</Text>
                     <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
                         <Ionicons name="log-out-outline" size={24} color="#FFF" />
                         <Text style={styles.signOutText}>Sign Out Account</Text>
