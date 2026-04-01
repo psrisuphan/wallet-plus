@@ -171,7 +171,12 @@ export default function TransactionsScreen() {
         );
     };
 
-    const uniqueCategories = Array.from(new Set(transactions.map(t => t.categoryName))).filter(Boolean).sort();
+    const uniqueCategories = transactions.reduce((acc: any[], t) => {
+        if (t.categoryName && !acc.find(c => c.name === t.categoryName)) {
+            acc.push({ name: t.categoryName, icon: t.categoryIcon });
+        }
+        return acc;
+    }, []).sort((a, b) => a.name.localeCompare(b.name));
 
     const activeFilterCount = (timeFilter !== 'all' ? 1 : 0) + 
                               (filterType !== 'all' ? 1 : 0) + 
@@ -221,27 +226,6 @@ export default function TransactionsScreen() {
                         </View>
 
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterCategoryTitle}>Category</Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll}>
-                                <TouchableOpacity 
-                                    style={[styles.filterPill, categoryFilter === 'all' && styles.filterPillActive]} 
-                                    onPress={() => setCategoryFilter('all')}
-                                >
-                                    <Text style={[styles.filterText, categoryFilter === 'all' && styles.filterTextActive]}>All Categories</Text>
-                                </TouchableOpacity>
-                                {uniqueCategories.map((cat, idx) => (
-                                    <TouchableOpacity 
-                                        key={idx}
-                                        style={[styles.filterPill, categoryFilter === cat && styles.filterPillActive]} 
-                                        onPress={() => setCategoryFilter(cat as string)}
-                                    >
-                                        <Text style={[styles.filterText, categoryFilter === cat && styles.filterTextActive]}>{cat as string}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-
-                        <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Time Period</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
                                 <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
@@ -281,16 +265,43 @@ export default function TransactionsScreen() {
                             </TouchableOpacity>
                         </ScrollView>
                         
-                        <Text style={styles.filterCategoryTitle}>Sort Order</Text>
-                        <View style={{ paddingHorizontal: 20, flexDirection: 'row', gap: 8 }}>
-                            <TouchableOpacity style={[styles.filterPill, sortOrder === 'newest' && styles.filterPillActive]} onPress={() => setSortOrder('newest')}>
-                                <Ionicons name="arrow-down" size={14} color={sortOrder === 'newest' ? '#FFF' : '#666'} />
-                                <Text style={[styles.filterText, sortOrder === 'newest' && styles.filterTextActive]}>Newest First</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterPill, sortOrder === 'oldest' && styles.filterPillActive]} onPress={() => setSortOrder('oldest')}>
-                                <Ionicons name="arrow-up" size={14} color={sortOrder === 'oldest' ? '#FFF' : '#666'} />
-                                <Text style={[styles.filterText, sortOrder === 'oldest' && styles.filterTextActive]}>Oldest First</Text>
-                            </TouchableOpacity>
+                        <View style={styles.filterSection}>
+                            <Text style={styles.filterCategoryTitle}>Sort Order</Text>
+                            <View style={{ paddingHorizontal: 20, flexDirection: 'row', gap: 8 }}>
+                                <TouchableOpacity style={[styles.filterPill, sortOrder === 'newest' && styles.filterPillActive]} onPress={() => setSortOrder('newest')}>
+                                    <Ionicons name="arrow-down" size={14} color={sortOrder === 'newest' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, sortOrder === 'newest' && styles.filterTextActive]}>Newest First</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, sortOrder === 'oldest' && styles.filterPillActive]} onPress={() => setSortOrder('oldest')}>
+                                    <Ionicons name="arrow-up" size={14} color={sortOrder === 'oldest' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, sortOrder === 'oldest' && styles.filterTextActive]}>Oldest First</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View style={styles.filterSection}>
+                            <Text style={styles.filterCategoryTitle}>Category</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterIconScroll}>
+                                <TouchableOpacity 
+                                    style={[styles.categoryIconPill, categoryFilter === 'all' && styles.categoryIconPillActive]} 
+                                    onPress={() => setCategoryFilter('all')}
+                                >
+                                    <Ionicons name="grid-outline" size={20} color={categoryFilter === 'all' ? '#FFF' : '#666'} />
+                                </TouchableOpacity>
+                                {uniqueCategories.map((cat, idx) => (
+                                    <TouchableOpacity 
+                                        key={idx}
+                                        style={[styles.categoryIconPill, categoryFilter === cat.name && styles.categoryIconPillActive]} 
+                                        onPress={() => setCategoryFilter(cat.name)}
+                                    >
+                                        <Ionicons 
+                                            name={(cat.icon || 'help-outline') as any} 
+                                            size={20} 
+                                            color={categoryFilter === cat.name ? '#FFF' : '#666'} 
+                                        />
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
                         </View>
                         
                         <TouchableOpacity 
@@ -474,7 +485,24 @@ const styles = StyleSheet.create({
     filterPillScroll: {
         marginHorizontal: -20,
         paddingHorizontal: 20,
-        },
+    },
+    filterIconScroll: {
+        marginHorizontal: -20,
+        paddingHorizontal: 20,
+        marginTop: 4,
+    },
+    categoryIconPill: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F0F0F0',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 10,
+    },
+    categoryIconPillActive: {
+        backgroundColor: PRIMARY_GREEN,
+    },
     resetFilterButton: {
         flexDirection: 'row',
         alignItems: 'center',
