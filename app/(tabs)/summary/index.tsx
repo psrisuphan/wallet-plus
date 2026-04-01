@@ -260,13 +260,13 @@ const SummaryScreen = () => {
                     style={[styles.tab, viewMode === 'overview' && styles.activeTab]} 
                     onPress={() => setViewMode('overview')}
                 >
-                    <Text style={[styles.tabText, viewMode === 'overview' && styles.activeTabText]}>Overview</Text>
+                    <Text style={[styles.tabText, viewMode === 'overview' && styles.activeTabText]}>Net</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={[styles.tab, viewMode === 'comparison' && styles.activeTab]} 
                     onPress={() => setViewMode('comparison')}
                 >
-                    <Text style={[styles.tabText, viewMode === 'comparison' && styles.activeTabText]}>Comparison</Text>
+                    <Text style={[styles.tabText, viewMode === 'comparison' && styles.activeTabText]}>Bar Chart</Text>
                 </TouchableOpacity>
             </View>
 
