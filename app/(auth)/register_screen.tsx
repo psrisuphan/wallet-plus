@@ -23,7 +23,7 @@ import * as ImagePicker from 'expo-image-picker';
 const ACCENT = '#699e8aff';
 
 export default function RegisterScreen() {
-    const [username, setUsername] = useState('');
+    const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -54,8 +54,8 @@ export default function RegisterScreen() {
     };
 
     const handleRegister = async () => {
-        if (!username.trim()) {
-            Alert.alert('Missing Info', 'Please enter a username.');
+        if (!displayName.trim()) {
+            Alert.alert('Missing Info', 'Please enter a display name.');
             return;
         }
         if (!email || !password || !confirmPassword) {
@@ -80,7 +80,7 @@ export default function RegisterScreen() {
             // 2. Create the user profile document in Firestore
             await setDoc(doc(db, 'users', user.uid), {
                 uid: user.uid,
-                username: username.trim(),
+                displayName: displayName.trim(),
                 email: email.toLowerCase().trim(),
                 profilePictureBase64: profileImageBase64 ?? null,
                 createdAt: serverTimestamp(),
@@ -132,11 +132,11 @@ export default function RegisterScreen() {
                         {/* Form Fields */}
                         <TextInput
                             style={styles.input}
-                            placeholder="Username"
+                            placeholder="Display Name"
                             placeholderTextColor="#999"
-                            value={username}
-                            onChangeText={setUsername}
-                            autoCapitalize="none"
+                            value={displayName}
+                            onChangeText={setDisplayName}
+                            autoCapitalize="words"
                         />
 
                         <TextInput
