@@ -186,7 +186,7 @@ const EditTransactionScreen = () => {
     };
 
     const submitUpdate = async (parsedAmount: number) => {
-        if (!selectedWallet) return;
+        if (!auth.currentUser || !selectedWallet) return;
         setIsSaving(true);
         try {
             const batch = writeBatch(db);
