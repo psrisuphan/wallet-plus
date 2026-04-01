@@ -148,8 +148,7 @@ export default function HomeScreen() {
                         <FlatList
                             data={wallets}
                             keyExtractor={(item) => item.id}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
+                            scrollEnabled={false}
                             contentContainerStyle={styles.walletsList}
                             renderItem={({ item }) => (
                                 <TouchableOpacity 
@@ -165,10 +164,10 @@ export default function HomeScreen() {
                                         <Text style={styles.walletCardName} numberOfLines={1}>
                                             {item.name}
                                         </Text>
+                                        <Text style={styles.walletCardBalance}>
+                                            ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </Text>
                                     </View>
-                                    <Text style={styles.walletCardBalance}>
-                                        ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </Text>
                                 </TouchableOpacity>
                             )}
                         />
@@ -262,11 +261,10 @@ const styles = StyleSheet.create({
     },
     walletsList: {
         paddingHorizontal: 4,
-        gap: 16,
+        gap: 12,
     },
     walletCard: {
         backgroundColor: '#fff',
-        width: 160,
         padding: 16,
         borderRadius: 20,
         borderWidth: 1,
@@ -280,25 +278,24 @@ const styles = StyleSheet.create({
     walletCardHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
-        gap: 8,
+        gap: 12,
     },
     walletIconContainer: {
-        width: 32,
-        height: 32,
-        borderRadius: 10,
+        width: 40,
+        height: 40,
+        borderRadius: 12,
         backgroundColor: '#F1F8E9',
         justifyContent: 'center',
         alignItems: 'center',
     },
     walletCardName: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '600',
-        color: '#666',
+        color: '#333',
         flex: 1,
     },
     walletCardBalance: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '700',
         color: '#1a1a1a',
     },
