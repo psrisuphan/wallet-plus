@@ -313,19 +313,12 @@ export default function HomeScreen() {
                                             </View>
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.walletRowName} numberOfLines={1}>
-                                                    {item.category || item.note || 'Transaction'}
+                                                    {item.note || item.categoryName || 'Transaction'}
                                                 </Text>
                                                 <Text style={{ fontSize: 12, color: '#999' }}>
                                                     {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                    {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                                                 </Text>
-                                                {item.walletId && (
-                                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
-                                                        <Ionicons name="wallet-outline" size={12} color="#888" />
-                                                        <Text style={{ fontSize: 12, color: '#888', fontWeight: '500' }}>
-                                                            {wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}
-                                                        </Text>
-                                                    </View>
-                                                )}
                                             </View>
                                             <Text style={[
                                                 styles.walletRowBalance,

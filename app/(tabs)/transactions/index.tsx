@@ -75,7 +75,7 @@ export default function TransactionsScreen() {
                 </View>
                 <View style={styles.transactionDetails}>
                     <Text style={styles.transactionName} numberOfLines={1}>
-                        {item.category || item.note || 'Transaction'}
+                        {item.note || item.categoryName || 'Transaction'}
                     </Text>
                     <Text style={styles.transactionTime}>
                         {dateStr} • {timeStr}
