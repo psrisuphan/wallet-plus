@@ -296,7 +296,8 @@ export default function TransactionsScreen() {
                                     style={[styles.categoryIconPill, categoryFilter === 'all' && styles.categoryIconPillActive]} 
                                     onPress={() => setCategoryFilter('all')}
                                 >
-                                    <Ionicons name="grid-outline" size={20} color={categoryFilter === 'all' ? '#FFF' : '#666'} />
+                                    <Ionicons name="grid-outline" size={18} color={categoryFilter === 'all' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, categoryFilter === 'all' && styles.filterTextActive]}>All</Text>
                                 </TouchableOpacity>
                                 {uniqueCategories.map((cat, idx) => (
                                     <TouchableOpacity 
@@ -306,9 +307,12 @@ export default function TransactionsScreen() {
                                     >
                                         <Ionicons 
                                             name={(cat.icon || 'help-outline') as any} 
-                                            size={20} 
+                                            size={18} 
                                             color={categoryFilter === cat.name ? '#FFF' : '#666'} 
                                         />
+                                        <Text style={[styles.filterText, categoryFilter === cat.name && styles.filterTextActive]}>
+                                            {cat.name}
+                                        </Text>
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
@@ -499,13 +503,13 @@ const styles = StyleSheet.create({
         marginHorizontal: -20,
     },
     categoryIconPill: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#F0F0F0',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 25,
+        backgroundColor: '#F5F5F5',
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 10,
+        gap: 8,
     },
     categoryIconPillActive: {
         backgroundColor: PRIMARY_GREEN,
