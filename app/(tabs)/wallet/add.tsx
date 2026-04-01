@@ -148,6 +148,7 @@ const AddWalletScreen = () => {
         // Create
         await addDoc(collection(db, 'wallets'), {
           ...walletData,
+          userId: user.uid,
           createdAt: new Date(),
         });
         Alert.alert('Success', 'Wallet created successfully!');

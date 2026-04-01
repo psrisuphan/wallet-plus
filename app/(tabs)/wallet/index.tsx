@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -31,6 +31,7 @@ interface Transaction {
 
 const WalletScreen = () => {
   const router = useRouter();
+  const params = useLocalSearchParams<{ search?: string, ts?: string }>();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
@@ -55,6 +56,24 @@ const WalletScreen = () => {
 
     return () => unsubscribeAuth();
   }, []);
+
+  // Handle incoming search from deep linking
+  useEffect(() => {
+    if (params.search) {
+      setSearchQuery(params.search);
+    }
+  }, [params.search, params.ts]);
+
+  // Clear search whenever the screen loses focus (user navigates to another tab)
+  useFocusEffect(
+    useCallback(() => {
+      // Component is focused
+      return () => {
+        // Component is blurred
+        setSearchQuery('');
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (!userId) {
@@ -234,23 +253,23 @@ const WalletScreen = () => {
 
   const renderTransactionItem = ({ item }: { item: Transaction }) => (
     <View style={styles.transactionItem}>
-      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? '#FF3B3015' : '#34C75915' }]}>
-        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? '#FF3B30' : '#34C759'} />
+      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? '#FF3B3015' : '#699E8A15' }]}>
+        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? '#FF3B30' : '#699E8A'} />
       </View>
       <View style={styles.transactionInfo}>
         <Text style={styles.transactionCategory}>{item.categoryName}</Text>
         {item.note ? <Text style={styles.transactionNote} numberOfLines={1}>{item.note}</Text> : null}
       </View>
       <View style={styles.transactionAmountContainer}>
-        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#34C759' }]}>
-          {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#699E8A' }]}>
+          {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
           {item.date?.seconds ? (
-            `${new Date(item.date.seconds * 1000).toLocaleDateString('th-TH', { 
+            `${new Date(item.date.seconds * 1000).toLocaleDateString('en-US', { 
               day: 'numeric', 
               month: 'short' 
-            })} ${new Date(item.date.seconds * 1000).toLocaleTimeString('th-TH', {
+            })} ${new Date(item.date.seconds * 1000).toLocaleTimeString('en-US', {
               hour: '2-digit',
               minute: '2-digit',
               hour12: false
@@ -268,8 +287,8 @@ const WalletScreen = () => {
       activeOpacity={0.7}
     >
       <View style={styles.walletHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
-          <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#333'} />
+        <View style={[styles.iconContainer, { backgroundColor: `${item.color?.length === 9 ? item.color.slice(0, 7) : (item.color || '#699E8A')}15` }]}>
+          <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#699E8A'} />
         </View>
         <View style={styles.walletInfo}>
           <Text style={styles.walletName}>{item.name}</Text>
@@ -286,7 +305,7 @@ const WalletScreen = () => {
       </View>
       <View style={styles.walletBody}>
         <Text style={styles.balanceLabel}>Balance</Text>
-        <Text style={[styles.walletBalance, { color: item.color }]}>฿{item.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</Text>
+        <Text style={[styles.walletBalance, { color: item.color }]}>฿{item.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -423,7 +442,7 @@ const WalletScreen = () => {
             <View style={styles.modalBalanceSection}>
               <Text style={styles.modalBalanceLabel}>Current Balance</Text>
               <Text style={[styles.modalBalanceAmount, { color: selectedWalletForTransactions?.color }]}>
-                ฿{selectedWalletForTransactions?.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                ฿{selectedWalletForTransactions?.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </Text>
             </View>
           </View>
