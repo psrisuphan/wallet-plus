@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
-import { useLocalSearchParams } from 'expo-router';
 
 const WHITE_GREEN = '#699e8aff';
 interface Wallet {
@@ -58,11 +57,16 @@ const WalletScreen = () => {
     return () => unsubscribeAuth();
   }, []);
 
-  useEffect(() => {
-    if (params.search) {
-      setSearchQuery(params.search);
-    }
-  }, [params.search]);
+  useFocusEffect(
+    useCallback(() => {
+      // If we have a search param, set it. Otherwise reset search.
+      if (params.search) {
+        setSearchQuery(params.search);
+      } else {
+        setSearchQuery('');
+      }
+    }, [params.search])
+  );
 
   useEffect(() => {
     if (!userId) {
