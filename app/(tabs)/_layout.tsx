@@ -46,7 +46,7 @@ const TabsLayout = () => {
                 }}
             />
             <Tabs.Screen
-                name="new_transaction/index"
+                name="transactions/new"
                 options={{
                     title: "Add",
                     tabBarIcon: ({ color, focused }) => (
@@ -89,7 +89,7 @@ const TabsLayout = () => {
                 }}
             />
             <Tabs.Screen
-                name="edit_transaction/[id]"
+                name="transactions/[id]"
                 options={{
                     href: null,
                     headerShown: false,

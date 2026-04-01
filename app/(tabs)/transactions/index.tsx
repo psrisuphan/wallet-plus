@@ -175,7 +175,7 @@ export default function TransactionsScreen() {
         return (
             <TouchableOpacity 
                 style={styles.transactionRow}
-                onPress={() => router.push(`/(tabs)/edit_transaction/${item.id}`)}
+                onPress={() => router.push(`/(tabs)/transactions/${item.id}`)}
                 activeOpacity={0.7}
             >
                 <View style={[
