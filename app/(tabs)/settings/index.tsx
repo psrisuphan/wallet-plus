@@ -229,7 +229,7 @@ const SettingsIndex = () => {
                             {saving ? (
                                 <ActivityIndicator size="small" color={ACCENT} />
                             ) : (
-                                <Text style={styles.doneText}>Done</Text>
+                                <Text style={styles.doneText}>Save</Text>
                             )}
                         </TouchableOpacity>
                     </View>
