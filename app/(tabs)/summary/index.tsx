@@ -219,9 +219,9 @@ const SummaryScreen = () => {
                         <Text style={styles.cardLabel}>{periodLabel}'s Net</Text>
                         <Text style={[
                             styles.netAmount,
-                            { color: netBalance >= 0 ? PRIMARY_GREEN : EXPENSE_COLOR }
+                            { color: netBalance > 0 ? PRIMARY_GREEN : netBalance < 0 ? EXPENSE_COLOR : '#888' }
                         ]}>
-                            {netBalance >= 0 ? '+' : '-'}฿{Math.abs(netBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {netBalance > 0 ? '+' : netBalance < 0 ? '-' : ''}฿{Math.abs(netBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </Text>
 
                         <View style={styles.separator} />
