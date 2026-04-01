@@ -162,6 +162,10 @@ export default function TransactionsScreen() {
         );
     };
 
+    const activeFilterCount = (timeFilter !== 'all' ? 1 : 0) + 
+                              (filterType !== 'all' ? 1 : 0) + 
+                              (sortOrder !== 'newest' ? 1 : 0);
+
     return (
         <View style={styles.mainContainer}>
             <Header title="All Transactions" showBack={true} />
@@ -174,6 +178,11 @@ export default function TransactionsScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Ionicons name="options-outline" size={18} color="#1a1a1a" />
                         <Text style={styles.filterExpandText}>Filter & Sort</Text>
+                        {activeFilterCount > 0 && (
+                            <View style={styles.filterBadge}>
+                                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                            </View>
+                        )}
                     </View>
                     <Ionicons name={showFilters ? "chevron-up" : "chevron-down"} size={18} color="#888" />
                 </TouchableOpacity>
@@ -229,6 +238,20 @@ export default function TransactionsScreen() {
                                 <Text style={[styles.filterText, sortOrder === 'oldest' && styles.filterTextActive]}>Oldest First</Text>
                             </TouchableOpacity>
                         </View>
+                        
+                        {activeFilterCount > 0 && (
+                            <TouchableOpacity 
+                                style={styles.resetFilterButton}
+                                onPress={() => {
+                                    setTimeFilter('all');
+                                    setFilterType('all');
+                                    setSortOrder('newest');
+                                }}
+                            >
+                                <Ionicons name="refresh-outline" size={16} color="#C62828" />
+                                <Text style={styles.resetFilterText}>Reset Filters</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 )}
             </View>
@@ -320,9 +343,41 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#1a1a1a',
     },
+    filterBadge: {
+        backgroundColor: PRIMARY_GREEN,
+        borderRadius: 12,
+        minWidth: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 6,
+        marginLeft: 4,
+    },
+    filterBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontWeight: '700',
+    },
     expandedFilters: {
         paddingBottom: 20,
         gap: 8,
+    },
+    resetFilterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        gap: 6,
+        marginTop: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: '#FFEBEE',
+        borderRadius: 20,
+    },
+    resetFilterText: {
+        color: '#C62828',
+        fontSize: 13,
+        fontWeight: '600',
     },
     filterCategoryTitle: {
         fontSize: 13,
