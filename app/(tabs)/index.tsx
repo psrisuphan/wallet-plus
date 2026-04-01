@@ -17,6 +17,8 @@ export default function HomeScreen() {
     const [wallets, setWallets] = useState<any[]>([]);
     const [todayTransactions, setTodayTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showTopArrow, setShowTopArrow] = useState(false);
+    const [showBottomArrow, setShowBottomArrow] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -92,6 +94,15 @@ export default function HomeScreen() {
             unsubscribeTodayList();
         };
     }, []);
+
+    const handleWalletScroll = (event: any) => {
+        const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+        const isAtTop = contentOffset.y <= 0;
+
+        setShowTopArrow(!isAtTop);
+        setShowBottomArrow(contentSize.height > layoutMeasurement.height && !isCloseToBottom);
+    };
 
     return (
         <View style={styles.container}>
@@ -184,42 +195,60 @@ export default function HomeScreen() {
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-                                <ScrollView 
-                                    style={{ maxHeight: 200 }} 
-                                    showsVerticalScrollIndicator={false}
-                                    nestedScrollEnabled={true}
-                                >
-                                    {wallets.map((item, index) => (
-                                        <React.Fragment key={item.id}>
-                                            <TouchableOpacity 
-                                                style={styles.walletRow}
-                                                onPress={() => {
-                                                    // TODO: navigate to wallet transactions view
-                                                }}
-                                            >
-                                                <View style={[
-                                                    styles.walletIconContainer, 
-                                                    { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
-                                                ]}>
-                                                    <Ionicons 
-                                                        name={(item.icon || 'wallet') as any} 
-                                                        size={18} 
-                                                        color={item.color || PRIMARY_GREEN} 
-                                                    />
-                                                </View>
-                                                <Text style={styles.walletRowName} numberOfLines={1}>
-                                                    {item.name}
-                                                </Text>
-                                                <Text style={styles.walletRowBalance}>
-                                                    ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                </Text>
-                                            </TouchableOpacity>
-                                            {index < wallets.length - 1 && (
-                                                <View style={styles.rowDivider} />
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-                                </ScrollView>
+                                <View>
+                                    {showTopArrow && (
+                                        <View style={styles.scrollIndicatorTop}>
+                                            <Ionicons name="chevron-up" size={16} color={PRIMARY_GREEN} />
+                                        </View>
+                                    )}
+                                    <ScrollView 
+                                        style={{ maxHeight: 200 }} 
+                                        showsVerticalScrollIndicator={false}
+                                        nestedScrollEnabled={true}
+                                        onScroll={handleWalletScroll}
+                                        scrollEventThrottle={16}
+                                        onContentSizeChange={(w, h) => {
+                                            // Initial check if content is scrollable
+                                            if (h > 200) setShowBottomArrow(true);
+                                        }}
+                                    >
+                                        {wallets.map((item, index) => (
+                                            <React.Fragment key={item.id}>
+                                                <TouchableOpacity 
+                                                    style={styles.walletRow}
+                                                    onPress={() => {
+                                                        // TODO: navigate to wallet transactions view
+                                                    }}
+                                                >
+                                                    <View style={[
+                                                        styles.walletIconContainer, 
+                                                        { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
+                                                    ]}>
+                                                        <Ionicons 
+                                                            name={(item.icon || 'wallet') as any} 
+                                                            size={18} 
+                                                            color={item.color || PRIMARY_GREEN} 
+                                                        />
+                                                    </View>
+                                                    <Text style={styles.walletRowName} numberOfLines={1}>
+                                                        {item.name}
+                                                    </Text>
+                                                    <Text style={styles.walletRowBalance}>
+                                                        ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                                {index < wallets.length - 1 && (
+                                                    <View style={styles.rowDivider} />
+                                                )}
+                                            </React.Fragment>
+                                        ))}
+                                    </ScrollView>
+                                    {showBottomArrow && (
+                                        <View style={styles.scrollIndicatorBottom}>
+                                            <Ionicons name="chevron-down" size={16} color={PRIMARY_GREEN} />
+                                        </View>
+                                    )}
+                                </View>
                             )}
                         </View>
                         
@@ -441,5 +470,21 @@ const styles = StyleSheet.create({
     changeAmount: {
         fontSize: 16,
         fontWeight: '700',
+    },
+    scrollIndicatorTop: {
+        position: 'absolute',
+        top: -12,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        zIndex: 1,
+    },
+    scrollIndicatorBottom: {
+        position: 'absolute',
+        bottom: -15,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        zIndex: 1,
     },
 });
