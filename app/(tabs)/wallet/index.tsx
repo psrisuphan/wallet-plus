@@ -106,7 +106,11 @@ const WalletScreen = () => {
               const batch = writeBatch(db);
 
               // 1. Query all transactions associated with this wallet
-              const transactionsQuery = query(collection(db, 'transactions'), where('walletId', '==', walletId));
+              const transactionsQuery = query(
+                collection(db, 'transactions'), 
+                where('walletId', '==', walletId),
+                where('userId', '==', userId)
+              );
               const transactionsSnapshot = await getDocs(transactionsQuery);
 
               // 2. Add each transaction deletion to the batch
