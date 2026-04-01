@@ -20,6 +20,7 @@ export default function TransactionsScreen() {
     const [timeFilter, setTimeFilter] = useState<string>('all');
     const [customDate, setCustomDate] = useState<Date>(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         const user = auth.currentUser;
@@ -165,50 +166,71 @@ export default function TransactionsScreen() {
         <View style={styles.mainContainer}>
             <Header title="All Transactions" showBack={true} />
             <StatusBar barStyle="light-content" />
-            
             <View style={styles.filterContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
-                        <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
-                        <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
-                        <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
-                        <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
-                        onPress={() => setShowDatePicker(true)}
-                    >
-                        <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
-                        <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
-                            {timeFilter === 'custom' ? customDate.toLocaleDateString('en-GB') : 'Custom'}
-                        </Text>
-                    </TouchableOpacity>
-                    
-                    <View style={styles.filterDivider} />
+                <TouchableOpacity 
+                    style={styles.filterExpandButton} 
+                    onPress={() => setShowFilters(!showFilters)}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="options-outline" size={18} color="#1a1a1a" />
+                        <Text style={styles.filterExpandText}>Filter & Sort</Text>
+                    </View>
+                    <Ionicons name={showFilters ? "chevron-up" : "chevron-down"} size={18} color="#888" />
+                </TouchableOpacity>
 
-                    <TouchableOpacity style={[styles.filterPill, filterType === 'all' && styles.filterPillActive]} onPress={() => setFilterType('all')}>
-                        <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All Types</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.filterPill, filterType === 'income' && styles.filterPillActive]} onPress={() => setFilterType('income')}>
-                        <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.filterPill, filterType === 'expense' && styles.filterPillActive]} onPress={() => setFilterType('expense')}>
-                        <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense</Text>
-                    </TouchableOpacity>
-                    
-                    <View style={styles.filterDivider} />
-                    
-                    <TouchableOpacity style={[styles.filterPill, sortOrder !== 'newest' && styles.filterPillActive]} onPress={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}>
-                        <Ionicons name={sortOrder === 'newest' ? "arrow-down" : "arrow-up"} size={14} color={sortOrder !== 'newest' ? '#FFF' : '#666'} />
-                        <Text style={[styles.filterText, sortOrder !== 'newest' && styles.filterTextActive]}>{sortOrder === 'newest' ? 'Newest' : 'Oldest'}</Text>
-                    </TouchableOpacity>
-                </ScrollView>
+                {showFilters && (
+                    <View style={styles.expandedFilters}>
+                        <Text style={styles.filterCategoryTitle}>Time Period</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
+                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
+                                <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
+                                <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
+                                <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
+                                <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
+                                onPress={() => setShowDatePicker(true)}
+                            >
+                                <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
+                                <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
+                                    {timeFilter === 'custom' ? customDate.toLocaleDateString('en-GB') : 'Custom Date'}
+                                </Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+
+                        <Text style={styles.filterCategoryTitle}>Transaction Type</Text>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
+                            <TouchableOpacity style={[styles.filterPill, filterType === 'all' && styles.filterPillActive]} onPress={() => setFilterType('all')}>
+                                <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All Types</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterPill, filterType === 'income' && styles.filterPillActive]} onPress={() => setFilterType('income')}>
+                                <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterPill, filterType === 'expense' && styles.filterPillActive]} onPress={() => setFilterType('expense')}>
+                                <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+                        
+                        <Text style={styles.filterCategoryTitle}>Sort Order</Text>
+                        <View style={{ paddingHorizontal: 20, flexDirection: 'row', gap: 8 }}>
+                            <TouchableOpacity style={[styles.filterPill, sortOrder === 'newest' && styles.filterPillActive]} onPress={() => setSortOrder('newest')}>
+                                <Ionicons name="arrow-down" size={14} color={sortOrder === 'newest' ? '#FFF' : '#666'} />
+                                <Text style={[styles.filterText, sortOrder === 'newest' && styles.filterTextActive]}>Newest First</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.filterPill, sortOrder === 'oldest' && styles.filterPillActive]} onPress={() => setSortOrder('oldest')}>
+                                <Ionicons name="arrow-up" size={14} color={sortOrder === 'oldest' ? '#FFF' : '#666'} />
+                                <Text style={[styles.filterText, sortOrder === 'oldest' && styles.filterTextActive]}>Oldest First</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
             </View>
 
             {showDatePicker && (
@@ -282,10 +304,35 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     filterContainer: {
-        paddingVertical: 12,
         backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
+    },
+    filterExpandButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+    },
+    filterExpandText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1a1a1a',
+    },
+    expandedFilters: {
+        paddingBottom: 20,
+        gap: 8,
+    },
+    filterCategoryTitle: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#888',
+        marginTop: 10,
+        marginBottom: 8,
+        paddingHorizontal: 20,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     filterScrollContent: {
         paddingHorizontal: 20,
@@ -312,12 +359,6 @@ const styles = StyleSheet.create({
     },
     filterTextActive: {
         color: '#FFFFFF',
-    },
-    filterDivider: {
-        width: 1,
-        height: 20,
-        backgroundColor: '#E0E0E0',
-        marginHorizontal: 4,
     },
     transactionRow: {
         flexDirection: 'row',
