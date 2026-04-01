@@ -317,6 +317,7 @@ export default function HomeScreen() {
                                                 </Text>
                                                 <Text style={{ fontSize: 12, color: '#999' }}>
                                                     {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                    {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                                                 </Text>
                                             </View>
                                             <Text style={[

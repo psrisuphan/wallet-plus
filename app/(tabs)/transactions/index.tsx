@@ -12,6 +12,7 @@ const SUBTLE_GREEN = '#699E8A20';
 export default function TransactionsScreen() {
     const router = useRouter();
     const [transactions, setTransactions] = useState<any[]>([]);
+    const [wallets, setWallets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -27,7 +28,7 @@ export default function TransactionsScreen() {
             orderBy('date', 'desc')
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribeTransactions = onSnapshot(q, (snapshot) => {
             const list: any[] = [];
             snapshot.forEach((doc) => {
                 list.push({ id: doc.id, ...doc.data() });
@@ -36,7 +37,23 @@ export default function TransactionsScreen() {
             setLoading(false);
         });
 
-        return () => unsubscribe();
+        const qWallets = query(
+            collection(db, 'wallets'),
+            where('userId', '==', user.uid)
+        );
+
+        const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((doc) => {
+                list.push({ id: doc.id, ...doc.data() });
+            });
+            setWallets(list);
+        });
+
+        return () => {
+            unsubscribeTransactions();
+            unsubscribeWallets();
+        };
     }, []);
 
     const renderTransactionItem = ({ item }: { item: any }) => {
@@ -62,6 +79,7 @@ export default function TransactionsScreen() {
                     </Text>
                     <Text style={styles.transactionTime}>
                         {dateStr} • {timeStr}
+                        {item.walletId ? ` • ${wallets.find(w => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                     </Text>
                 </View>
                 <Text style={[
