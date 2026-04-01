@@ -234,9 +234,9 @@ export default function HomeScreen() {
                                                         <Text style={styles.walletRowName} numberOfLines={1}>
                                                             {item.name}
                                                         </Text>
-                                                        {item.note && (
+                                                        {item.detail && (
                                                             <Text style={styles.walletRowDescription} numberOfLines={1}>
-                                                                {item.note}
+                                                                {item.detail}
                                                             </Text>
                                                         )}
                                                     </View>
