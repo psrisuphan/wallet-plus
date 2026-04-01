@@ -212,25 +212,32 @@ export default function HomeScreen() {
                                             if (h > 200) setShowBottomArrow(true);
                                         }}
                                     >
-                                        {wallets.map((item, index) => (
-                                            <React.Fragment key={item.id}>
-                                                <TouchableOpacity 
-                                                    style={styles.walletRow}
-                                                    onPress={() => {}}
-                                                >
-                                                    <View style={[
-                                                        styles.walletIconContainer, 
-                                                        { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
-                                                    ]}>
-                                                        <Ionicons 
-                                                            name={(item.icon || 'wallet') as any} 
-                                                            size={18} 
-                                                            color={item.color || PRIMARY_GREEN} 
-                                                        />
-                                                    </View>
-                                                    <View style={{ flex: 1, justifyContent: 'center' }}>
-                                                        <Text style={styles.walletRowName} numberOfLines={1}>
-                                                            {item.name}
+                                        {wallets
+                                            .slice()
+                                            .sort((a, b) => {
+                                                const deltaA = Math.abs(walletDailyChanges[a.id] || 0);
+                                                const deltaB = Math.abs(walletDailyChanges[b.id] || 0);
+                                                return deltaB - deltaA;
+                                            })
+                                            .map((item, index, sortedArr) => (
+                                                <React.Fragment key={item.id}>
+                                                    <TouchableOpacity 
+                                                        style={styles.walletRow}
+                                                        onPress={() => {}}
+                                                    >
+                                                        <View style={[
+                                                            styles.walletIconContainer, 
+                                                            { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
+                                                        ]}>
+                                                            <Ionicons 
+                                                                name={(item.icon || 'wallet') as any} 
+                                                                size={18} 
+                                                                color={item.color || PRIMARY_GREEN} 
+                                                            />
+                                                        </View>
+                                                        <View style={{ flex: 1, justifyContent: 'center' }}>
+                                                            <Text style={styles.walletRowName} numberOfLines={1}>
+                                                                {item.name}
                                                         </Text>
                                                         {item.detail && (
                                                             <Text style={styles.walletRowDescription} numberOfLines={1}>
@@ -252,7 +259,7 @@ export default function HomeScreen() {
                                                         )}
                                                     </View>
                                                 </TouchableOpacity>
-                                                {index < wallets.length - 1 && (
+                                                {index < sortedArr.length - 1 && (
                                                     <View style={styles.rowDivider} />
                                                 )}
                                             </React.Fragment>
