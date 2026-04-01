@@ -18,6 +18,17 @@ interface Wallet {
   userId: string;
 }
 
+interface Transaction {
+  id: string;
+  type: 'expense' | 'income';
+  amount: number;
+  categoryName: string;
+  categoryIcon: string;
+  date: any;
+  note?: string;
+  walletId: string;
+}
+
 const WalletScreen = () => {
   const router = useRouter();
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -25,6 +36,10 @@ const WalletScreen = () => {
   const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedWalletForTransactions, setSelectedWalletForTransactions] = useState<Wallet | null>(null);
+  const [isTransactionsModalVisible, setIsTransactionsModalVisible] = useState(false);
+  const [walletTransactions, setWalletTransactions] = useState<Transaction[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -62,6 +77,42 @@ const WalletScreen = () => {
 
     return () => unsubscribeFirestore();
   }, [userId]);
+
+  useEffect(() => {
+    if (!selectedWalletForTransactions) {
+      setWalletTransactions([]);
+      return;
+    }
+
+    setLoadingTransactions(true);
+    const q = query(
+      collection(db, 'transactions'),
+      where('walletId', '==', selectedWalletForTransactions.id),
+      where('userId', '==', userId)
+    );
+
+    const unsubscribeTransactions = onSnapshot(q, (snapshot) => {
+      const transactionsData: Transaction[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Transaction[];
+      
+      // Sort by date descending
+      transactionsData.sort((a, b) => {
+        const dateA = a.date?.seconds || 0;
+        const dateB = b.date?.seconds || 0;
+        return dateB - dateA;
+      });
+      
+      setWalletTransactions(transactionsData);
+      setLoadingTransactions(false);
+    }, (error) => {
+      console.error('Error fetching transactions:', error);
+      setLoadingTransactions(false);
+    });
+
+    return () => unsubscribeTransactions();
+  }, [selectedWalletForTransactions, userId]);
 
   // Handle Search and Sorting
   const filteredAndSortedWallets = useMemo(() => {
@@ -147,8 +198,40 @@ const WalletScreen = () => {
     router.push('/(tabs)/wallet/add');
   };
 
+  const openTransactions = (wallet: Wallet) => {
+    setSelectedWalletForTransactions(wallet);
+    setIsTransactionsModalVisible(true);
+  };
+
+  const renderTransactionItem = ({ item }: { item: Transaction }) => (
+    <View style={styles.transactionItem}>
+      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? '#FF3B3015' : '#34C75915' }]}>
+        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? '#FF3B30' : '#34C759'} />
+      </View>
+      <View style={styles.transactionInfo}>
+        <Text style={styles.transactionCategory}>{item.categoryName}</Text>
+        {item.note ? <Text style={styles.transactionNote} numberOfLines={1}>{item.note}</Text> : null}
+      </View>
+      <View style={styles.transactionAmountContainer}>
+        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#34C759' }]}>
+          {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+        </Text>
+        <Text style={styles.transactionDate}>
+          {item.date?.seconds ? new Date(item.date.seconds * 1000).toLocaleDateString('th-TH', { 
+            day: 'numeric', 
+            month: 'short' 
+          }) : 'Pending'}
+        </Text>
+      </View>
+    </View>
+  );
+
   const renderWalletItem = ({ item }: { item: Wallet }) => (
-    <View style={styles.walletItem}>
+    <TouchableOpacity 
+      style={styles.walletItem}
+      onPress={() => openTransactions(item)}
+      activeOpacity={0.7}
+    >
       <View style={styles.walletHeader}>
         <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
           <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#333'} />
@@ -170,7 +253,7 @@ const WalletScreen = () => {
         <Text style={styles.balanceLabel}>Balance</Text>
         <Text style={[styles.walletBalance, { color: item.color }]}>฿{item.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -281,6 +364,59 @@ const WalletScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       </View>
+
+      {/* Transactions Modal */}
+      <Modal
+        visible={isTransactionsModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setIsTransactionsModalVisible(false)}
+      >
+        <View style={styles.modalFullContent}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderTop}>
+              <View style={[styles.modalWalletBadge, { backgroundColor: selectedWalletForTransactions?.color + '15' }]}>
+                <Ionicons name={selectedWalletForTransactions?.icon as any} size={20} color={selectedWalletForTransactions?.color} />
+                <Text style={[styles.modalWalletName, { color: selectedWalletForTransactions?.color }]}>
+                  {selectedWalletForTransactions?.name}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsTransactionsModalVisible(false)} style={styles.modalCloseButton}>
+                <Ionicons name="close-circle" size={28} color="#CCC" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBalanceSection}>
+              <Text style={styles.modalBalanceLabel}>Current Balance</Text>
+              <Text style={[styles.modalBalanceAmount, { color: selectedWalletForTransactions?.color }]}>
+                ฿{selectedWalletForTransactions?.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.modalBody}>
+            <Text style={styles.modalSectionTitle}>Recent Transactions</Text>
+            {loadingTransactions ? (
+              <View style={styles.modalLoading}>
+                <ActivityIndicator size="small" color={WHITE_GREEN} />
+                <Text style={styles.modalLoadingText}>Loading transactions...</Text>
+              </View>
+            ) : walletTransactions.length > 0 ? (
+              <FlatList
+                data={walletTransactions}
+                renderItem={renderTransactionItem}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 40 }}
+              />
+            ) : (
+              <View style={styles.modalEmpty}>
+                <Ionicons name="receipt-outline" size={60} color="#EEE" />
+                <Text style={styles.modalEmptyText}>No transactions for this wallet yet.</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -525,6 +661,123 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: WHITE_GREEN,
+  },
+  // Modal Styles
+  modalFullContent: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    padding: 24,
+    backgroundColor: '#FAFAFA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  modalHeaderTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalWalletBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  modalWalletName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalBalanceSection: {
+    alignItems: 'center',
+  },
+  modalBalanceLabel: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  modalBalanceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  modalBody: {
+    flex: 1,
+    padding: 24,
+  },
+  modalSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 16,
+  },
+  modalLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalLoadingText: {
+    marginTop: 10,
+    color: '#999',
+    fontSize: 14,
+  },
+  modalEmpty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  modalEmptyText: {
+    marginTop: 10,
+    color: '#CCC',
+    fontSize: 16,
+  },
+  // Transaction Item Styles
+  transactionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8F9FA',
+  },
+  transactionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  transactionInfo: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  transactionCategory: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  transactionNote: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  transactionAmountContainer: {
+    alignItems: 'flex-end',
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  transactionDate: {
+    fontSize: 11,
+    color: '#BBB',
+    marginTop: 2,
   },
 });
 
