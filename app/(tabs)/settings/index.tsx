@@ -17,7 +17,7 @@ import { auth, db } from '../../../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -27,6 +27,9 @@ const SettingsIndex = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [isClearModalVisible, setIsClearModalVisible] = useState(false);
+    const [confirmText, setConfirmText] = useState('');
+    const [isClearing, setIsClearing] = useState(false);
     
     // Auth Data
     const [displayName, setDisplayName] = useState('');
@@ -150,6 +153,43 @@ const SettingsIndex = () => {
         ]);
     };
 
+    const handleClearData = async () => {
+        if (confirmText.toUpperCase() !== 'CLEAR') {
+            Alert.alert('Error', 'Please type CLEAR to confirm.');
+            return;
+        }
+
+        setIsClearing(true);
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                const batch = writeBatch(db);
+                
+                // 1. Clear Wallets
+                const walletsRef = collection(db, 'wallets');
+                const walletsQuery = query(walletsRef, where('userId', '==', user.uid));
+                const walletsSnap = await getDocs(walletsQuery);
+                walletsSnap.forEach((doc) => batch.delete(doc.ref));
+
+                // 2. Clear Transactions
+                const transactionsRef = collection(db, 'transactions');
+                const transactionsQuery = query(transactionsRef, where('userId', '==', user.uid));
+                const transactionsSnap = await getDocs(transactionsQuery);
+                transactionsSnap.forEach((doc) => batch.delete(doc.ref));
+
+                await batch.commit();
+                
+                setIsClearModalVisible(false);
+                setConfirmText('');
+                Alert.alert('Success', 'All wallets and transactions have been cleared.');
+            }
+        } catch (error: any) {
+            Alert.alert('Error', error.message);
+        } finally {
+            setIsClearing(false);
+        }
+    };
+
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -193,6 +233,26 @@ const SettingsIndex = () => {
                     </View>
                     <Ionicons name="chevron-forward" size={24} color="#CCC" />
                 </TouchableOpacity>
+
+                {/* Data Management Section */}
+                <Text style={styles.menuTitle}>DATA MANAGEMENT</Text>
+                <View style={styles.menuSection}>
+                    <TouchableOpacity 
+                        style={styles.menuItem} 
+                        onPress={() => {
+                            setConfirmText('');
+                            setIsClearModalVisible(true);
+                        }}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: '#FF3B3015' }]}>
+                                <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                            </View>
+                            <Text style={[styles.menuText, { color: '#FF3B30' }]}>Clear All Personal Data</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#DDD" />
+                    </TouchableOpacity>
+                </View>
 
                 {/* Sign Out Section */}
                 <View style={styles.logoutSection}>
@@ -267,6 +327,61 @@ const SettingsIndex = () => {
                             </View>
                         </View>
                     </ScrollView>
+                </View>
+            </Modal>
+
+            {/* Clear Data Modal */}
+            <Modal
+                visible={isClearModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setIsClearModalVisible(false)}
+            >
+                <View style={styles.clearModalOverlay}>
+                    <View style={styles.clearModalContent}>
+                        <View style={styles.clearModalIcon}>
+                            <Ionicons name="warning" size={40} color="#FF3B30" />
+                        </View>
+                        <Text style={styles.clearModalTitle}>Clear All Data?</Text>
+                        <Text style={styles.clearModalDescription}>
+                            This will permanently delete all your wallets and transactions. This action cannot be undone.
+                        </Text>
+                        
+                        <View style={styles.clearInputContainer}>
+                            <Text style={styles.clearInputLabel}>Type <Text style={{fontWeight: 'bold'}}>CLEAR</Text> to confirm</Text>
+                            <TextInput
+                                style={styles.clearInput}
+                                value={confirmText}
+                                onChangeText={setConfirmText}
+                                placeholder="CLEAR"
+                                autoCapitalize="characters"
+                                autoCorrect={false}
+                            />
+                        </View>
+
+                        <View style={styles.clearModalButtons}>
+                            <TouchableOpacity 
+                                style={[styles.clearBtn, styles.clearCancelBtn]} 
+                                onPress={() => {
+                                    setIsClearModalVisible(false);
+                                    setConfirmText('');
+                                }}
+                            >
+                                <Text style={styles.clearCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.clearBtn, styles.clearConfirmBtn, { opacity: confirmText.toUpperCase() === 'CLEAR' ? 1 : 0.5 }]} 
+                                onPress={handleClearData}
+                                disabled={isClearing || confirmText.toUpperCase() !== 'CLEAR'}
+                            >
+                                {isClearing ? (
+                                    <ActivityIndicator size="small" color="#FFF" />
+                                ) : (
+                                    <Text style={styles.clearConfirmText}>Clear Now</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
             </Modal>
         </View>
@@ -498,6 +613,92 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#1a1a1a',
         justifyContent: 'center',
+    },
+    // Clear Data Modal Styles
+    clearModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    clearModalContent: {
+        backgroundColor: '#FFF',
+        width: '100%',
+        borderRadius: 24,
+        padding: 24,
+        alignItems: 'center',
+    },
+    clearModalIcon: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#FF3B3010',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    clearModalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#1a1a1a',
+        marginBottom: 8,
+    },
+    clearModalDescription: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 24,
+    },
+    clearInputContainer: {
+        width: '100%',
+        marginBottom: 24,
+    },
+    clearInputLabel: {
+        fontSize: 13,
+        color: '#888',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    clearInput: {
+        backgroundColor: '#F8F8F8',
+        height: 52,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#FF3B30',
+        textAlign: 'center',
+        borderWidth: 1,
+        borderColor: '#EEE',
+    },
+    clearModalButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    clearBtn: {
+        flex: 1,
+        height: 52,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    clearCancelBtn: {
+        backgroundColor: '#F5F5F5',
+    },
+    clearConfirmBtn: {
+        backgroundColor: '#FF3B30',
+    },
+    clearCancelText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    clearConfirmText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 
