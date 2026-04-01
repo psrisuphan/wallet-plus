@@ -148,10 +148,7 @@ const WalletScreen = () => {
   };
 
   const renderWalletItem = ({ item }: { item: Wallet }) => (
-    <TouchableOpacity 
-      style={styles.walletItem}
-      onPress={() => openEditPage(item.id)}
-    >
+    <View style={styles.walletItem}>
       <View style={styles.walletHeader}>
         <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
           <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#333'} />
@@ -160,15 +157,20 @@ const WalletScreen = () => {
           <Text style={styles.walletName}>{item.name}</Text>
           {item.detail ? <Text style={styles.walletDetail} numberOfLines={1}>{item.detail}</Text> : null}
         </View>
-        <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={styles.deleteIconButton}>
-          <Ionicons name="trash-outline" size={20} color="#DC3545" />
-        </TouchableOpacity>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity onPress={() => openEditPage(item.id)} style={styles.actionIconButton}>
+            <Ionicons name="pencil-outline" size={20} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={[styles.actionIconButton, { marginLeft: 8 }]}>
+            <Ionicons name="trash-outline" size={20} color="#DC3545" />
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={styles.walletBody}>
         <Text style={styles.balanceLabel}>Balance</Text>
         <Text style={[styles.walletBalance, { color: item.color }]}>฿{item.balance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</Text>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   if (loading) {
@@ -408,7 +410,11 @@ const styles = StyleSheet.create({
     color: '#777',
     marginTop: 2,
   },
-  deleteIconButton: {
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIconButton: {
     padding: 8,
   },
   walletBody: {
