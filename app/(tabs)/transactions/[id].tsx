@@ -155,9 +155,39 @@ const EditTransactionScreen = () => {
             return;
         }
 
-        setIsSaving(true);
         const parsedAmount = parseFloat(amount);
         
+        // Calculate projected final balance for the selected wallet
+        let projectedBalance = selectedWallet.balance;
+        if (type === 'expense') {
+            if (originalTransaction.walletId === selectedWallet.id) {
+                // If same wallet, we need to account for reverting the old transaction FIRST
+                const revertAmount = originalTransaction.type === 'expense' ? originalTransaction.amount : -originalTransaction.amount;
+                projectedBalance = selectedWallet.balance + revertAmount - parsedAmount;
+            } else {
+                // If different wallet, it's just new balance - amount
+                projectedBalance = selectedWallet.balance - parsedAmount;
+            }
+        }
+
+        if (type === 'expense' && projectedBalance < 0) {
+            Alert.alert(
+                "Insufficient Balance",
+                `This update will result in a negative balance (฿${projectedBalance.toLocaleString()}) for ${selectedWallet.name}. Continue anyway?`,
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Continue", style: "destructive", onPress: () => submitUpdate(parsedAmount) }
+                ]
+            );
+            return;
+        }
+
+        submitUpdate(parsedAmount);
+    };
+
+    const submitUpdate = async (parsedAmount: number) => {
+        if (!selectedWallet) return;
+        setIsSaving(true);
         try {
             const batch = writeBatch(db);
             const transactionRef = doc(db, 'transactions', id as string);
@@ -181,6 +211,8 @@ const EditTransactionScreen = () => {
             } else {
                 batch.update(oldWalletRef, { balance: revertedBalance });
                 const newWalletRef = doc(db, 'wallets', selectedWallet.id);
+                // Note: selectedWallet.balance here is the STALE balance from state (before reverting old wallet)
+                // BUT since it's a different wallet, it's already "clean".
                 const newBalance = type === 'expense' 
                     ? selectedWallet.balance - parsedAmount 
                     : selectedWallet.balance + parsedAmount;
