@@ -84,8 +84,13 @@ export default function HomeScreen() {
                     {/* Total Balance Section */}
                     <View style={styles.balanceCard}>
                         <View style={styles.balanceHeader}>
-                            <Ionicons name="wallet" size={20} color="#2E7D32" />
-                            <Text style={styles.balanceLabel}>Total Balance</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Ionicons name="wallet" size={20} color="#2E7D32" />
+                                <Text style={styles.balanceLabel}>Total Balance</Text>
+                            </View>
+                            <Text style={styles.balanceDate}>
+                                {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                            </Text>
                         </View>
                         <Text style={styles.balanceAmount}>
                             ฿{totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -159,15 +164,19 @@ const styles = StyleSheet.create({
     balanceHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        marginBottom: 12,
+        justifyContent: 'space-between',
+        marginBottom: 10,
     },
     balanceLabel: {
         fontSize: 14,
         color: '#666',
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        marginLeft: 8,
+        fontWeight: '500',
+    },
+    balanceDate: {
+        fontSize: 12,
+        color: '#999',
+        fontWeight: '500',
     },
     balanceAmount: {
         fontSize: 36,
