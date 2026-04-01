@@ -6,31 +6,8 @@ import { useRouter } from 'expo-router';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import Header from '../../../components/Header';
-
-const PRIMARY_GREEN = '#699E8A';
-const SUBTLE_GREEN = '#699E8A20';
-
-const EXPENSE_CATEGORIES = [
-  { id: '1', name: 'Food', icon: 'fast-food' },
-  { id: '2', name: 'Transport', icon: 'car' },
-  { id: '3', name: 'Shopping', icon: 'cart' },
-  { id: '4', name: 'Bills', icon: 'receipt' },
-  { id: '5', name: 'Health', icon: 'medkit' },
-  { id: '6', name: 'Education', icon: 'school' },
-  { id: '7', name: 'Groceries', icon: 'basket' },
-  { id: '8', name: 'Housing', icon: 'home' },
-  { id: '9', name: 'Utilities', icon: 'flash' },
-  { id: '10', name: 'Entertainment', icon: 'film' },
-];
-
-const INCOME_CATEGORIES = [
-  { id: '11', name: 'Salary', icon: 'cash' },
-  { id: '12', name: 'Business', icon: 'briefcase' },
-  { id: '13', name: 'Investment', icon: 'trending-up' },
-  { id: '14', name: 'Bonus', icon: 'gift' },
-  { id: '15', name: 'Freelance', icon: 'laptop' },
-  { id: '16', name: 'Other', icon: 'add-circle' },
-];
+import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../../constants/Colors';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
 
 export default function TransactionsScreen() {
     const router = useRouter();

@@ -5,55 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { useFocusEffect } from 'expo-router';
+import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
+import { CATEGORY_COLORS, getCategoryColor, getCategoryIcon } from '../../../constants/Categories';
+import type { Transaction, CategoryBreakdown } from '../../../types';
 
-const PRIMARY_GREEN = '#699E8A';
-const SUBTLE_GREEN = '#699E8A20';
-const EXPENSE_COLOR = '#FF3B30';
-const INCOME_COLOR = '#699E8A';
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
-// Category color map for breakdown chart
-const CATEGORY_COLORS: { [key: string]: string } = {
-    'Food': '#FF6B6B',
-    'Transport': '#4ECDC4',
-    'Shopping': '#FFE66D',
-    'Bills': '#A8E6CF',
-    'Health': '#FF8B94',
-    'Education': '#DDA0DD',
-    'Groceries': '#98D8C8',
-    'Housing': '#F7DC6F',
-    'Utilities': '#BB8FCE',
-    'Entertainment': '#85C1E9',
-    'Salary': '#82E0AA',
-    'Business': '#F8C471',
-    'Investment': '#76D7C4',
-    'Bonus': '#F1948A',
-    'Freelance': '#AED6F1',
-    'Other': '#D5DBDB',
-};
 
 type Period = 'today' | 'weekly' | 'monthly' | 'yearly';
 type ViewMode = 'overview' | 'comparison';
-
-interface Transaction {
-    id: string;
-    type: 'income' | 'expense';
-    amount: number;
-    categoryName: string;
-    categoryIcon: string;
-    walletName?: string;
-    note?: string;
-    date: any;
-}
-
-interface CategoryBreakdown {
-    name: string;
-    icon: string;
-    total: number;
-    count: number;
-    percentage: number;
-    color: string;
-}
 
 interface MonthlyData {
     month: string; // e.g. "Apr '25"

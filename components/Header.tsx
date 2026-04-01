@@ -3,8 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-
-const ACCENT = '#699e8aff';
+import { PRIMARY as ACCENT } from '../constants/Colors';
 
 interface HeaderProps {
   title?: string;

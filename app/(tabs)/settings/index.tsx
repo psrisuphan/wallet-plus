@@ -20,8 +20,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { doc, getDoc, updateDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-
-const ACCENT = '#699e8aff';
+import { PRIMARY as ACCENT } from '../../../constants/Colors';
 
 const SettingsIndex = () => {
     const [loading, setLoading] = useState(true);

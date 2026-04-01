@@ -17,9 +17,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { collection, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
+import { PRIMARY } from '../../../constants/Colors';
 
 const COLORS = [
-  '#699e8aff', // Theme Green
+  PRIMARY, // Theme Green
   '#4A90E2', // Blue
   '#E24A4A', // Red
   '#F5A623', // Orange
@@ -165,7 +166,7 @@ const AddWalletScreen = () => {
   if (initialLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#699e8aff" />
+        <ActivityIndicator size="large" color={PRIMARY} />
       </View>
     );
   }
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   headerBackground: {
-    backgroundColor: '#699e8aff',
+    backgroundColor: PRIMARY,
     paddingHorizontal: 15,
     paddingBottom: 15,
   },
