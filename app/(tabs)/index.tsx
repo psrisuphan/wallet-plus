@@ -1,10 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+
+const PRIMARY_GREEN = '#699E8A';
+const SUBTLE_GREEN = '#699E8A20';
 
 export default function HomeScreen() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -108,7 +111,7 @@ export default function HomeScreen() {
                     <View style={styles.balanceCard}>
                         <View style={styles.balanceHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Ionicons name="cash" size={20} color="#2E7D32" />
+                                <Ionicons name="cash" size={20} color={PRIMARY_GREEN} />
                                 <Text style={styles.balanceLabel}>Total Balance</Text>
                             </View>
                             <Text style={styles.balanceDate}>
@@ -126,7 +129,7 @@ export default function HomeScreen() {
                             <View style={[
                                 styles.changeBadge, 
                                 { 
-                                    backgroundColor: todayChange > 0 ? '#E8F5E9' : 
+                                    backgroundColor: todayChange > 0 ? SUBTLE_GREEN : 
                                                     todayChange < 0 ? '#FFEBEE' : 
                                                     '#F5F5F5' 
                                 }
@@ -136,14 +139,14 @@ export default function HomeScreen() {
                                           todayChange < 0 ? "trending-down" : 
                                           "remove"} 
                                     size={16} 
-                                    color={todayChange > 0 ? '#2E7D32' : 
+                                    color={todayChange > 0 ? PRIMARY_GREEN : 
                                            todayChange < 0 ? '#C62828' : 
                                            '#888'} 
                                 />
                                 <Text style={[
                                     styles.changeAmount, 
                                     { 
-                                        color: todayChange > 0 ? '#2E7D32' : 
+                                        color: todayChange > 0 ? PRIMARY_GREEN : 
                                                todayChange < 0 ? '#C62828' : 
                                                '#888' 
                                     }
@@ -158,7 +161,7 @@ export default function HomeScreen() {
                     <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Ionicons name="wallet" size={20} color="#2E7D32" />
+                                <Ionicons name="wallet" size={20} color={PRIMARY_GREEN} />
                                 <Text style={styles.sectionTitle}>Your Wallets</Text>
                             </View>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/wallet')}>
@@ -177,12 +180,12 @@ export default function HomeScreen() {
                                     >
                                         <View style={[
                                             styles.walletIconContainer, 
-                                            { backgroundColor: `${item.color || '#2E7D32'}20` }
+                                            { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
                                         ]}>
                                             <Ionicons 
                                                 name={(item.icon || 'wallet') as any} 
                                                 size={18} 
-                                                color={item.color || '#2E7D32'} 
+                                                color={item.color || PRIMARY_GREEN} 
                                             />
                                         </View>
                                         <Text style={styles.walletRowName} numberOfLines={1}>
@@ -213,7 +216,7 @@ export default function HomeScreen() {
                     <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Ionicons name="time" size={20} color="#2E7D32" />
+                                <Ionicons name="time" size={20} color={PRIMARY_GREEN} />
                                 <Text style={styles.sectionTitle}>Today's Activity</Text>
                             </View>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/new_transaction')}>
@@ -227,12 +230,12 @@ export default function HomeScreen() {
                                     <View style={styles.walletRow}>
                                         <View style={[
                                             styles.walletIconContainer, 
-                                            { backgroundColor: item.type === 'income' ? '#E8F5E9' : '#FFEBEE' }
+                                            { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
                                         ]}>
                                             <Ionicons 
                                                 name={item.type === 'income' ? "arrow-up" : "arrow-down"} 
                                                 size={18} 
-                                                color={item.type === 'income' ? '#2E7D32' : '#C62828'} 
+                                                color={item.type === 'income' ? PRIMARY_GREEN : '#C62828'} 
                                             />
                                         </View>
                                         <View style={{ flex: 1 }}>
@@ -245,7 +248,7 @@ export default function HomeScreen() {
                                         </View>
                                         <Text style={[
                                             styles.walletRowBalance,
-                                            { color: item.type === 'income' ? '#2E7D32' : '#C62828' }
+                                            { color: item.type === 'income' ? PRIMARY_GREEN : '#C62828' }
                                         ]}>
                                             {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
                                         </Text>
@@ -281,12 +284,6 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
-    },
-    welcomeText: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 20,
-        fontWeight: '500',
     },
     balanceCard: {
         backgroundColor: '#fff',
@@ -358,7 +355,7 @@ const styles = StyleSheet.create({
     },
     viewAllText: {
         fontSize: 14,
-        color: '#2E7D32',
+        color: PRIMARY_GREEN,
         fontWeight: '600',
     },
     walletsList: {
@@ -373,7 +370,7 @@ const styles = StyleSheet.create({
     rowDivider: {
         height: 1,
         backgroundColor: '#F5F5F5',
-        marginLeft: 48, // Icon width (36) + gap (12)
+        marginLeft: 48,
     },
     walletIconContainer: {
         width: 36,
