@@ -287,8 +287,8 @@ const WalletScreen = () => {
       activeOpacity={0.7}
     >
       <View style={styles.walletHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
-          <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#333'} />
+        <View style={[styles.iconContainer, { backgroundColor: `${item.color?.length === 9 ? item.color.slice(0, 7) : (item.color || '#699E8A')}15` }]}>
+          <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#699E8A'} />
         </View>
         <View style={styles.walletInfo}>
           <Text style={styles.walletName}>{item.name}</Text>

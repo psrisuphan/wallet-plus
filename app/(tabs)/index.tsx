@@ -232,7 +232,7 @@ export default function HomeScreen() {
                                                     >
                                                         <View style={[
                                                             styles.walletIconContainer, 
-                                                            { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
+                                                            { backgroundColor: `${item.color?.length === 9 ? item.color.slice(0, 7) : (item.color || PRIMARY_GREEN)}20` }
                                                         ]}>
                                                             <Ionicons 
                                                                 name={(item.icon || 'wallet') as any} 
