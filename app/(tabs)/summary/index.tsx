@@ -9,7 +9,7 @@ import { useFocusEffect } from 'expo-router';
 const PRIMARY_GREEN = '#699E8A';
 const SUBTLE_GREEN = '#699E8A20';
 const EXPENSE_COLOR = '#FF3B30';
-const INCOME_COLOR = '#34C759';
+const INCOME_COLOR = '#699E8A';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Category color map for breakdown chart
