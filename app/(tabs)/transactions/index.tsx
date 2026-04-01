@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator, StatusBar, TouchableOpacity, ScrollView, SectionList, Platform, TextInput } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,28 @@ import Header from '../../../components/Header';
 
 const PRIMARY_GREEN = '#699E8A';
 const SUBTLE_GREEN = '#699E8A20';
+
+const EXPENSE_CATEGORIES = [
+  { id: '1', name: 'Food', icon: 'fast-food' },
+  { id: '2', name: 'Transport', icon: 'car' },
+  { id: '3', name: 'Shopping', icon: 'cart' },
+  { id: '4', name: 'Bills', icon: 'receipt' },
+  { id: '5', name: 'Health', icon: 'medkit' },
+  { id: '6', name: 'Education', icon: 'school' },
+  { id: '7', name: 'Groceries', icon: 'basket' },
+  { id: '8', name: 'Housing', icon: 'home' },
+  { id: '9', name: 'Utilities', icon: 'flash' },
+  { id: '10', name: 'Entertainment', icon: 'film' },
+];
+
+const INCOME_CATEGORIES = [
+  { id: '11', name: 'Salary', icon: 'cash' },
+  { id: '12', name: 'Business', icon: 'briefcase' },
+  { id: '13', name: 'Investment', icon: 'trending-up' },
+  { id: '14', name: 'Bonus', icon: 'gift' },
+  { id: '15', name: 'Freelance', icon: 'laptop' },
+  { id: '16', name: 'Other', icon: 'add-circle' },
+];
 
 export default function TransactionsScreen() {
     const router = useRouter();
@@ -72,6 +94,20 @@ export default function TransactionsScreen() {
         setSearchQuery('');
         setSortOrder('newest');
     };
+
+    // Auto-reset category filter if it's not valid for the selected type
+    useEffect(() => {
+        if (categoryFilter === 'all') return;
+        
+        const isCurrentCategoryIncome = INCOME_CATEGORIES.some(c => c.name === categoryFilter);
+        const isCurrentCategoryExpense = EXPENSE_CATEGORIES.some(c => c.name === categoryFilter);
+        
+        if (filterType === 'income' && !isCurrentCategoryIncome) {
+            setCategoryFilter('all');
+        } else if (filterType === 'expense' && !isCurrentCategoryExpense) {
+            setCategoryFilter('all');
+        }
+    }, [filterType]);
 
     const processTransactions = () => {
         let filtered = transactions.filter(t => {
@@ -179,12 +215,11 @@ export default function TransactionsScreen() {
         );
     };
 
-    const uniqueCategories = transactions.reduce((acc: any[], t) => {
-        if (t.categoryName && !acc.find(c => c.name === t.categoryName)) {
-            acc.push({ name: t.categoryName, icon: t.categoryIcon });
-        }
-        return acc;
-    }, []).sort((a, b) => a.name.localeCompare(b.name));
+    const categoriesToDisplay = useMemo(() => {
+        if (filterType === 'income') return INCOME_CATEGORIES;
+        if (filterType === 'expense') return EXPENSE_CATEGORIES;
+        return [...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES];
+    }, [filterType]);
 
     const activeFilterCount = (timeFilter !== 'all' ? 1 : 0) + 
                               (filterType !== 'all' ? 1 : 0) + 
@@ -299,9 +334,9 @@ export default function TransactionsScreen() {
                                     <Ionicons name="grid-outline" size={18} color={categoryFilter === 'all' ? '#FFF' : '#666'} />
                                     <Text style={[styles.filterText, categoryFilter === 'all' && styles.filterTextActive]}>All</Text>
                                 </TouchableOpacity>
-                                {uniqueCategories.map((cat, idx) => (
+                                {categoriesToDisplay.map((cat: any, idx: number) => (
                                     <TouchableOpacity 
-                                        key={idx}
+                                        key={cat.id || `cat-${idx}`}
                                         style={[styles.categoryIconPill, categoryFilter === cat.name && styles.categoryIconPillActive]} 
                                         onPress={() => setCategoryFilter(cat.name)}
                                     >
