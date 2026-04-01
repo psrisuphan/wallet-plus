@@ -324,9 +324,14 @@ export default function HomeScreen() {
                                                     </View>
                                                     <View style={{ flex: 1 }}>
                                                         <Text style={styles.walletRowName} numberOfLines={1}>
-                                                            {item.note || item.categoryName || 'Transaction'}
+                                                            {item.categoryName || 'Transaction'}
                                                         </Text>
-                                                        <Text style={{ fontSize: 12, color: '#999' }}>
+                                                        {item.note ? (
+                                                            <Text style={{ fontSize: 13, color: '#444', fontWeight: '500', marginBottom: 2 }}>
+                                                                {item.note}
+                                                            </Text>
+                                                        ) : null}
+                                                        <Text style={{ fontSize: 11, color: '#999' }}>
                                                             {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                                             {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                                                         </Text>
