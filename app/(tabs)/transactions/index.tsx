@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, StatusBar, TouchableOpacity, ScrollView, SectionList, Platform } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, StatusBar, TouchableOpacity, ScrollView, SectionList, Platform, TextInput } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -19,6 +19,8 @@ export default function TransactionsScreen() {
     const [sortOrder, setSortOrder] = useState<string>('newest');
     const [timeFilter, setTimeFilter] = useState<string>('all');
     const [customDate, setCustomDate] = useState<Date>(new Date());
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
 
@@ -65,11 +67,24 @@ export default function TransactionsScreen() {
 
     const processTransactions = () => {
         let filtered = transactions.filter(t => {
-            if (filterType !== 'all' && t.type !== filterType) return false;
-            
             const dateObj = t.date?.toDate ? t.date.toDate() : new Date();
             const today = new Date();
             
+            // Search filter (Case insensitive)
+            if (searchQuery.trim()) {
+                const search = searchQuery.toLowerCase();
+                const note = (t.note || '').toLowerCase();
+                const category = (t.categoryName || '').toLowerCase();
+                if (!note.includes(search) && !category.includes(search)) return false;
+            }
+
+            // Category filter
+            if (categoryFilter !== 'all' && t.categoryName !== categoryFilter) return false;
+
+            // Type filter
+            if (filterType !== 'all' && t.type !== filterType) return false;
+            
+            // Time filter
             if (timeFilter === 'today') {
                 if (dateObj.toDateString() !== today.toDateString()) return false;
             } else if (timeFilter === 'thisWeek') {
@@ -156,8 +171,12 @@ export default function TransactionsScreen() {
         );
     };
 
+    const uniqueCategories = Array.from(new Set(transactions.map(t => t.categoryName))).filter(Boolean).sort();
+
     const activeFilterCount = (timeFilter !== 'all' ? 1 : 0) + 
                               (filterType !== 'all' ? 1 : 0) + 
+                              (categoryFilter !== 'all' ? 1 : 0) + 
+                              (searchQuery.trim() !== '' ? 1 : 0) + 
                               (sortOrder !== 'newest' ? 1 : 0);
 
     return (
@@ -183,30 +202,71 @@ export default function TransactionsScreen() {
 
                 {showFilters && (
                     <View style={styles.expandedFilters}>
-                        <Text style={styles.filterCategoryTitle}>Time Period</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
-                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
-                                <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
-                                <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
-                                <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
-                                <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
-                                onPress={() => setShowDatePicker(true)}
-                            >
-                                <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
-                                <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
-                                    {timeFilter === 'custom' ? customDate.toLocaleDateString('en-GB') : 'Custom Date'}
-                                </Text>
-                            </TouchableOpacity>
-                        </ScrollView>
+                        <View style={styles.filterSection}>
+                            <Text style={styles.filterCategoryTitle}>Search</Text>
+                            <View style={styles.searchContainer}>
+                                <Ionicons name="search-outline" size={18} color="#888" />
+                                <TextInput
+                                    style={styles.searchInput}
+                                    placeholder="Search note or category..."
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                />
+                                {searchQuery.length > 0 && (
+                                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                        <Ionicons name="close-circle" size={18} color="#888" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        </View>
+
+                        <View style={styles.filterSection}>
+                            <Text style={styles.filterCategoryTitle}>Category</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll}>
+                                <TouchableOpacity 
+                                    style={[styles.filterPill, categoryFilter === 'all' && styles.filterPillActive]} 
+                                    onPress={() => setCategoryFilter('all')}
+                                >
+                                    <Text style={[styles.filterText, categoryFilter === 'all' && styles.filterTextActive]}>All Categories</Text>
+                                </TouchableOpacity>
+                                {uniqueCategories.map((cat, idx) => (
+                                    <TouchableOpacity 
+                                        key={idx}
+                                        style={[styles.filterPill, categoryFilter === cat && styles.filterPillActive]} 
+                                        onPress={() => setCategoryFilter(cat as string)}
+                                    >
+                                        <Text style={[styles.filterText, categoryFilter === cat && styles.filterTextActive]}>{cat as string}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+
+                        <View style={styles.filterSection}>
+                            <Text style={styles.filterCategoryTitle}>Time Period</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
+                                    <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
+                                    <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
+                                    <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
+                                    <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
+                                    onPress={() => setShowDatePicker(true)}
+                                >
+                                    <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
+                                        {timeFilter === 'custom' ? customDate.toLocaleDateString('en-GB') : 'Custom Date'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </ScrollView>
+                        </View>
 
                         <Text style={styles.filterCategoryTitle}>Transaction Type</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
@@ -238,6 +298,8 @@ export default function TransactionsScreen() {
                             onPress={() => {
                                 setTimeFilter('all');
                                 setFilterType('all');
+                                setCategoryFilter('all');
+                                setSearchQuery('');
                                 setSortOrder('newest');
                             }}
                         >
@@ -388,9 +450,31 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     expandedFilters: {
+        paddingHorizontal: 20,
         paddingBottom: 20,
+        gap: 16,
+    },
+    filterSection: {
+        marginBottom: 8,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F0F0F0',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        height: 44,
         gap: 8,
     },
+    searchInput: {
+        flex: 1,
+        fontSize: 15,
+        color: '#1a1a1a',
+    },
+    filterPillScroll: {
+        marginHorizontal: -20,
+        paddingHorizontal: 20,
+        },
     resetFilterButton: {
         flexDirection: 'row',
         alignItems: 'center',
