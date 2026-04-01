@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -16,6 +16,7 @@ import Header from '../../../components/Header';
 import { auth, db } from '../../../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -71,14 +72,19 @@ const SettingsIndex = () => {
         fetchUserData();
     }, []);
 
-    // Effect to handle navigation param 'edit=true'
-    useEffect(() => {
-        if (params.edit === 'true' && !loading) {
-            setTempName(displayName);
-            setTempImage(profileImageBase64);
-            setIsEditModalVisible(true);
-        }
-    }, [params.edit, loading]);
+    // Re-check for edit parameter every time the screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            if (params.edit === 'true' && !loading) {
+                setTempName(displayName);
+                setTempImage(profileImageBase64);
+                setIsEditModalVisible(true);
+                
+                // Clear the parameter so it can be re-triggered
+                router.setParams({ edit: 'false' });
+            }
+        }, [params.edit, loading, displayName, profileImageBase64])
+    );
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
