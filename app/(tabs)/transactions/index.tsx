@@ -130,7 +130,7 @@ export default function TransactionsScreen() {
                         {item.note || item.categoryName || 'Transaction'}
                     </Text>
                     <Text style={styles.transactionTime}>
-                        {timeStr}
+                        {dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {timeStr}
                     </Text>
                     {item.walletId && (
                         <View style={styles.walletTagContainer}>
