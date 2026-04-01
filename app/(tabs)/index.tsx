@@ -226,7 +226,7 @@ export default function HomeScreen() {
                                                         onPress={() => {
                                                             router.push({
                                                                 pathname: '/(tabs)/wallet',
-                                                                params: { search: item.name }
+                                                                params: { search: item.name, ts: Date.now().toString() }
                                                             });
                                                         }}
                                                     >

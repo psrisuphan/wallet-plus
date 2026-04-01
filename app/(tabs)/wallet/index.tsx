@@ -31,7 +31,7 @@ interface Transaction {
 
 const WalletScreen = () => {
   const router = useRouter();
-  const params = useLocalSearchParams<{ search?: string }>();
+  const params = useLocalSearchParams<{ search?: string, ts?: string }>();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
@@ -57,15 +57,22 @@ const WalletScreen = () => {
     return () => unsubscribeAuth();
   }, []);
 
+  // Handle incoming search from deep linking
+  useEffect(() => {
+    if (params.search) {
+      setSearchQuery(params.search);
+    }
+  }, [params.search, params.ts]);
+
+  // Clear search whenever the screen loses focus (user navigates to another tab)
   useFocusEffect(
     useCallback(() => {
-      // If we have a search param, set it. Otherwise reset search.
-      if (params.search) {
-        setSearchQuery(params.search);
-      } else {
+      // Component is focused
+      return () => {
+        // Component is blurred
         setSearchQuery('');
-      }
-    }, [params.search])
+      };
+    }, [])
   );
 
   useEffect(() => {
