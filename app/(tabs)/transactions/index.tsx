@@ -127,8 +127,13 @@ export default function TransactionsScreen() {
                 </View>
                 <View style={styles.transactionDetails}>
                     <Text style={styles.transactionName} numberOfLines={1}>
-                        {item.note || item.categoryName || 'Transaction'}
+                        {item.categoryName || 'Transaction'}
                     </Text>
+                    {item.note && (
+                        <Text style={styles.transactionNote} numberOfLines={1}>
+                            {item.note}
+                        </Text>
+                    )}
                     <Text style={styles.transactionTime}>
                         {dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {timeStr}
                     </Text>
@@ -446,6 +451,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#1a1a1a',
+        marginBottom: 2,
+    },
+    transactionNote: {
+        fontSize: 14,
+        color: '#666',
         marginBottom: 4,
     },
     transactionTime: {
