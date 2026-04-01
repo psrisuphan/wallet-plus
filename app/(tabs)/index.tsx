@@ -170,46 +170,45 @@ export default function HomeScreen() {
                         </View>
                         
                         <View style={styles.walletsList}>
-                            {wallets.slice(0, 3).map((item, index) => (
-                                <React.Fragment key={item.id}>
-                                    <TouchableOpacity 
-                                        style={styles.walletRow}
-                                        onPress={() => {
-                                            // TODO: navigate to wallet transactions view
-                                        }}
-                                    >
-                                        <View style={[
-                                            styles.walletIconContainer, 
-                                            { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
-                                        ]}>
-                                            <Ionicons 
-                                                name={(item.icon || 'wallet') as any} 
-                                                size={18} 
-                                                color={item.color || PRIMARY_GREEN} 
-                                            />
-                                        </View>
-                                        <Text style={styles.walletRowName} numberOfLines={1}>
-                                            {item.name}
-                                        </Text>
-                                        <Text style={styles.walletRowBalance}>
-                                            ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                        </Text>
-                                    </TouchableOpacity>
-                                    {index < Math.min(wallets.length, 3) - 1 && (
-                                        <View style={styles.rowDivider} />
-                                    )}
-                                </React.Fragment>
-                            ))}
+                            <ScrollView 
+                                style={{ maxHeight: 200 }} 
+                                showsVerticalScrollIndicator={false}
+                                nestedScrollEnabled={true}
+                            >
+                                {wallets.map((item, index) => (
+                                    <React.Fragment key={item.id}>
+                                        <TouchableOpacity 
+                                            style={styles.walletRow}
+                                            onPress={() => {
+                                                // TODO: navigate to wallet transactions view
+                                            }}
+                                        >
+                                            <View style={[
+                                                styles.walletIconContainer, 
+                                                { backgroundColor: `${item.color || PRIMARY_GREEN}20` }
+                                            ]}>
+                                                <Ionicons 
+                                                    name={(item.icon || 'wallet') as any} 
+                                                    size={18} 
+                                                    color={item.color || PRIMARY_GREEN} 
+                                                />
+                                            </View>
+                                            <Text style={styles.walletRowName} numberOfLines={1}>
+                                                {item.name}
+                                            </Text>
+                                            <Text style={styles.walletRowBalance}>
+                                                ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                            </Text>
+                                        </TouchableOpacity>
+                                        {index < wallets.length - 1 && (
+                                            <View style={styles.rowDivider} />
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </ScrollView>
                         </View>
                         
-                        {wallets.length > 3 && (
-                            <TouchableOpacity 
-                                style={styles.moreWalletsHint}
-                                onPress={() => router.push('/(tabs)/wallet')}
-                            >
-                                <Text style={styles.moreWalletsText}>+ {wallets.length - 3} more wallets</Text>
-                            </TouchableOpacity>
-                        )}
+
                     </View>
 
                     {/* Today's Transactions Section */}
@@ -225,39 +224,45 @@ export default function HomeScreen() {
                         </View>
                         
                         <View style={styles.walletsList}>
-                            {todayTransactions.map((item, index) => (
-                                <React.Fragment key={item.id}>
-                                    <View style={styles.walletRow}>
-                                        <View style={[
-                                            styles.walletIconContainer, 
-                                            { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
-                                        ]}>
-                                            <Ionicons 
-                                                name={item.type === 'income' ? "arrow-up" : "arrow-down"} 
-                                                size={18} 
-                                                color={item.type === 'income' ? PRIMARY_GREEN : '#C62828'} 
-                                            />
-                                        </View>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={styles.walletRowName} numberOfLines={1}>
-                                                {item.category || item.note || 'Transaction'}
+                            <ScrollView 
+                                style={{ maxHeight: 250 }} 
+                                showsVerticalScrollIndicator={false}
+                                nestedScrollEnabled={true}
+                            >
+                                {todayTransactions.map((item, index) => (
+                                    <React.Fragment key={item.id}>
+                                        <View style={styles.walletRow}>
+                                            <View style={[
+                                                styles.walletIconContainer, 
+                                                { backgroundColor: item.type === 'income' ? SUBTLE_GREEN : '#FFEBEE' }
+                                            ]}>
+                                                <Ionicons 
+                                                    name={item.type === 'income' ? "arrow-up" : "arrow-down"} 
+                                                    size={18} 
+                                                    color={item.type === 'income' ? PRIMARY_GREEN : '#C62828'} 
+                                                />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.walletRowName} numberOfLines={1}>
+                                                    {item.category || item.note || 'Transaction'}
+                                                </Text>
+                                                <Text style={{ fontSize: 12, color: '#999' }}>
+                                                    {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                </Text>
+                                            </View>
+                                            <Text style={[
+                                                styles.walletRowBalance,
+                                                { color: item.type === 'income' ? PRIMARY_GREEN : '#C62828' }
+                                            ]}>
+                                                {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
                                             </Text>
-                                            <Text style={{ fontSize: 12, color: '#999' }}>
-                                                {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                                            </Text>
                                         </View>
-                                        <Text style={[
-                                            styles.walletRowBalance,
-                                            { color: item.type === 'income' ? PRIMARY_GREEN : '#C62828' }
-                                        ]}>
-                                            {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
-                                        </Text>
-                                    </View>
-                                    {index < todayTransactions.length - 1 && (
-                                        <View style={styles.rowDivider} />
-                                    )}
-                                </React.Fragment>
-                            ))}
+                                        {index < todayTransactions.length - 1 && (
+                                            <View style={styles.rowDivider} />
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </ScrollView>
                             {todayTransactions.length === 0 && (
                                 <View style={{ alignItems: 'center', paddingVertical: 24 }}>
                                     <Ionicons name="receipt-outline" size={48} color="#EEE" />
