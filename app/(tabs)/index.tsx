@@ -35,7 +35,8 @@ export default function HomeScreen() {
             let total = 0;
             const walletsList: any[] = [];
             snapshot.forEach((doc) => {
-                const data = { id: doc.id, ...doc.data() };
+                const docData = doc.data() as any;
+                const data = { id: doc.id, ...docData };
                 total += data.balance || 0;
                 walletsList.push(data);
             });
