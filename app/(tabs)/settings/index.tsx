@@ -9,7 +9,8 @@ import {
   ScrollView, 
   TextInput, 
   Alert, 
-  ActivityIndicator 
+  ActivityIndicator,
+  Modal
 } from 'react-native';
 import Header from '../../../components/Header';
 import { auth, db } from '../../../firebaseConfig';
@@ -24,37 +25,53 @@ const ACCENT = '#699e8aff';
 const SettingsIndex = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    
+    // Auth Data
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
     const [profileImageBase64, setProfileImageBase64] = useState<string | null>(null);
+    
+    // Temp Edit Data
+    const [tempName, setTempName] = useState('');
+    const [tempImage, setTempImage] = useState<string | null>(null);
+
     const router = useRouter();
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const user = auth.currentUser;
-            if (user) {
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists()) {
-                        const data = userDoc.data();
-                        setDisplayName(data.displayName || '');
-                        setEmail(data.email || '');
-                        setProfileImageBase64(data.profilePictureBase64 || null);
-                    }
-                } catch (error) {
-                    console.error("Error fetching user data:", error);
-                } finally {
-                    setLoading(false);
+    const fetchUserData = async () => {
+        const user = auth.currentUser;
+        if (user) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    const name = data.displayName || '';
+                    const img = data.profilePictureBase64 || null;
+                    
+                    setDisplayName(name);
+                    setEmail(data.email || '');
+                    setProfileImageBase64(img);
+                    
+                    // Initialize Temp
+                    setTempName(name);
+                    setTempImage(img);
                 }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            } finally {
+                setLoading(false);
             }
-        };
+        }
+    };
+
+    useEffect(() => {
         fetchUserData();
     }, []);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Permission Required', 'Please allow access to your photos to camera.');
+            Alert.alert('Permission Required', 'Please allow photo access to change your picture.');
             return;
         }
 
@@ -67,13 +84,13 @@ const SettingsIndex = () => {
         });
 
         if (!result.canceled && result.assets[0].base64) {
-            setProfileImageBase64(result.assets[0].base64);
+            setTempImage(result.assets[0].base64);
         }
     };
 
     const handleUpdate = async () => {
-        if (!displayName.trim()) {
-            Alert.alert('Missing Info', 'Please enter a display name.');
+        if (!tempName.trim()) {
+            Alert.alert('Error', 'Please enter a display name.');
             return;
         }
 
@@ -82,10 +99,14 @@ const SettingsIndex = () => {
             const user = auth.currentUser;
             if (user) {
                 await updateDoc(doc(db, 'users', user.uid), {
-                    displayName: displayName.trim(),
-                    profilePictureBase64: profileImageBase64,
+                    displayName: tempName.trim(),
+                    profilePictureBase64: tempImage,
                 });
-                Alert.alert('Success', 'Settings updated successfully!');
+                
+                // Update Local State
+                await fetchUserData();
+                setIsEditModalVisible(false);
+                Alert.alert('Success', 'Profile updated!');
             }
         } catch (error: any) {
             Alert.alert('Update Error', error.message);
@@ -103,7 +124,6 @@ const SettingsIndex = () => {
               onPress: async () => {
                 try {
                     await signOut(auth);
-                    // The _layout will handle redirecting since user is no longer authed
                 } catch (error) {
                     console.error("Error signing out:", error);
                 }
@@ -126,61 +146,136 @@ const SettingsIndex = () => {
             <Header title="Settings" showHome={true} />
             
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {/* Profile Preview Section */}
-                <View style={styles.profileHeader}>
-                    <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage} activeOpacity={0.8}>
+                
+                {/* Profile Card Section (The clickable "floor") */}
+                <TouchableOpacity 
+                    style={styles.profileCard} 
+                    onPress={() => {
+                        setTempName(displayName);
+                        setTempImage(profileImageBase64);
+                        setIsEditModalVisible(true);
+                    }}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.profileCardLeft}>
                         {profileImageBase64 ? (
                             <Image
                                 source={{ uri: `data:image/jpeg;base64,${profileImageBase64}` }}
-                                style={styles.avatar}
+                                style={styles.cardAvatar}
                             />
                         ) : (
-                            <View style={styles.avatarPlaceholder}>
-                                <Ionicons name="person" size={50} color={ACCENT} />
+                            <View style={styles.cardAvatarPlaceholder}>
+                                <Ionicons name="person" size={24} color={ACCENT} />
                             </View>
                         )}
-                        <View style={styles.editBadge}>
-                            <Ionicons name="camera" size={16} color="white" />
+                        <View style={styles.profileCardText}>
+                            <Text style={styles.cardName}>{displayName || 'Set Name'}</Text>
+                            <Text style={styles.cardEmail}>{email}</Text>
                         </View>
-                    </TouchableOpacity>
-                    <Text style={styles.emailText}>{email}</Text>
-                </View>
-
-                {/* Account Settings Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Account Information</Text>
-                    
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Display Name</Text>
-                        <TextInput
-                            style={styles.input}
-                            value={displayName}
-                            onChangeText={setDisplayName}
-                            placeholder="Your Name"
-                        />
                     </View>
+                    <Ionicons name="chevron-forward" size={24} color="#CCC" />
+                </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={[styles.saveButton, saving && styles.buttonDisabled]} 
-                        onPress={handleUpdate}
-                        disabled={saving}
-                    >
-                        {saving ? (
-                            <ActivityIndicator color="white" size="small" />
-                        ) : (
-                            <Text style={styles.saveButtonText}>Apply Changes</Text>
-                        )}
+                {/* Other Settings (Placeholder sections) */}
+                <View style={styles.menuSection}>
+                    <Text style={styles.menuTitle}>General</Text>
+                    <TouchableOpacity style={styles.menuItem}>
+                        <View style={styles.menuItemLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
+                                <Ionicons name="notifications" size={20} color="#2196F3" />
+                            </View>
+                            <Text style={styles.menuText}>Notifications</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#CCC" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={styles.menuItem}>
+                        <View style={styles.menuItemLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: '#F3E5F5' }]}>
+                                <Ionicons name="lock-closed" size={20} color="#9C27B0" />
+                            </View>
+                            <Text style={styles.menuText}>Privacy & Security</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color="#CCC" />
                     </TouchableOpacity>
                 </View>
 
-                {/* Account Section - Logout */}
-                <View style={[styles.section, { borderBottomWidth: 0, marginTop: 12 }]}>
+                {/* Sign Out Section */}
+                <View style={styles.logoutSection}>
                     <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
                         <Ionicons name="log-out-outline" size={24} color="#FFF" />
                         <Text style={styles.signOutText}>Sign Out Account</Text>
                     </TouchableOpacity>
                 </View>
+
             </ScrollView>
+
+            {/* Edit Profile Modal (The "Edit Page" inside a modal) */}
+            <Modal
+                visible={isEditModalVisible}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setIsEditModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
+                            <Text style={styles.cancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Edit Profile</Text>
+                        <TouchableOpacity onPress={handleUpdate} disabled={saving}>
+                            {saving ? (
+                                <ActivityIndicator size="small" color={ACCENT} />
+                            ) : (
+                                <Text style={styles.doneText}>Done</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView style={styles.modalBody}>
+                        <View style={styles.editAvatarSection}>
+                            <TouchableOpacity style={styles.editAvatarWrapper} onPress={pickImage}>
+                                {tempImage ? (
+                                    <Image
+                                        source={{ uri: `data:image/jpeg;base64,${tempImage}` }}
+                                        style={styles.editAvatar}
+                                    />
+                                ) : (
+                                    <View style={styles.editAvatarPlaceholder}>
+                                        <Ionicons name="person" size={50} color={ACCENT} />
+                                    </View>
+                                )}
+                                <View style={styles.modalCameraBadge}>
+                                    <Ionicons name="camera" size={18} color="white" />
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={pickImage}>
+                                <Text style={styles.changePhotoText}>Change Profile Photo</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.editForm}>
+                            <View style={styles.editInputGroup}>
+                                <Text style={styles.editLabel}>NAME</Text>
+                                <TextInput
+                                    style={styles.editInput}
+                                    value={tempName}
+                                    onChangeText={setTempName}
+                                    placeholder="Enter your name"
+                                    autoFocus
+                                />
+                            </View>
+                            
+                            <View style={styles.editInputGroup}>
+                                <Text style={styles.editLabel}>EMAIL (UNEDITABLE)</Text>
+                                <View style={[styles.editInput, { backgroundColor: '#F0F0F0' }]}>
+                                    <Text style={{ color: '#999', fontSize: 16 }}>{email}</Text>
+                                </View>
+                            </View>
+                        </View>
+                    </ScrollView>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -197,120 +292,107 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
     },
     scrollContent: {
+        paddingTop: 16,
         paddingBottom: 40,
     },
-    profileHeader: {
-        backgroundColor: '#FFF',
+    // Main Settings Screen Styles
+    profileCard: {
+        flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 32,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEE',
+        justifyContent: 'space-between',
+        backgroundColor: '#FFF',
+        padding: 16,
+        marginHorizontal: 20,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
+        marginBottom: 24,
     },
-    avatarWrapper: {
-        width: 120,
-        height: 120,
-        position: 'relative',
-        marginBottom: 12,
+    profileCardLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    avatar: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        borderWidth: 4,
-        borderColor: ACCENT + '15',
+    cardAvatar: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        marginRight: 16,
     },
-    avatarPlaceholder: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
+    cardAvatarPlaceholder: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
         backgroundColor: ACCENT + '10',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: ACCENT + '20',
-        borderStyle: 'dashed',
+        marginRight: 16,
     },
-    editBadge: {
-        position: 'absolute',
-        bottom: 5,
-        right: 5,
-        backgroundColor: ACCENT,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+    profileCardText: {
         justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#FFF',
     },
-    emailText: {
-        fontSize: 16,
-        color: '#888',
-        fontWeight: '500',
-    },
-    section: {
-        padding: 24,
-        backgroundColor: '#FFF',
-        marginTop: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEE',
-    },
-    sectionTitle: {
-        fontSize: 18,
+    cardName: {
+        fontSize: 20,
         fontWeight: 'bold',
         color: '#1a1a1a',
-        marginBottom: 20,
+        marginBottom: 2,
     },
-    inputGroup: {
+    cardEmail: {
+        fontSize: 14,
+        color: '#888',
+    },
+    menuSection: {
+        backgroundColor: '#FFF',
+        marginHorizontal: 20,
+        borderRadius: 20,
+        padding: 8,
         marginBottom: 24,
     },
-    label: {
+    menuTitle: {
+        marginLeft: 16,
+        marginTop: 8,
+        marginBottom: 12,
         fontSize: 14,
-        color: '#666',
-        marginBottom: 8,
-        fontWeight: '600',
+        fontWeight: '700',
+        color: '#999',
+        letterSpacing: 1,
     },
-    input: {
-        height: 52,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        color: '#1A1A1A',
-        borderWidth: 1,
-        borderColor: '#EEE',
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 12,
+        paddingHorizontal: 12,
     },
-    saveButton: {
-        backgroundColor: ACCENT,
-        height: 52,
-        borderRadius: 12,
+    menuItemLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconBox: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: ACCENT,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 3,
+        marginRight: 12,
     },
-    buttonDisabled: {
-        opacity: 0.6,
-    },
-    saveButtonText: {
-        color: '#FFF',
+    menuText: {
         fontSize: 16,
-        fontWeight: 'bold',
+        color: '#333',
+        fontWeight: '500',
+    },
+    logoutSection: {
+        paddingHorizontal: 20,
     },
     signOutButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         height: 56,
-        borderRadius: 12,
+        borderRadius: 16,
         backgroundColor: '#FF3B30',
-        shadowColor: '#FF3B30',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
         elevation: 3,
     },
     signOutText: {
@@ -318,6 +400,100 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginLeft: 10,
+    },
+    // Modal Edit Styles
+    modalContainer: {
+        flex: 1,
+        backgroundColor: '#FFF',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    cancelText: {
+        color: '#666',
+        fontSize: 16,
+    },
+    doneText: {
+        color: ACCENT,
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    modalBody: {
+        flex: 1,
+    },
+    editAvatarSection: {
+        alignItems: 'center',
+        paddingVertical: 32,
+    },
+    editAvatarWrapper: {
+        width: 100,
+        height: 100,
+        position: 'relative',
+        marginBottom: 12,
+    },
+    editAvatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+    },
+    editAvatarPlaceholder: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: ACCENT + '05',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: ACCENT + '20',
+    },
+    modalCameraBadge: {
+        position: 'absolute',
+        bottom: 2,
+        right: 2,
+        backgroundColor: ACCENT,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#FFF',
+    },
+    changePhotoText: {
+        color: ACCENT,
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    editForm: {
+        padding: 20,
+    },
+    editInputGroup: {
+        marginBottom: 24,
+    },
+    editLabel: {
+        fontSize: 12,
+        color: '#999',
+        fontWeight: '700',
+        marginBottom: 8,
+        marginLeft: 4,
+    },
+    editInput: {
+        backgroundColor: '#F5F5F5',
+        height: 52,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        fontSize: 16,
+        color: '#1a1a1a',
+        justifyContent: 'center',
     },
 });
 
