@@ -1,11 +1,42 @@
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
+import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
+import { auth, db } from '../../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const [displayName, setDisplayName] = useState<string | null>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    setProfileImage(data.profilePictureBase64);
+                    setDisplayName(data.displayName);
+                }
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <Header title="Overview" showLogo={false} />
+            <Header 
+                title="Overview" 
+                showLogo={false} 
+                profileImage={profileImage}
+                onProfilePress={() => {
+                    router.push('/(tabs)/settings?edit=true'); 
+                }}
+            />
             <View style={styles.content}>
                 <Text style={styles.title}>Home Screen</Text>
                 <Text style={styles.subtitle}>Welcome back to Wallet+</Text>
