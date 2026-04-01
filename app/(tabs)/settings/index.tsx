@@ -30,6 +30,7 @@ const SettingsIndex = () => {
     // Auth Data
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
+    const [createdAt, setCreatedAt] = useState<any>(null); // New state for created date
     const [profileImageBase64, setProfileImageBase64] = useState<string | null>(null);
     
     // Temp Edit Data
@@ -50,6 +51,7 @@ const SettingsIndex = () => {
                     
                     setDisplayName(name);
                     setEmail(data.email || '');
+                    setCreatedAt(data.createdAt); // Capture the timestamp
                     setProfileImageBase64(img);
                     
                     // Initialize Temp
@@ -252,8 +254,12 @@ const SettingsIndex = () => {
                             <TouchableOpacity onPress={pickImage}>
                                 <Text style={styles.changePhotoText}>Change Profile Photo</Text>
                             </TouchableOpacity>
-                            {/* Display email here since it's uneditable */}
                             <Text style={styles.modalEmailDisplay}>{email}</Text>
+                            {createdAt && (
+                                <Text style={styles.modalDateDisplay}>
+                                    Joined {createdAt.toDate ? createdAt.toDate().toLocaleDateString() : new Date(createdAt.seconds * 1000).toLocaleDateString()}
+                                </Text>
+                            )}
                         </View>
 
                         <View style={styles.editForm}>
@@ -471,8 +477,13 @@ const styles = StyleSheet.create({
     },
     modalEmailDisplay: {
         fontSize: 14,
-        color: '#888',
+        color: '#666',
         fontWeight: '500',
+    },
+    modalDateDisplay: {
+        fontSize: 12,
+        color: '#999',
+        marginTop: 4,
     },
     editForm: {
         padding: 20,
