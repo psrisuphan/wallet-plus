@@ -65,6 +65,14 @@ export default function TransactionsScreen() {
         };
     }, []);
 
+    const resetFilters = () => {
+        setTimeFilter('all');
+        setFilterType('all');
+        setCategoryFilter('all');
+        setSearchQuery('');
+        setSortOrder('newest');
+    };
+
     const processTransactions = () => {
         let filtered = transactions.filter(t => {
             const dateObj = t.date?.toDate ? t.date.toDate() : new Date();
@@ -306,13 +314,7 @@ export default function TransactionsScreen() {
                         
                         <TouchableOpacity 
                             style={styles.resetFilterButton}
-                            onPress={() => {
-                                setTimeFilter('all');
-                                setFilterType('all');
-                                setCategoryFilter('all');
-                                setSearchQuery('');
-                                setSortOrder('newest');
-                            }}
+                            onPress={resetFilters}
                         >
                             <Ionicons name="refresh-outline" size={16} color="#C62828" />
                             <Text style={styles.resetFilterText}>Reset Filters</Text>
@@ -353,6 +355,9 @@ export default function TransactionsScreen() {
                     <View style={styles.centerContainer}>
                         <Ionicons name="filter-outline" size={64} color="#E0E0E0" />
                         <Text style={styles.emptyText}>No transactions match filters</Text>
+                        <TouchableOpacity onPress={resetFilters} style={styles.clearFiltersButton}>
+                            <Text style={styles.clearFiltersText}>Clear all filters</Text>
+                        </TouchableOpacity>
                     </View>
                 ) : (() => {
                     const sections = processTransactions();
@@ -617,9 +622,18 @@ const styles = StyleSheet.create({
         marginTop: -50,
     },
     emptyText: {
-        fontSize: 18,
-        color: '#999',
+        fontSize: 16,
+        color: '#888',
+        marginTop: 8,
+    },
+    clearFiltersButton: {
         marginTop: 16,
-        fontWeight: '500',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+    },
+    clearFiltersText: {
+        fontSize: 15,
+        color: PRIMARY_GREEN,
+        fontWeight: '700',
     },
 });
