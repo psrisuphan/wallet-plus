@@ -79,8 +79,15 @@ export default function TransactionsScreen() {
                     </Text>
                     <Text style={styles.transactionTime}>
                         {dateStr} • {timeStr}
-                        {item.walletId ? ` • ${wallets.find(w => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                     </Text>
+                    {item.walletId && (
+                        <View style={styles.walletTagContainer}>
+                            <Ionicons name="wallet-outline" size={12} color="#888" />
+                            <Text style={styles.walletTagText}>
+                                {wallets.find(w => w.id === item.walletId)?.name || 'Unknown Wallet'}
+                            </Text>
+                        </View>
+                    )}
                 </View>
                 <Text style={[
                     styles.transactionAmount,
@@ -166,6 +173,17 @@ const styles = StyleSheet.create({
     transactionTime: {
         fontSize: 13,
         color: '#888',
+    },
+    walletTagContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: 4,
+    },
+    walletTagText: {
+        fontSize: 12,
+        color: '#888',
+        fontWeight: '500',
     },
     transactionAmount: {
         fontSize: 16,
