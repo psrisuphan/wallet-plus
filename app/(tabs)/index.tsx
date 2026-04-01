@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -12,6 +12,7 @@ export default function HomeScreen() {
     const [totalBalance, setTotalBalance] = useState(0);
     const [todayChange, setTodayChange] = useState(0);
     const [wallets, setWallets] = useState<any[]>([]);
+    const [todayTransactions, setTodayTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -62,6 +63,22 @@ export default function HomeScreen() {
                 else if (data.type === 'expense') change -= data.amount || 0;
             });
             setTodayChange(change);
+        });
+
+        // Listen to today's transactions list
+        const qTodayList = query(
+            collection(db, 'transactions'), 
+            where('userId', '==', user.uid),
+            where('date', '>=', startOfDay),
+            orderBy('date', 'desc')
+        );
+
+        const unsubscribeTodayList = onSnapshot(qTodayList, (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((doc) => {
+                list.push({ id: doc.id, ...doc.data() });
+            });
+            setTodayTransactions(list);
             setLoading(false);
         });
 
@@ -69,6 +86,7 @@ export default function HomeScreen() {
         return () => {
             unsubscribeWallets();
             unsubscribeTransactions();
+            unsubscribeTodayList();
         };
     }, []);
 
@@ -190,6 +208,63 @@ export default function HomeScreen() {
                             </TouchableOpacity>
                         )}
                     </View>
+
+                    {/* Today's Transactions Section */}
+                    <View style={styles.walletsCard}>
+                        <View style={styles.sectionHeader}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Ionicons name="time" size={20} color="#2E7D32" />
+                                <Text style={styles.sectionTitle}>Today's Activity</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => router.push('/(tabs)/new_transaction')}>
+                                <Text style={styles.viewAllText}>View All</Text>
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <View style={styles.walletsList}>
+                            {todayTransactions.map((item, index) => (
+                                <React.Fragment key={item.id}>
+                                    <View style={styles.walletRow}>
+                                        <View style={[
+                                            styles.walletIconContainer, 
+                                            { backgroundColor: item.type === 'income' ? '#E8F5E9' : '#FFEBEE' }
+                                        ]}>
+                                            <Ionicons 
+                                                name={item.type === 'income' ? "arrow-up" : "arrow-down"} 
+                                                size={18} 
+                                                color={item.type === 'income' ? '#2E7D32' : '#C62828'} 
+                                            />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.walletRowName} numberOfLines={1}>
+                                                {item.category || item.note || 'Transaction'}
+                                            </Text>
+                                            <Text style={{ fontSize: 12, color: '#999' }}>
+                                                {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                            </Text>
+                                        </View>
+                                        <Text style={[
+                                            styles.walletRowBalance,
+                                            { color: item.type === 'income' ? '#2E7D32' : '#C62828' }
+                                        ]}>
+                                            {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString()}
+                                        </Text>
+                                    </View>
+                                    {index < todayTransactions.length - 1 && (
+                                        <View style={styles.rowDivider} />
+                                    )}
+                                </React.Fragment>
+                            ))}
+                            {todayTransactions.length === 0 && (
+                                <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                                    <Ionicons name="receipt-outline" size={48} color="#EEE" />
+                                    <Text style={{ textAlign: 'center', color: '#999', marginTop: 8 }}>
+                                        No activity today
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
                 </View>
             </ScrollView>
         </View>
@@ -217,7 +292,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 24,
         padding: 24,
-        marginBottom: 24,
+        marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.1,
@@ -261,7 +336,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 24,
         padding: 20,
-        marginBottom: 24,
+        marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
