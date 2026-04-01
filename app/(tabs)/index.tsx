@@ -230,9 +230,16 @@ export default function HomeScreen() {
                                                             color={item.color || PRIMARY_GREEN} 
                                                         />
                                                     </View>
-                                                    <Text style={styles.walletRowName} numberOfLines={1}>
-                                                        {item.name}
-                                                    </Text>
+                                                    <View style={{ flex: 1, justifyContent: 'center' }}>
+                                                        <Text style={styles.walletRowName} numberOfLines={1}>
+                                                            {item.name}
+                                                        </Text>
+                                                        {item.note && (
+                                                            <Text style={styles.walletRowDescription} numberOfLines={1}>
+                                                                {item.note}
+                                                            </Text>
+                                                        )}
+                                                    </View>
                                                     <Text style={styles.walletRowBalance}>
                                                         ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                     </Text>
@@ -430,9 +437,13 @@ const styles = StyleSheet.create({
     },
     walletRowName: {
         fontSize: 15,
-        fontWeight: '600',
-        color: '#333',
-        flex: 1,
+        fontWeight: '700',
+        color: '#1a1a1a',
+    },
+    walletRowDescription: {
+        fontSize: 12,
+        color: '#999',
+        marginTop: 2,
     },
     walletRowBalance: {
         fontSize: 15,
