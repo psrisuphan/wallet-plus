@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -127,6 +127,50 @@ const EditTransactionScreen = () => {
         };
         fetchTransaction();
     }, [id]);
+
+    const handleDelete = async () => {
+        Alert.alert(
+            "Delete Transaction",
+            "Are you sure you want to delete this transaction? This will also update your wallet balance.",
+            [
+                { text: "Cancel", style: "cancel" },
+                { 
+                    text: "Delete", 
+                    style: "destructive", 
+                    onPress: async () => {
+                        if (!originalTransaction) return;
+                        setIsSaving(true);
+                        try {
+                            const batch = writeBatch(db);
+                            const transactionRef = doc(db, 'transactions', id as string);
+                            
+                            // Revert wallet balance
+                            const walletRef = doc(db, 'wallets', originalTransaction.walletId);
+                            const walletSnap = await getDoc(walletRef);
+                            if (!walletSnap.exists()) throw new Error("Wallet not found");
+                            const walletData = walletSnap.data();
+                            
+                            const revertedBalance = originalTransaction.type === 'expense'
+                                ? walletData.balance + originalTransaction.amount
+                                : walletData.balance - originalTransaction.amount;
+                                
+                            batch.update(walletRef, { balance: revertedBalance });
+                            batch.delete(transactionRef);
+                            
+                            await batch.commit();
+                            Alert.alert("Success", "Transaction deleted successfully!");
+                            router.push('/(tabs)/transactions');
+                        } catch (error) {
+                            console.error("Error deleting transaction: ", error);
+                            Alert.alert("Error", "Could not delete transaction.");
+                        } finally {
+                            setIsSaving(false);
+                        }
+                    } 
+                }
+            ]
+        );
+    };
 
     // Set selected wallet once wallets are loaded
     useEffect(() => {
@@ -453,6 +497,14 @@ const EditTransactionScreen = () => {
                 
                 <View style={styles.footer}>
                     <TouchableOpacity 
+                        style={styles.deleteButton}
+                        onPress={handleDelete}
+                        disabled={isSaving}
+                    >
+                        <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
                         style={[
                             styles.saveButton,
                             { 
@@ -463,7 +515,7 @@ const EditTransactionScreen = () => {
                         onPress={handleSave}
                         disabled={isSaving}
                     >
-                        {isSaving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveButtonText}>Update Transaction</Text>}
+                        {isSaving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveButtonText}>Update</Text>}
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -498,8 +550,9 @@ const styles = StyleSheet.create({
     walletSelectorInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     selectorIconContainer: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
     walletSelectorText: { fontSize: 16, fontWeight: '600', color: '#333' },
-    footer: { padding: 20, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#EEE' },
-    saveButton: { height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+    footer: { padding: 20, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#EEE', flexDirection: 'row', gap: 12 },
+    deleteButton: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', borderColor: '#FF3B30', borderWidth: 1 },
+    saveButton: { flex: 1, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
     saveButtonText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
     modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '80%', padding: 20 },
