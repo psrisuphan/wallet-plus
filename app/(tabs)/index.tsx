@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity, FlatList } from 'react-native';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
 import { doc, getDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -137,7 +137,7 @@ export default function HomeScreen() {
                     </View>
 
                     {/* Wallets Section */}
-                    <View style={styles.sectionContainer}>
+                    <View style={styles.walletsCard}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>Your Wallets</Text>
                             <TouchableOpacity onPress={() => router.push('/(tabs)/wallet')}>
@@ -145,39 +145,38 @@ export default function HomeScreen() {
                             </TouchableOpacity>
                         </View>
                         
-                        <FlatList
-                            data={wallets.slice(0, 3)}
-                            keyExtractor={(item) => item.id}
-                            scrollEnabled={false}
-                            contentContainerStyle={styles.walletsList}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity 
-                                    style={styles.walletCard}
-                                    onPress={() => {
-                                        // TODO: navigate to wallet transactions view
-                                    }}
-                                >
-                                    <View style={styles.walletCardHeader}>
+                        <View style={styles.walletsList}>
+                            {wallets.slice(0, 3).map((item, index) => (
+                                <React.Fragment key={item.id}>
+                                    <TouchableOpacity 
+                                        style={styles.walletRow}
+                                        onPress={() => {
+                                            // TODO: navigate to wallet transactions view
+                                        }}
+                                    >
                                         <View style={[
                                             styles.walletIconContainer, 
                                             { backgroundColor: `${item.color || '#2E7D32'}20` }
                                         ]}>
                                             <Ionicons 
                                                 name={(item.icon || 'wallet') as any} 
-                                                size={20} 
+                                                size={18} 
                                                 color={item.color || '#2E7D32'} 
                                             />
                                         </View>
-                                        <Text style={styles.walletCardName} numberOfLines={1}>
+                                        <Text style={styles.walletRowName} numberOfLines={1}>
                                             {item.name}
                                         </Text>
-                                        <Text style={styles.walletCardBalance}>
+                                        <Text style={styles.walletRowBalance}>
                                             ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </Text>
-                                    </View>
-                                </TouchableOpacity>
-                            )}
-                        />
+                                    </TouchableOpacity>
+                                    {index < Math.min(wallets.length, 3) - 1 && (
+                                        <View style={styles.rowDivider} />
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </View>
                         
                         {wallets.length > 3 && (
                             <TouchableOpacity 
@@ -255,18 +254,27 @@ const styles = StyleSheet.create({
     todayContainer: {
         width: '100%',
     },
-    sectionContainer: {
+    walletsCard: {
+        backgroundColor: '#fff',
+        borderRadius: 24,
+        padding: 20,
         marginBottom: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 15,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
     },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 16,
-        paddingHorizontal: 4,
     },
     sectionTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '700',
         color: '#1a1a1a',
     },
@@ -276,49 +284,43 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     walletsList: {
-        paddingHorizontal: 4,
-        gap: 12,
+        width: '100%',
     },
-    walletCard: {
-        backgroundColor: '#fff',
-        padding: 16,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-    },
-    walletCardHeader: {
+    walletRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        paddingVertical: 12,
         gap: 12,
     },
+    rowDivider: {
+        height: 1,
+        backgroundColor: '#F5F5F5',
+        marginLeft: 48, // Icon width (36) + gap (12)
+    },
     walletIconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: '#F1F8E9',
+        width: 36,
+        height: 36,
+        borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    walletCardName: {
-        fontSize: 16,
+    walletRowName: {
+        fontSize: 15,
         fontWeight: '600',
         color: '#333',
         flex: 1,
     },
-    walletCardBalance: {
-        fontSize: 16,
+    walletRowBalance: {
+        fontSize: 15,
         fontWeight: '700',
         color: '#1a1a1a',
     },
     moreWalletsHint: {
         alignItems: 'center',
-        paddingVertical: 12,
+        paddingTop: 12,
         marginTop: 4,
+        borderTopWidth: 1,
+        borderTopColor: '#F5F5F5',
     },
     moreWalletsText: {
         fontSize: 14,
