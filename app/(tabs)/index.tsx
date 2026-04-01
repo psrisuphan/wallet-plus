@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, StatusBar, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity, FlatList } from 'react-native';
 import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
@@ -11,6 +11,7 @@ export default function HomeScreen() {
     const [displayName, setDisplayName] = useState<string | null>(null);
     const [totalBalance, setTotalBalance] = useState(0);
     const [todayChange, setTodayChange] = useState(0);
+    const [wallets, setWallets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -32,10 +33,14 @@ export default function HomeScreen() {
         const qWallets = query(collection(db, 'wallets'), where('userId', '==', user.uid));
         const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
             let total = 0;
+            const walletsList: any[] = [];
             snapshot.forEach((doc) => {
-                total += doc.data().balance || 0;
+                const data = { id: doc.id, ...doc.data() };
+                total += data.balance || 0;
+                walletsList.push(data);
             });
             setTotalBalance(total);
+            setWallets(walletsList);
         });
 
         // Listen to today's transactions
@@ -130,6 +135,44 @@ export default function HomeScreen() {
                             </View>
                         </View>
                     </View>
+
+                    {/* Wallets Section */}
+                    <View style={styles.sectionContainer}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Your Wallets</Text>
+                            <TouchableOpacity onPress={() => router.push('/(tabs)/wallet')}>
+                                <Text style={styles.viewAllText}>View All</Text>
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <FlatList
+                            data={wallets}
+                            keyExtractor={(item) => item.id}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.walletsList}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity 
+                                    style={styles.walletCard}
+                                    onPress={() => {
+                                        // TODO: navigate to wallet transactions view
+                                    }}
+                                >
+                                    <View style={styles.walletCardHeader}>
+                                        <View style={styles.walletIconContainer}>
+                                            <Ionicons name="card" size={18} color="#2E7D32" />
+                                        </View>
+                                        <Text style={styles.walletCardName} numberOfLines={1}>
+                                            {item.name}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.walletCardBalance}>
+                                        ฿{(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        />
+                    </View>
                 </View>
             </ScrollView>
         </View>
@@ -139,7 +182,10 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#FFFFFF',
+    },
+    scrollContent: {
+        paddingBottom: 40,
     },
     content: {
         padding: 20,
@@ -151,15 +197,17 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     balanceCard: {
-        backgroundColor: '#FFF',
+        backgroundColor: '#fff',
         borderRadius: 24,
         padding: 24,
-        marginBottom: 20,
+        marginBottom: 24,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 15,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
     },
     balanceHeader: {
         flexDirection: 'row',
@@ -191,6 +239,68 @@ const styles = StyleSheet.create({
     },
     todayContainer: {
         width: '100%',
+    },
+    sectionContainer: {
+        marginBottom: 24,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+        paddingHorizontal: 4,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1a1a1a',
+    },
+    viewAllText: {
+        fontSize: 14,
+        color: '#2E7D32',
+        fontWeight: '600',
+    },
+    walletsList: {
+        paddingHorizontal: 4,
+        gap: 16,
+    },
+    walletCard: {
+        backgroundColor: '#fff',
+        width: 160,
+        padding: 16,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
+    },
+    walletCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+        gap: 8,
+    },
+    walletIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 10,
+        backgroundColor: '#F1F8E9',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    walletCardName: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#666',
+        flex: 1,
+    },
+    walletCardBalance: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1a1a1a',
     },
     todayLabel: {
         fontSize: 12,
