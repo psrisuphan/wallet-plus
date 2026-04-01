@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
@@ -92,7 +92,7 @@ const WalletScreen = () => {
   const handleDeleteWallet = (walletId: string) => {
     Alert.alert(
       'Delete Wallet',
-      'Are you sure you want to delete this wallet?',
+      'Are you sure you want to delete this wallet? All related transactions will also be permanently deleted.',
       [
         {
           text: 'Cancel',
@@ -103,11 +103,27 @@ const WalletScreen = () => {
           onPress: async () => {
             setLoading(true);
             try {
-              await deleteDoc(doc(db, 'wallets', walletId));
-              Alert.alert('Success', 'Wallet deleted successfully!');
+              const batch = writeBatch(db);
+
+              // 1. Query all transactions associated with this wallet
+              const transactionsQuery = query(collection(db, 'transactions'), where('walletId', '==', walletId));
+              const transactionsSnapshot = await getDocs(transactionsQuery);
+
+              // 2. Add each transaction deletion to the batch
+              transactionsSnapshot.forEach((transactionDoc) => {
+                batch.delete(transactionDoc.ref);
+              });
+
+              // 3. Add the wallet deletion to the batch
+              batch.delete(doc(db, 'wallets', walletId));
+
+              // 4. Commit all deletions atomically
+              await batch.commit();
+
+              Alert.alert('Success', 'Wallet and its transactions deleted successfully!');
             } catch (error) {
               console.error('Error deleting wallet:', error);
-              Alert.alert('Error', 'Failed to delete wallet.');
+              Alert.alert('Error', 'Failed to delete wallet and associated transactions.');
             } finally {
               setLoading(false);
             }
