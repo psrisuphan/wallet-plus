@@ -30,8 +30,10 @@ const AddTransactionScreen = () => {
             setAmount('');
             setNote('');
             setSelectedWallet(null);
-            setSelectedCategory(type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id);
-        }, [type])
+            setImageNoteBase64(null);
+            setType('expense');
+            setSelectedCategory(EXPENSE_CATEGORIES[0].id);
+        }, []) // Empty dependencies ensure this only runs once per focus, not on type toggle
     );
 
     // Auto-switch category selection when toggling between expense and income
