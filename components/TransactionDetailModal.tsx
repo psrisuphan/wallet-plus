@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, Image, Pla
 import { Ionicons } from '@expo/vector-icons';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../constants/Colors';
 
+import { auth } from '../firebaseConfig';
 import { Transaction } from '../types';
 
 interface TransactionDetailModalProps {
@@ -124,10 +125,12 @@ const TransactionDetailModal = ({ visible, transaction, walletName, isShared, on
                     </ScrollView>
                     
                     <View style={modalStyles.footer}>
-                        <TouchableOpacity style={modalStyles.editButton} onPress={onEdit}>
-                            <Ionicons name="create-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-                            <Text style={modalStyles.editButtonText}>Edit Transaction</Text>
-                        </TouchableOpacity>
+                        {auth.currentUser?.uid === transaction.userId && (
+                            <TouchableOpacity style={modalStyles.editButton} onPress={onEdit}>
+                                <Ionicons name="create-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                                <Text style={modalStyles.editButtonText}>Edit Transaction</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </View>
             </View>

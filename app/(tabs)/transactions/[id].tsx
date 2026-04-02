@@ -81,6 +81,18 @@ const EditTransactionScreen = () => {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    
+                    // Check if user is the creator
+                    if (data.userId && auth.currentUser?.uid !== data.userId) {
+                        setLoading(false);
+                        Alert.alert(
+                            "Permission Denied", 
+                            "Only the person who added this transaction can edit or delete it.",
+                            [{ text: "OK", onPress: () => router.back() }]
+                        );
+                        return;
+                    }
+
                     setOriginalTransaction({ id: docSnap.id, ...data });
                     setType(data.type);
                     setAmount(data.amount.toString());
