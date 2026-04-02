@@ -130,7 +130,13 @@ wallet-plus/
    ```
 
 3. **Environment Setup**
-   Update `firebaseConfig.ts` with your Firebase project credentials. Ensure Firestore and Authentication are enabled in your Firebase console.
+   The project uses environment variables for Firebase configuration.
+   - Copy the `.env.example` file to create a `.env` file:
+     ```bash
+     cp .env.example .env
+     ```
+   - Open the `.env` file and fill in your Firebase project credentials.
+   - Ensure Firestore and Authentication are enabled in your Firebase console.
 
 4. **Launch Application**
    ```bash
