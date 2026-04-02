@@ -10,12 +10,12 @@ import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
+  apiKey: "AIzaSyDFn7cGtZjFl1vCAWUMGfWqUZb1uoZfiRk",
+  authDomain: "wallet-plus-database.firebaseapp.com",
+  projectId: "wallet-plus-database",
+  storageBucket: "wallet-plus-database.firebasestorage.app",
+  messagingSenderId: "328127035725",
+  appId: "1:328127035725:web:206dd6aa7690722e5d9f04"
 };
 
 // Initialize Firebase

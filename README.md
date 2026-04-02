@@ -130,13 +130,7 @@ wallet-plus/
    ```
 
 3. **Environment Setup**
-   The project uses environment variables for Firebase configuration.
-   - Copy the `.env.example` file to create a `.env` file:
-     ```bash
-     cp .env.example .env
-     ```
-   - Open the `.env` file and fill in your Firebase project credentials.
-   - Ensure Firestore and Authentication are enabled in your Firebase console.
+   The project is pre-configured with the default Firebase project credentials. Ensure Firestore and Authentication are enabled in your Firebase console if you're using your own project.
 
 4. **Launch Application**
    ```bash

@@ -30,10 +30,6 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env
-.env*.local
-
 # typescript
 *.tsbuildinfo
 
@@ -42,5 +38,5 @@ yarn-error.*
 /android
 
 # firebase
-# firebaseConfig.ts is no longer ignored because it will use environment variables
+# firebaseConfig.ts is tracked for easier collaboration
 firebase-debug.log
