@@ -521,7 +521,7 @@ export default function TransactionsScreen() {
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                                     <Text style={{ fontSize: 18, fontWeight: '600' }}>Select Date</Text>
                                     <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                                        <Text style={{ color: PRIMARY_GREEN, fontWeight: '600', fontSize: 16 }}>Done</Text>
+                                        <Text style={{ color: '#888', fontWeight: '500', fontSize: 16 }}>Cancel</Text>
                                     </TouchableOpacity>
                                 </View>
                                 <DateTimePicker
