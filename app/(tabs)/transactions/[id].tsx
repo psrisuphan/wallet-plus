@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, writeBatch, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, writeBatch, deleteDoc, or } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -60,13 +60,22 @@ const EditTransactionScreen = () => {
     useEffect(() => {
         if (!userId) return;
         setLoadingWallets(true);
-        const q = query(collection(db, 'wallets'), where('userId', '==', userId));
+        const q = query(
+            collection(db, 'wallets'), 
+            or(
+                where('userId', '==', userId),
+                where('sharedWith', 'array-contains', userId)
+            )
+        );
         const unsubscribeWallets = onSnapshot(q, (querySnapshot) => {
             const walletData = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             })) as Wallet[];
             setWallets(walletData);
+            setLoadingWallets(false);
+        }, (error) => {
+            console.error("Edit Tx - Wallets Error:", error);
             setLoadingWallets(false);
         });
         return () => unsubscribeWallets();

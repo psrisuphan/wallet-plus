@@ -26,66 +26,70 @@ export default function HomeScreen() {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const walletsRef = useRef<Wallet[]>([]);
+    const [userId, setUserId] = useState<string | null>(null);
     const router = useRouter();
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
-            if (!user) {
+            if (user) {
+                setUserId(user.uid);
+            } else {
+                setUserId(null);
                 setWallets([]);
                 setTodayTransactions([]);
                 setTotalBalance(0);
                 setLoading(false);
-                return;
             }
-
-            const fetchUserData = async () => {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const data = userDoc.data();
-                    setProfileImage(data.profilePictureBase64);
-                    setDisplayName(data.displayName);
-                }
-            };
-            fetchUserData();
-
-            const qWallets = query(
-                collection(db, 'wallets'), 
-                or(
-                    where('userId', '==', user.uid),
-                    where('sharedWith', 'array-contains', user.uid)
-                )
-            );
-            const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
-                let total = 0;
-                const walletsList: any[] = [];
-                snapshot.forEach((doc) => {
-                    const docData = doc.data() as any;
-                    const data = { id: doc.id, ...docData };
-                    total += data.balance || 0;
-                    walletsList.push(data);
-                });
-                setTotalBalance(total);
-                setWallets(walletsList);
-                walletsRef.current = walletsList;
-            });
-
-            return () => unsubscribeWallets();
         });
-
         return () => unsubscribeAuth();
     }, []);
 
+    useEffect(() => {
+        if (!userId) return;
+
+        const fetchUserData = async () => {
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                setProfileImage(data.profilePictureBase64);
+                setDisplayName(data.displayName);
+            }
+        };
+        fetchUserData();
+
+        const qWallets = query(
+            collection(db, 'wallets'), 
+            or(
+                where('userId', '==', userId),
+                where('sharedWith', 'array-contains', userId)
+            )
+        );
+        const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
+            let total = 0;
+            const walletsList: any[] = [];
+            snapshot.forEach((doc) => {
+                const docData = doc.data() as any;
+                const data = { id: doc.id, ...docData };
+                total += data.balance || 0;
+                walletsList.push(data);
+            });
+            setTotalBalance(total);
+            setWallets(walletsList);
+            walletsRef.current = walletsList;
+        }, (error) => {
+            console.error("Wallets Snapshot Error:", error);
+        });
+
+        return () => unsubscribeWallets();
+    }, [userId]);
+
     // Separate effect for transactions — depends on wallets being loaded
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const walletIds = wallets.map(w => w.id);
-        if (walletIds.length === 0) {
+        if (!userId || wallets.length === 0) {
             setTodayTransactions([]);
             setTodayChange(0);
             setWalletDailyChanges({});
-            setLoading(false);
+            if (!userId) setLoading(false);
             return;
         }
 
@@ -94,7 +98,7 @@ export default function HomeScreen() {
 
         const qToday = query(
             collection(db, 'transactions'),
-            where('walletId', 'in', walletIds.slice(0, 30)),
+            where('walletId', 'in', wallets.map(w => w.id).slice(0, 30)),
             where('date', '>=', Timestamp.fromDate(start)),
             orderBy('date', 'desc')
         );
@@ -118,10 +122,13 @@ export default function HomeScreen() {
             setTodayChange(totalNet);
             setWalletDailyChanges(deltas);
             setLoading(false);
+        }, (error) => {
+            console.error("Transactions Snapshot Error:", error);
+            setLoading(false);
         });
 
         return () => unsubscribeTransactions();
-    }, [wallets]);
+    }, [userId, wallets]);
 
     const handleWalletScroll = (event: any) => {
         const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
