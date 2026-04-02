@@ -69,6 +69,15 @@
 
 ---
 
+## Security & Privacy
+
+The application follows a **Security-First** architecture:
+- **Client-Side Keys**: Firebase API keys are deliberately included in the repository for "one-click" collaboration. Per Firebase security documentation, these are identifiers, not secrets.
+- **Server-Side Security**: Data privacy is strictly enforced via **Cloud Firestore Security Rules**. Even with the API keys, no user can read or modify data that does not belong to them.
+- **Authentication**: All features require a secure login via Firebase Authentication.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
