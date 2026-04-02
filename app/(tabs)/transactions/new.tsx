@@ -894,7 +894,7 @@ const styles = StyleSheet.create({
     },
     footer: {
         padding: 24,
-        paddingBottom: 40,
+        paddingBottom: 16,
         position: 'absolute',
         bottom: 0,
         left: 0,
