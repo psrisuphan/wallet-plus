@@ -304,6 +304,22 @@ const EditTransactionScreen = () => {
         return result;
     }, [wallets, searchQuery, sortType]);
 
+    const hasChanges = useMemo(() => {
+        if (!originalTransaction || !selectedWallet) return false;
+        
+        const currentAmount = parseFloat(amount);
+        const originalAmount = originalTransaction.amount;
+        
+        const amountChanged = isNaN(currentAmount) ? false : currentAmount !== originalAmount;
+        const typeChanged = type !== originalTransaction.type;
+        const noteChanged = note.trim() !== (originalTransaction.note || '').trim();
+        const categoryChanged = selectedCategory !== originalTransaction.categoryId;
+        const walletChanged = selectedWallet.id !== originalTransaction.walletId;
+        const imageChanged = (imageNoteBase64 || null) !== (originalTransaction.imageBase64 || null);
+
+        return amountChanged || typeChanged || noteChanged || categoryChanged || walletChanged || imageChanged;
+    }, [originalTransaction, amount, type, note, selectedCategory, selectedWallet, imageNoteBase64]);
+
     if (loading) {
         return (
             <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -539,12 +555,13 @@ const EditTransactionScreen = () => {
                         style={[
                             styles.saveButton,
                             { 
-                                backgroundColor: type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN,
-                                opacity: isSaving ? 0.7 : 1
+                                backgroundColor: !hasChanges ? '#ADB5BD' : (type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN),
+                                opacity: isSaving ? 0.7 : 1,
+                                shadowColor: !hasChanges ? 'transparent' : (type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN),
                             }
                         ]}
                         onPress={handleSave}
-                        disabled={isSaving}
+                        disabled={isSaving || !hasChanges}
                     >
                         {isSaving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveButtonText}>Update</Text>}
                     </TouchableOpacity>
