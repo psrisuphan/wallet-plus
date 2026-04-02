@@ -429,7 +429,7 @@ export default function TransactionsScreen() {
                                             onPress={() => toggleWallet(wallet.id)}
                                         >
                                             <Ionicons 
-                                                name="wallet-outline" 
+                                                name={isShared ? "people-outline" : "wallet-outline"} 
                                                 size={14} 
                                                 color={isSelected ? '#FFF' : wColor} 
                                             />
@@ -438,7 +438,12 @@ export default function TransactionsScreen() {
                                                 { color: wColor },
                                                 isSelected && { color: '#FFF' }
                                             ]}>
-                                                {wallet.name}{isShared ? ' (Shared)' : ''}
+                                                {wallet.name}
+                                                {isShared && (
+                                                    <Text style={{ fontSize: 10, opacity: 0.8 }}>
+                                                        {` (Shared)`}
+                                                    </Text>
+                                                )}
                                             </Text>
                                         </TouchableOpacity>
                                     );
