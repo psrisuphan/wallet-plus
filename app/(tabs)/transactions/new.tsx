@@ -30,8 +30,10 @@ const AddTransactionScreen = () => {
             setAmount('');
             setNote('');
             setSelectedWallet(null);
-            setSelectedCategory(type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id);
-        }, [type])
+            setImageNoteBase64(null);
+            setType('expense');
+            setSelectedCategory(EXPENSE_CATEGORIES[0].id);
+        }, []) // Empty dependencies ensure this only runs once per focus, not on type toggle
     );
 
     // Auto-switch category selection when toggling between expense and income
@@ -603,16 +605,16 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     typeButtonExpenseActive: {
-        backgroundColor: '#FFF',
-        shadowColor: '#000',
+        backgroundColor: EXPENSE_COLOR,
+        shadowColor: EXPENSE_COLOR,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 2,
     },
     typeButtonIncomeActive: {
-        backgroundColor: '#FFF',
-        shadowColor: '#000',
+        backgroundColor: WHITE_GREEN,
+        shadowColor: WHITE_GREEN,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -624,7 +626,7 @@ const styles = StyleSheet.create({
         color: '#888',
     },
     typeTextActive: {
-        color: '#333',
+        color: '#FFF',
     },
     amountContainer: {
         flexDirection: 'row',
