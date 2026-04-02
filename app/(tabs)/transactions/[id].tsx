@@ -464,17 +464,21 @@ const EditTransactionScreen = () => {
                             placeholderTextColor="#999"
                             value={note}
                             onChangeText={setNote}
+                            multiline={true}
+                            textAlignVertical="top"
                         />
-                        <TouchableOpacity 
-                            style={styles.noteImageAction} 
-                            onPress={pickImage}
-                        >
-                            <Ionicons 
-                                name={imageNoteBase64 ? "camera" : "camera-outline"} 
-                                size={24} 
-                                color={imageNoteBase64 ? WHITE_GREEN : "#888"} 
-                            />
-                        </TouchableOpacity>
+                        <View style={styles.noteActionContainer}>
+                            <TouchableOpacity 
+                                style={styles.noteImageAction} 
+                                onPress={pickImage}
+                            >
+                                <Ionicons 
+                                    name={imageNoteBase64 ? "camera" : "camera-outline"} 
+                                    size={24} 
+                                    color={imageNoteBase64 ? WHITE_GREEN : "#888"} 
+                                />
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
                     {/* Image Preview inside Note section */}
@@ -573,14 +577,13 @@ const styles = StyleSheet.create({
     scrollIndicatorHintLeft: { left: -10 },
     scrollIndicatorHintRight: { right: -10, alignItems: 'flex-end' },
     noteInputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: '#FFF',
         borderRadius: 12,
         marginBottom: 10,
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#EAEAEA',
+        minHeight: 120,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -592,9 +595,16 @@ const styles = StyleSheet.create({
         padding: 15,
         fontSize: 16,
         color: '#333',
+        minHeight: 80,
+    },
+    noteActionContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        paddingRight: 10,
+        paddingBottom: 10,
     },
     noteImageAction: {
-        paddingHorizontal: 15,
+        padding: 8,
     },
     inlineImagePreviewContainer: {
         width: '100%',
