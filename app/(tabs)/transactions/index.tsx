@@ -30,6 +30,10 @@ export default function TransactionsScreen() {
     const [showDetailModal, setShowDetailModal] = useState(false);
 
     const [userId, setUserId] = useState<string | null>(null);
+    const [startDate, setStartDate] = useState<Date>(new Date());
+    const [endDate, setEndDate] = useState<Date>(new Date());
+    const [showRangePicker, setShowRangePicker] = useState(false);
+    const [editingRange, setEditingRange] = useState<'start' | 'end'>('start');
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
@@ -160,6 +164,12 @@ export default function TransactionsScreen() {
                 if (dateObj.getMonth() !== today.getMonth() || dateObj.getFullYear() !== today.getFullYear()) return false;
             } else if (timeFilter === 'custom') {
                 if (dateObj.toDateString() !== customDate.toDateString()) return false;
+            } else if (timeFilter === 'range') {
+                const sDate = new Date(startDate);
+                sDate.setHours(0, 0, 0, 0);
+                const eDate = new Date(endDate);
+                eDate.setHours(23, 59, 59, 999);
+                if (dateObj < sDate || dateObj > eDate) return false;
             }
             
             return true;
@@ -354,6 +364,18 @@ export default function TransactionsScreen() {
                                         {timeFilter === 'custom' 
                                             ? customDate.toLocaleDateString('en-GB') 
                                             : 'Custom Date'
+                                        }
+                                    </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={[styles.filterPill, timeFilter === 'range' && styles.filterPillActive]} 
+                                    onPress={() => setShowRangePicker(true)}
+                                >
+                                    <Ionicons name="calendar-outline" size={14} color={timeFilter === 'range' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, timeFilter === 'range' && styles.filterTextActive]}>
+                                        {timeFilter === 'range' 
+                                            ? `${startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })} - ${endDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}`
+                                            : 'Custom Range'
                                         }
                                     </Text>
                                 </TouchableOpacity>
@@ -564,6 +586,104 @@ export default function TransactionsScreen() {
                         }}
                     />
                 )
+            )}
+
+            {showRangePicker && (
+                <Modal
+                    transparent={true}
+                    animationType="slide"
+                    visible={showRangePicker}
+                    onRequestClose={() => setShowRangePicker(false)}
+                >
+                    <TouchableOpacity 
+                        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+                        activeOpacity={1}
+                        onPress={() => setShowRangePicker(false)}
+                    >
+                        <View style={{ backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, minHeight: 450 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                <Text style={{ fontSize: 20, fontWeight: '700', color: '#1a1a1a' }}>Select Date Range</Text>
+                                <TouchableOpacity onPress={() => setShowRangePicker(false)}>
+                                    <Text style={{ color: '#888', fontWeight: '500', fontSize: 16 }}>Cancel</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                                <TouchableOpacity 
+                                    onPress={() => setEditingRange('start')}
+                                    style={{ 
+                                        flex: 1, 
+                                        padding: 12, 
+                                        borderRadius: 12, 
+                                        backgroundColor: editingRange === 'start' ? PRIMARY_GREEN + '15' : '#F5F5F5',
+                                        borderWidth: 1,
+                                        borderColor: editingRange === 'start' ? PRIMARY_GREEN : '#EEE'
+                                    }}
+                                >
+                                    <Text style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>From</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: '600', color: editingRange === 'start' ? PRIMARY_GREEN : '#333' }}>
+                                        {startDate.toLocaleDateString('en-GB')}
+                                    </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    onPress={() => setEditingRange('end')}
+                                    style={{ 
+                                        flex: 1, 
+                                        padding: 12, 
+                                        borderRadius: 12, 
+                                        backgroundColor: editingRange === 'end' ? PRIMARY_GREEN + '15' : '#F5F5F5',
+                                        borderWidth: 1,
+                                        borderColor: editingRange === 'end' ? PRIMARY_GREEN : '#EEE'
+                                    }}
+                                >
+                                    <Text style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>To</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: '600', color: editingRange === 'end' ? PRIMARY_GREEN : '#333' }}>
+                                        {endDate.toLocaleDateString('en-GB')}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            <DateTimePicker
+                                value={editingRange === 'start' ? startDate : endDate}
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                onChange={(event, selectedDate) => {
+                                    if (selectedDate) {
+                                        if (editingRange === 'start') {
+                                            setStartDate(selectedDate);
+                                            if (selectedDate > endDate) setEndDate(selectedDate);
+                                        } else {
+                                            setEndDate(selectedDate);
+                                            if (selectedDate < startDate) setStartDate(selectedDate);
+                                        }
+                                    }
+                                    if (Platform.OS !== 'ios' && event.type === 'set') setShowRangePicker(false);
+                                }}
+                            />
+
+                            <TouchableOpacity 
+                                style={{ 
+                                    backgroundColor: PRIMARY_GREEN, 
+                                    paddingVertical: 16, 
+                                    borderRadius: 14, 
+                                    alignItems: 'center',
+                                    marginTop: 'auto',
+                                    shadowColor: PRIMARY_GREEN,
+                                    shadowOffset: { width: 0, height: 4 },
+                                    shadowOpacity: 0.2,
+                                    shadowRadius: 8,
+                                    elevation: 4
+                                }}
+                                onPress={() => {
+                                    setShowRangePicker(false);
+                                    setTimeFilter('range');
+                                }}
+                            >
+                                <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>Confirm Range</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
+                </Modal>
             )}
 
             <View style={styles.content}>
