@@ -17,13 +17,13 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-green?style=flat-square" />
-  <img src="https://img.shields.io/badge/Version-1.0.0-blue?style=flat-square" />
+  <img src="https://img.shields.io/badge/Version-1.1.0-blue?style=flat-square" />
   <img src="https://img.shields.io/badge/License-Private-red?style=flat-square" />
 </p>
 
 ---
 
-## 📱 Screenshots
+## Screenshots
 
 <p align="center">
   <img src="screenshots/dashboard.png" alt="Dashboard" width="200" />
@@ -41,64 +41,35 @@
 
 ---
 
-## ✨ Features
+## Features
 
-### 💰 Multi-Wallet Management
-- Create and manage multiple wallets (Cash, Bank, Savings, etc.)
-- Customize each wallet with unique icons, colors, and descriptions
-- Real-time balance tracking across all wallets
-- Quick wallet selection with search and sorting when adding transactions
+### Collaborative Multi-Wallet Management
+- **Shared Wallets**: Join or invite others to collaborate on expense tracking via unique Wallet IDs.
+- **Ownership Control**: Owners can manage collaborators, browse participants, and remove members.
+- **Customization**: Personalize wallets with distinct icons, colors, and descriptions.
+- **Real-time Sync**: Instant balance updates across all connected devices using Firebase.
 
-### 📊 Transaction Tracking
-- Log income and expenses with ease
-- **10 expense categories**: Food, Transport, Shopping, Bills, Health, Education, Groceries, Housing, Utilities, Entertainment
-- **6 income categories**: Salary, Business, Investment, Bonus, Freelance, Other
-- Attach **image notes** (receipts, bills) to any transaction
-- Add optional text notes for detailed record-keeping
-- **Insufficient balance warning** when expenses exceed wallet balance
+### Advanced Transaction Tracking
+- **Smart Logging**: Effortless entry for income and expenses with intelligent category mapping.
+- **Rich Filtering**: Search and filter history by **amount range**, **category**, or **date frequency**.
+- **Custom Date Ranges**: Flexible period filtering including Daily, Weekly, Monthly, Yearly, and Custom Range selections.
+- **Image Attachments**: Securely attach photos of receipts, bills, or invoices to any transaction.
+- **Contextual Notifications**: Real-time warnings for insufficient balance or negative starting amounts.
 
-### 📋 Transaction Detail Modal
-- View comprehensive transaction details in a sleek popup modal
-- Full-width image previews for attached receipts
-- Quickly navigate to edit mode from the detail view
-- Consistent experience across Dashboard and Transactions list
+### Premium Experience & UX
+- **Haptic Feedback System**: Tactical responses for all core interactions (toggling filters, submitting forms, deletions, and error validations).
+- **Transaction Detail Modal**: Elegant full-screen previews with high-resolution image rendering and direct navigation to edit mode.
+- **Smart Persistence**: Automatic login sessions and secure local caching for immediate data access.
+- **Dynamic Onboarding**: Context-aware empty states and guidance for new users.
 
-### 📈 Financial Summary & Analytics
-- **Period-based filtering**: Today, Weekly, Monthly, Yearly
-- Income vs. Expense overview with visual indicators
-- **Category breakdown** with percentage bars and color-coded visualizations
-- **Monthly comparison view** for long-term trend analysis
-- Aggregated totals for each spending category
-
-### 🏠 Smart Dashboard
-- Personalized greeting with profile picture
-- **Total balance** card with today's net change indicator
-- Scrollable wallet overview cards
-- **Today's Activity** feed with the latest transactions
-- Quick navigation shortcut (**TXs** button) to full transaction history
-
-### ⚙️ User Settings
-- Profile management (display name, profile picture)
-- Camera and gallery support for profile photos
-- Account information display (email, member since date)
-- **Clear all data** option with confirmation safeguard
-- Secure sign-out
-
-### 🔐 Authentication
-- Email & password authentication via Firebase Auth
-- User registration with display name setup
-- Forgot password functionality
-- Persistent login sessions using AsyncStorage
-
-### 🛡️ Smart UX Safeguards
-- **Edit protection**: "Update" button grays out when no changes are detected
-- **Empty state guidance**: Proactive notice when adding transactions without wallets, with a direct link to create one
-- **Expense warnings**: Alert when spending exceeds wallet balance
-- **Confirmation dialogs**: For destructive actions like data clearing
+### Analytics & Summary
+- **Visual Breakdown**: Dynamic charts and percentage-based category consumption bars.
+- **Monthly Comparison**: Longitudinal trend analysis to track financial growth or spending patterns.
+- **Period Synthesis**: Aggregated totals that calculate net changes over specific timeframes.
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -106,61 +77,44 @@
 | **Language** | [TypeScript](https://www.typescriptlang.org/) 5.9 |
 | **Navigation** | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing) |
 | **Backend** | [Firebase](https://firebase.google.com/) (Firestore + Auth) |
-| **State** | React Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`) |
+| **State** | React Hooks and Context API |
+| **Haptics** | [expo-haptics](https://docs.expo.dev/versions/latest/sdk/haptics/) |
 | **Icons** | [@expo/vector-icons](https://icons.expo.fyi/) (Ionicons) |
-| **Image Picker** | [expo-image-picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) |
-| **Persistence** | [@react-native-async-storage/async-storage](https://react-native-async-storage.github.io/async-storage/) |
+| **Persistence** | AsyncStorage & Firestore Persistence |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 wallet-plus/
 ├── app/
 │   ├── (auth)/                     # Authentication screens
-│   │   ├── _layout.tsx
-│   │   ├── login_screen.tsx        # Login page
-│   │   ├── register_screen.tsx     # Registration page
-│   │   └── forgot_password_screen.tsx
-│   ├── (tabs)/                     # Main app (tab navigation)
-│   │   ├── _layout.tsx             # Tab bar configuration
-│   │   ├── index.tsx               # 🏠 Dashboard / Overview
-│   │   ├── wallet/
-│   │   │   ├── index.tsx           # 💳 Wallet list
-│   │   │   └── add.tsx             # ➕ Add new wallet
-│   │   ├── transactions/
-│   │   │   ├── new.tsx             # ➕ Add transaction
-│   │   │   ├── index.tsx           # 📋 All transactions list
-│   │   │   └── [id].tsx            # ✏️ Edit transaction
-│   │   ├── summary/
-│   │   │   └── index.tsx           # 📈 Analytics & Summary
-│   │   └── settings/
-│   │       └── index.tsx           # ⚙️ User settings
-│   └── _layout.tsx                 # Root layout (auth guard)
-├── components/
-│   ├── Header.tsx                  # Reusable header with navigation
-│   └── TransactionDetailModal.tsx  # Transaction detail popup
-├── constants/
-│   ├── Colors.ts                   # Centralized color tokens
-│   └── Categories.ts              # Expense & income category definitions
-├── types/
-│   └── index.ts                   # Shared TypeScript interfaces
-├── assets/                        # App icons and splash screen
-├── firebaseConfig.ts              # Firebase initialization
-└── package.json
+│   ├── (tabs)/                     # Main app navigation
+│   │   ├── index.tsx               # Dashboard view
+│   │   ├── wallet/                 # Wallet management
+│   │   ├── transactions/           # Transaction history & editing
+│   │   ├── summary/                # Analytics & reports
+│   │   └── settings/               # User profile & preferences
+│   └── _layout.tsx                 # Root layout & auth guards
+├── components/                     # Shared UI components
+├── constants/                      # Theme colors & category definitions
+├── utils/
+│   └── haptics.ts                  # Standardized haptic feedback logic
+├── types/                          # TypeScript definitions
+├── assets/                         # Static resources
+└── firebaseConfig.ts               # Firebase initialization
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18 or later)
 - [npm](https://www.npmjs.com/) (v9 or later)
-- [Expo CLI](https://docs.expo.dev/get-started/installation/)
-- [Expo Go](https://expo.dev/go) app on your device (iOS / Android)
+- [Expo Go](https://expo.dev/go) app for testing on physical devices
 
 ### Installation
 
@@ -175,56 +129,17 @@ wallet-plus/
    npm install
    ```
 
-3. **Configure Firebase**
+3. **Environment Setup**
+   Update `firebaseConfig.ts` with your Firebase project credentials. Ensure Firestore and Authentication are enabled in your Firebase console.
 
-   Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com/) and update `firebaseConfig.ts` with your project credentials:
-   ```typescript
-   const firebaseConfig = {
-     apiKey: "YOUR_API_KEY",
-     authDomain: "YOUR_AUTH_DOMAIN",
-     projectId: "YOUR_PROJECT_ID",
-     storageBucket: "YOUR_STORAGE_BUCKET",
-     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-     appId: "YOUR_APP_ID"
-   };
-   ```
-
-4. **Set up Firestore collections**
-
-   The app uses the following Firestore collections:
-   - `users` — User profiles (displayName, email, profilePictureBase64)
-   - `wallets` — Wallet data (name, balance, icon, color, detail, userId)
-   - `transactions` — Transaction records (amount, type, category, walletId, note, imageBase64, date, userId)
-
-5. **Start the development server**
+4. **Launch Application**
    ```bash
    npx expo start
    ```
 
-6. **Run on your device**
-   - Scan the QR code with Expo Go (Android) or Camera app (iOS)
-   - Or press `i` for iOS Simulator / `a` for Android Emulator
-
 ---
 
-## 🎨 Design System
-
-The app uses a centralized design system defined in `constants/Colors.ts`:
-
-| Token | Color | Usage |
-|---|---|---|
-| `PRIMARY` | `#699E8A` | Brand green — headers, buttons, accents |
-| `INCOME_COLOR` | `#699E8A` | Income indicators |
-| `EXPENSE_COLOR` | `#FF3B30` | Expense indicators & warnings |
-| `BACKGROUND` | `#F8F9FA` | Page backgrounds |
-| `CARD_BG` | `#FFFFFF` | Card surfaces |
-| `TEXT_PRIMARY` | `#1a1a1a` | Main text |
-| `TEXT_SECONDARY` | `#666` | Subtext |
-| `BORDER` | `#F0F0F0` | Card borders & dividers |
-
----
-
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] Multi-wallet management
 - [x] Transaction tracking with categories
@@ -232,10 +147,10 @@ The app uses a centralized design system defined in `constants/Colors.ts`:
 - [x] Financial summary with period filtering
 - [x] Monthly comparison analytics
 - [x] Transaction detail modal
-- [x] Edit change detection (dirty state)
-- [x] Empty wallet state onboarding
+- [x] Advanced transaction filtering (amount/date/category)
+- [x] Shared wallets (collaboration via Wallet ID)
+- [x] Premium haptic feedback system
 - [ ] Dark mode support
-- [ ] Shared wallets (collaborative expense tracking)
 - [ ] Budget goals & alerts
 - [ ] Export transactions (CSV / PDF)
 - [ ] Push notifications for spending limits
@@ -243,18 +158,18 @@ The app uses a centralized design system defined in `constants/Colors.ts`:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-This is currently a private project. If you'd like to contribute, please open an issue first to discuss your proposed changes.
+This is currently a private project. If you'd like to contribute, please contact the repository owner to discuss your proposed changes.
 
 ---
 
-## 📄 License
+## License
 
 This project is private and not open-sourced. All rights reserved.
 
 ---
 
 <p align="center">
-  Made with ❤️ using React Native & Firebase
+  Built with passion for modern personal finance
 </p>
