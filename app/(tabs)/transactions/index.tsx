@@ -417,14 +417,27 @@ export default function TransactionsScreen() {
                                 {wallets.map((wallet: any) => {
                                     const isSelected = selectedWallets.includes(wallet.id);
                                     const isShared = wallet.userId !== userId;
+                                    const wColor = wallet.color || '#666';
                                     return (
                                         <TouchableOpacity 
                                             key={wallet.id}
-                                            style={[styles.filterPill, isSelected && styles.filterPillActive]} 
+                                            style={[
+                                                styles.filterPill, 
+                                                { borderColor: wColor + '80' }, // Subtle transparent border
+                                                isSelected && { backgroundColor: wColor, borderColor: wColor }
+                                            ]} 
                                             onPress={() => toggleWallet(wallet.id)}
                                         >
-                                            <Ionicons name="wallet-outline" size={14} color={isSelected ? '#FFF' : '#666'} />
-                                            <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
+                                            <Ionicons 
+                                                name="wallet-outline" 
+                                                size={14} 
+                                                color={isSelected ? '#FFF' : wColor} 
+                                            />
+                                            <Text style={[
+                                                styles.filterText, 
+                                                { color: wColor },
+                                                isSelected && { color: '#FFF' }
+                                            ]}>
                                                 {wallet.name}{isShared ? ' (Shared)' : ''}
                                             </Text>
                                         </TouchableOpacity>
