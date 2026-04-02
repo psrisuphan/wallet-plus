@@ -457,13 +457,41 @@ const EditTransactionScreen = () => {
                     </View>
 
                     <Text style={styles.sectionTitle}>Note</Text>
-                    <TextInput
-                        style={styles.noteInput}
-                        placeholder="What was this for?"
-                        placeholderTextColor="#999"
-                        value={note}
-                        onChangeText={setNote}
-                    />
+                    <View style={styles.noteInputContainer}>
+                        <TextInput
+                            style={styles.noteInput}
+                            placeholder="What was this for?"
+                            placeholderTextColor="#999"
+                            value={note}
+                            onChangeText={setNote}
+                        />
+                        <TouchableOpacity 
+                            style={styles.noteImageAction} 
+                            onPress={pickImage}
+                        >
+                            <Ionicons 
+                                name={imageNoteBase64 ? "camera" : "camera-outline"} 
+                                size={24} 
+                                color={imageNoteBase64 ? WHITE_GREEN : "#888"} 
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Image Preview inside Note section */}
+                    {imageNoteBase64 && (
+                        <View style={styles.inlineImagePreviewContainer}>
+                            <Image 
+                                source={{ uri: `data:image/jpeg;base64,${imageNoteBase64}` }} 
+                                style={styles.inlineImagePreview} 
+                            />
+                            <TouchableOpacity 
+                                style={styles.removeImageButtonSmall} 
+                                onPress={removeImage}
+                            >
+                                <Ionicons name="close-circle" size={20} color="#FF3B30" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
                     {/* Wallet Section */}
                     <Text style={styles.sectionTitle}>Wallet</Text>
@@ -491,32 +519,6 @@ const EditTransactionScreen = () => {
                         )}
                     </TouchableOpacity>
 
-                    {/* Image Note */}
-                    <Text style={styles.sectionTitle}>Image Note (Optional)</Text>
-                    <View style={styles.imagePickerContainer}>
-                        {imageNoteBase64 ? (
-                            <View style={styles.imagePreviewContainer}>
-                                <Image 
-                                    source={{ uri: `data:image/jpeg;base64,${imageNoteBase64}` }} 
-                                    style={styles.imagePreview} 
-                                />
-                                <TouchableOpacity 
-                                    style={styles.removeImageButton} 
-                                    onPress={removeImage}
-                                >
-                                    <Ionicons name="close-circle" size={24} color="#FF3B30" />
-                                </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <TouchableOpacity 
-                                style={styles.imagePickerPlaceholder} 
-                                onPress={pickImage}
-                            >
-                                <Ionicons name="camera-outline" size={32} color="#888" />
-                                <Text style={styles.imagePickerText}>Add a photo receipt or note</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
 
                 </ScrollView>
                 
@@ -570,7 +572,53 @@ const styles = StyleSheet.create({
     scrollIndicatorHint: { position: 'absolute', top: 0, height: 60, width: 30, justifyContent: 'center' },
     scrollIndicatorHintLeft: { left: -10 },
     scrollIndicatorHintRight: { right: -10, alignItems: 'flex-end' },
-    noteInput: { backgroundColor: '#FFF', borderRadius: 12, padding: 15, fontSize: 16, color: '#333', marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+    noteInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        marginBottom: 10,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    noteInput: {
+        flex: 1,
+        padding: 15,
+        fontSize: 16,
+        color: '#333',
+    },
+    noteImageAction: {
+        paddingHorizontal: 15,
+    },
+    inlineImagePreviewContainer: {
+        width: '100%',
+        height: 150,
+        borderRadius: 12,
+        overflow: 'hidden',
+        marginBottom: 20,
+        backgroundColor: '#F8F9FA',
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        position: 'relative',
+    },
+    inlineImagePreview: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    removeImageButtonSmall: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 12,
+    },
     walletSelector: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFF', borderRadius: 12, padding: 15, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
     walletSelectorInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     selectorIconContainer: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
@@ -593,46 +641,6 @@ const styles = StyleSheet.create({
     modalWalletBalance: { fontSize: 14, color: '#888' },
     emptyContainer: { alignItems: 'center', padding: 40 },
     emptyText: { color: '#999', fontSize: 16 },
-    imagePickerContainer: {
-        marginBottom: 20,
-    },
-    imagePickerPlaceholder: {
-        height: 120,
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: '#EAEAEA',
-        borderStyle: 'dashed',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imagePickerText: {
-        marginTop: 8,
-        fontSize: 14,
-        color: '#888',
-    },
-    imagePreviewContainer: {
-        position: 'relative',
-        width: '100%',
-        height: 200,
-        borderRadius: 12,
-        overflow: 'hidden',
-        backgroundColor: '#FFF',
-        borderWidth: 1,
-        borderColor: '#EAEAEA',
-    },
-    imagePreview: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-    },
-    removeImageButton: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        backgroundColor: 'rgba(255,255,255,0.8)',
-        borderRadius: 15,
-    },
 });
 
 export default EditTransactionScreen;

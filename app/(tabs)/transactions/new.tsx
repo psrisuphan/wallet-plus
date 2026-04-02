@@ -439,13 +439,41 @@ const AddTransactionScreen = () => {
 
                     {/* Note Input */}
                     <Text style={styles.sectionTitle}>Note</Text>
-                    <TextInput
-                        style={styles.noteInput}
-                        placeholder="What was this for?"
-                        placeholderTextColor="#999"
-                        value={note}
-                        onChangeText={setNote}
-                    />
+                    <View style={styles.noteInputContainer}>
+                        <TextInput
+                            style={styles.noteInput}
+                            placeholder="What was this for?"
+                            placeholderTextColor="#999"
+                            value={note}
+                            onChangeText={setNote}
+                        />
+                        <TouchableOpacity 
+                            style={styles.noteImageAction} 
+                            onPress={pickImage}
+                        >
+                            <Ionicons 
+                                name={imageNoteBase64 ? "camera" : "camera-outline"} 
+                                size={24} 
+                                color={imageNoteBase64 ? WHITE_GREEN : "#888"} 
+                            />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Image Preview inside Note section */}
+                    {imageNoteBase64 && (
+                        <View style={styles.inlineImagePreviewContainer}>
+                            <Image 
+                                source={{ uri: `data:image/jpeg;base64,${imageNoteBase64}` }} 
+                                style={styles.inlineImagePreview} 
+                            />
+                            <TouchableOpacity 
+                                style={styles.removeImageButtonSmall} 
+                                onPress={removeImage}
+                            >
+                                <Ionicons name="close-circle" size={20} color="#FF3B30" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
                     {/* Wallet Selection */}
                     <Text style={styles.sectionTitle}>Wallet</Text>
@@ -480,33 +508,6 @@ const AddTransactionScreen = () => {
                             </>
                         )}
                     </TouchableOpacity>
-
-                    {/* Image Note */}
-                    <Text style={styles.sectionTitle}>Image Note (Optional)</Text>
-                    <View style={styles.imagePickerContainer}>
-                        {imageNoteBase64 ? (
-                            <View style={styles.imagePreviewContainer}>
-                                <Image 
-                                    source={{ uri: `data:image/jpeg;base64,${imageNoteBase64}` }} 
-                                    style={styles.imagePreview} 
-                                />
-                                <TouchableOpacity 
-                                    style={styles.removeImageButton} 
-                                    onPress={removeImage}
-                                >
-                                    <Ionicons name="close-circle" size={24} color="#FF3B30" />
-                                </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <TouchableOpacity 
-                                style={styles.imagePickerPlaceholder} 
-                                onPress={pickImage}
-                            >
-                                <Ionicons name="camera-outline" size={32} color="#888" />
-                                <Text style={styles.imagePickerText}>Add a photo receipt or note</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
 
                 </ScrollView>
                 
@@ -831,16 +832,45 @@ const styles = StyleSheet.create({
         color: WHITE_GREEN,
         fontWeight: 'bold',
     },
-    noteInput: {
+    noteInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#FFF',
         borderRadius: 12,
-        padding: 14,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        color: '#333',
+        marginBottom: 10,
+        overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#EAEAEA',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    noteInput: {
+        flex: 1,
+        padding: 15,
+        fontSize: 16,
+        color: '#333',
+    },
+    noteImageAction: {
+        paddingHorizontal: 15,
+    },
+    inlineImagePreviewContainer: {
+        width: '100%',
+        height: 150,
+        borderRadius: 12,
+        overflow: 'hidden',
         marginBottom: 20,
+        backgroundColor: '#F8F9FA',
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        position: 'relative',
+    },
+    inlineImagePreview: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
     },
     footer: {
         padding: 20,
@@ -902,6 +932,13 @@ const styles = StyleSheet.create({
         right: 10,
         backgroundColor: 'rgba(255,255,255,0.8)',
         borderRadius: 15,
+    },
+    removeImageButtonSmall: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 12,
     },
 });
 
