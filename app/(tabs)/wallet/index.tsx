@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, getDoc, deleteDoc, doc, writeBatch, getDocs, or } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, getDoc, deleteDoc, doc, writeBatch, getDocs, or, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
@@ -239,6 +239,7 @@ const WalletScreen = () => {
         },
         {
           text: 'Delete',
+          style: 'destructive',
           onPress: async () => {
             setLoading(true);
             try {
@@ -270,10 +271,36 @@ const WalletScreen = () => {
               setLoading(false);
             }
           },
-          style: 'destructive',
         },
       ],
       { cancelable: false }
+    );
+  };
+
+  const handleLeaveWallet = (walletId: string) => {
+    Alert.alert(
+      "Leave Wallet",
+      "Are you sure you want to leave this shared wallet? The wallet will still exist for other members, but you will no longer have access to its history.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Leave", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              if (!userId) return;
+              const walletRef = doc(db, 'wallets', walletId);
+              await updateDoc(walletRef, {
+                sharedWith: arrayRemove(userId)
+              });
+              Alert.alert("Success", "You have left the wallet.");
+            } catch (error) {
+              console.error('Error leaving wallet:', error);
+              Alert.alert('Error', 'Could not leave the wallet.');
+            }
+          } 
+        }
+      ]
     );
   };
 
@@ -344,13 +371,19 @@ const WalletScreen = () => {
           </View>
           {item.detail ? <Text style={styles.walletDetail} numberOfLines={1}>{item.detail}</Text> : null}
         </View>
-        {(item.userId === userId) && (
+        {item.userId === userId ? (
           <View style={styles.actionButtons}>
             <TouchableOpacity onPress={() => openEditPage(item.id)} style={styles.actionIconButton}>
               <Ionicons name="create" size={20} color="#666" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={[styles.actionIconButton, { marginLeft: 8 }]}>
               <Ionicons name="trash" size={20} color="#DC3545" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity onPress={() => handleLeaveWallet(item.id)} style={styles.actionIconButton}>
+              <Ionicons name="log-out" size={20} color="#DC3545" />
             </TouchableOpacity>
           </View>
         )}
