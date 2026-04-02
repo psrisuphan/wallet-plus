@@ -214,6 +214,18 @@ export default function TransactionsScreen() {
                     <Text style={styles.transactionTime}>
                         {dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {timeStr}
                     </Text>
+                    {(() => {
+                        const wallet = wallets.find(w => w.id === item.walletId);
+                        const isShared = (wallet?.sharedWith?.length || 0) > 0 || (wallet && item.userId !== wallet.userId);
+                        if (item.userName && isShared) {
+                            return (
+                                <Text style={{ fontSize: 11, color: PRIMARY_GREEN, fontWeight: '600', marginTop: 1 }}>
+                                    Added by {item.userName}
+                                </Text>
+                            );
+                        }
+                        return null;
+                    })()}
                     {item.walletId && (
                         <View style={styles.walletTagContainer}>
                             <Ionicons name="wallet-outline" size={12} color="#888" />
@@ -459,7 +471,10 @@ export default function TransactionsScreen() {
                     visible={showDetailModal}
                     transaction={selectedTransaction}
                     walletName={wallets.find(w => w.id === selectedTransaction.walletId)?.name || 'Unknown Wallet'}
-                    isShared={!!(selectedTransaction?.walletId && (wallets.find(w => w.id === selectedTransaction.walletId)?.sharedWith?.length || 0) > 0)}
+                    isShared={(() => {
+                        const wallet = wallets.find(w => w.id === selectedTransaction.walletId);
+                        return !!((wallet?.sharedWith?.length || 0) > 0 || (wallet && selectedTransaction.userId !== wallet.userId));
+                    })()}
                     onClose={() => setShowDetailModal(false)}
                     onEdit={() => {
                         setShowDetailModal(false);
