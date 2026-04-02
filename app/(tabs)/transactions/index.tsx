@@ -345,18 +345,6 @@ export default function TransactionsScreen() {
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Time Period</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
-                                    <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
-                                    <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
-                                    <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
-                                    <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
-                                </TouchableOpacity>
                                 <TouchableOpacity 
                                     style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
                                     onPress={() => setShowDatePicker(true)}
@@ -373,6 +361,18 @@ export default function TransactionsScreen() {
                                             : 'Custom Date'
                                         }
                                     </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
+                                    <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
+                                    <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
+                                    <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
+                                    <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
                                 </TouchableOpacity>
                             </ScrollView>
                         </View>
