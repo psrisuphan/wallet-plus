@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     },
     topToggleContainer: {
         paddingHorizontal: 20,
-        paddingTop: 15,
+        paddingTop: 10,
         backgroundColor: '#F8F9FA',
     },
     typeContainer: {
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     },
     typeButton: {
         flex: 1,
-        paddingVertical: 12,
+        paddingVertical: 8,
         alignItems: 'center',
         borderRadius: 10,
     },
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     typeText: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
         color: '#888',
     },
