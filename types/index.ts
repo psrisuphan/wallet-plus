@@ -29,6 +29,7 @@ export interface Transaction {
   imageBase64?: string | null;
   date: any;
   userId?: string;
+  userName?: string;
 }
 
 export interface CategoryBreakdown {

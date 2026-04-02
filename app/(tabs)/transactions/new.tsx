@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, serverTimestamp, or } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, doc, getDoc, updateDoc, serverTimestamp, or } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -63,13 +63,24 @@ const AddTransactionScreen = () => {
     const [sortType, setSortType] = useState<'name' | 'balanceAsc' | 'balanceDesc'>('name');
     const [showSortDropdown, setShowSortDropdown] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const [displayName, setDisplayName] = useState<string>('Unknown User');
 
     useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
             if (user) {
                 setUserId(user.uid);
+                // Fetch display name for new transactions
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        setDisplayName(userDoc.data().displayName || 'Unknown User');
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                }
             } else {
                 setUserId(null);
+                setDisplayName('Unknown User');
                 setWallets([]);
                 setSelectedWallet(null);
                 setLoadingWallets(false);
@@ -191,6 +202,7 @@ const AddTransactionScreen = () => {
             // 1. Create transaction document
             const transactionData = {
                 userId: auth.currentUser.uid,
+                userName: displayName,
                 walletId: selectedWallet.id,
                 walletName: selectedWallet.name,
                 type: type, // 'expense' or 'income'

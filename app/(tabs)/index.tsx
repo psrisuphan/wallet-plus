@@ -7,23 +7,24 @@ import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp, 
 import { useRouter } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../constants/Colors';
 import TransactionDetailModal from '../../components/TransactionDetailModal';
+import { Wallet, Transaction } from '../../types';
 
 export default function HomeScreen() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [displayName, setDisplayName] = useState<string | null>(null);
     const [totalBalance, setTotalBalance] = useState(0);
     const [todayChange, setTodayChange] = useState(0);
-    const [wallets, setWallets] = useState<any[]>([]);
-    const [todayTransactions, setTodayTransactions] = useState<any[]>([]);
+    const [wallets, setWallets] = useState<Wallet[]>([]);
+    const [todayTransactions, setTodayTransactions] = useState<Transaction[]>([]);
     const [walletDailyChanges, setWalletDailyChanges] = useState<{[key: string]: number}>({});
     const [loading, setLoading] = useState(true);
     const [showTopArrow, setShowTopArrow] = useState(false);
     const [showBottomArrow, setShowBottomArrow] = useState(false);
     const [showTodayTopArrow, setShowTodayTopArrow] = useState(false);
     const [showTodayBottomArrow, setShowTodayBottomArrow] = useState(false);
-    const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const walletsRef = useRef<any[]>([]);
+    const walletsRef = useRef<Wallet[]>([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -379,6 +380,7 @@ export default function HomeScreen() {
                                                         ) : null}
                                                         <Text style={{ fontSize: 11, color: '#999' }}>
                                                             {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                            {item.userName ? ` • Added by ${item.userName}` : ''}
                                                             {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                                                         </Text>
                                                     </View>
@@ -421,8 +423,10 @@ export default function HomeScreen() {
                 walletName={selectedTransaction?.walletId ? (wallets.find(w => w.id === selectedTransaction.walletId)?.name || 'Unknown Wallet') : 'No Wallet'}
                 onClose={() => setShowDetailModal(false)}
                 onEdit={() => {
-                    setShowDetailModal(false);
-                    router.push(`/(tabs)/transactions/${selectedTransaction.id}`);
+                    if (selectedTransaction) {
+                        setShowDetailModal(false);
+                        router.push(`/(tabs)/transactions/${selectedTransaction.id}`);
+                    }
                 }}
             />
         </View>

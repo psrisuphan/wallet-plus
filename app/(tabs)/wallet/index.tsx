@@ -7,27 +7,7 @@ import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
 import { PRIMARY as WHITE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
-interface Wallet {
-  id: string;
-  name: string;
-  balance: number;
-  icon: string;
-  color: string;
-  detail?: string;
-  sharedWith?: string[];
-  userId: string;
-}
-
-interface Transaction {
-  id: string;
-  type: 'expense' | 'income';
-  amount: number;
-  categoryName: string;
-  categoryIcon: string;
-  date: any;
-  note?: string;
-  walletId: string;
-}
+import { Wallet, Transaction } from '../../../types';
 
 const WalletScreen = () => {
   const router = useRouter();
@@ -324,6 +304,9 @@ const WalletScreen = () => {
           {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
+          {item.userName ? (
+            <Text style={{ fontWeight: '600', color: WHITE_GREEN }}>{item.userName} • </Text>
+          ) : null}
           {item.date?.seconds ? (
             `${new Date(item.date.seconds * 1000).toLocaleDateString('en-US', { 
               day: 'numeric', 
