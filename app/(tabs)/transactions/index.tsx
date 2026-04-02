@@ -502,21 +502,65 @@ export default function TransactionsScreen() {
             </View>
 
             {showDatePicker && (
-                <DateTimePicker
-                    value={customDate}
-                    mode="date"
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                        setShowDatePicker(Platform.OS === 'ios');
-                        if (selectedDate) {
-                            setCustomDate(selectedDate);
-                            setTimeFilter('custom');
-                        }
-                        if (Platform.OS === 'android' || event.type === 'set' || event.type === 'dismissed') {
-                             setShowDatePicker(false);
-                        }
-                    }}
-                />
+                Platform.OS === 'ios' ? (
+                    <Modal
+                        transparent={true}
+                        animationType="slide"
+                        visible={showDatePicker}
+                        onRequestClose={() => setShowDatePicker(false)}
+                    >
+                        <TouchableOpacity 
+                            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+                            activeOpacity={1}
+                            onPress={() => setShowDatePicker(false)}
+                        >
+                            <View style={{ backgroundColor: '#FFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                    <Text style={{ fontSize: 18, fontWeight: '600' }}>Select Date</Text>
+                                    <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                                        <Text style={{ color: PRIMARY_GREEN, fontWeight: '600', fontSize: 16 }}>Done</Text>
+                                    </TouchableOpacity>
+                                </View>
+                                <DateTimePicker
+                                    value={customDate}
+                                    mode="date"
+                                    display="spinner"
+                                    onChange={(event, selectedDate) => {
+                                        if (selectedDate) setCustomDate(selectedDate);
+                                    }}
+                                />
+                                <TouchableOpacity 
+                                    style={{ 
+                                        backgroundColor: PRIMARY_GREEN, 
+                                        padding: 16, 
+                                        borderRadius: 12, 
+                                        alignItems: 'center',
+                                        marginTop: 20
+                                    }}
+                                    onPress={() => {
+                                        setShowDatePicker(false);
+                                        setTimeFilter('custom');
+                                    }}
+                                >
+                                    <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>Confirm Date</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </TouchableOpacity>
+                    </Modal>
+                ) : (
+                    <DateTimePicker
+                        value={customDate}
+                        mode="date"
+                        display="default"
+                        onChange={(event, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) {
+                                setCustomDate(selectedDate);
+                                setTimeFilter('custom');
+                            }
+                        }}
+                    />
+                )
             )}
 
             <View style={styles.content}>
