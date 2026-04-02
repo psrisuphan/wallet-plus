@@ -166,9 +166,14 @@ export default function TransactionsScreen() {
                     />
                 </View>
                 <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionName} numberOfLines={1}>
-                        {item.categoryName || 'Transaction'}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.transactionName} numberOfLines={1}>
+                            {item.categoryName || 'Transaction'}
+                        </Text>
+                        {item.imageBase64 && (
+                            <Ionicons name="camera" size={14} color={PRIMARY_GREEN} />
+                        )}
+                    </View>
                     {item.note && (
                         <Text style={styles.transactionNote} numberOfLines={1}>
                             {item.note}

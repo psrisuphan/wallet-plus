@@ -6,6 +6,8 @@ import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, writeBatc
 import { db, auth } from '../../../firebaseConfig';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 import { PRIMARY as WHITE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
 import type { Wallet } from '../../../types';
@@ -21,6 +23,7 @@ const EditTransactionScreen = () => {
     const [type, setType] = useState<'expense' | 'income'>('expense');
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
+    const [imageNoteBase64, setImageNoteBase64] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState(EXPENSE_CATEGORIES[0].id);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -82,6 +85,7 @@ const EditTransactionScreen = () => {
                     setType(data.type);
                     setAmount(data.amount.toString());
                     setNote(data.note || '');
+                    setImageNoteBase64(data.imageBase64 || null);
                     setSelectedCategory(data.categoryId || (data.type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id));
                 } else {
                     Alert.alert("Error", "Transaction not found");
@@ -245,6 +249,7 @@ const EditTransactionScreen = () => {
                 categoryName: categoryData?.name || 'Unknown',
                 categoryIcon: categoryData?.icon || 'help',
                 note: note.trim() || null,
+                imageBase64: imageNoteBase64 ?? null,
             });
 
             await batch.commit();
@@ -257,6 +262,29 @@ const EditTransactionScreen = () => {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Required', 'Please allow access to your photos to add an image note.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            quality: 0.3,
+            base64: true,
+        });
+
+        if (!result.canceled && result.assets[0].base64) {
+            setImageNoteBase64(result.assets[0].base64);
+        }
+    };
+
+    const removeImage = () => {
+        setImageNoteBase64(null);
     };
 
     const handleCategoryScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -429,14 +457,47 @@ const EditTransactionScreen = () => {
                     </View>
 
                     <Text style={styles.sectionTitle}>Note</Text>
-                    <TextInput
-                        style={styles.noteInput}
-                        placeholder="What was this for?"
-                        placeholderTextColor="#999"
-                        value={note}
-                        onChangeText={setNote}
-                    />
+                    <View style={styles.noteInputContainer}>
+                        <TextInput
+                            style={styles.noteInput}
+                            placeholder="What was this for?"
+                            placeholderTextColor="#999"
+                            value={note}
+                            onChangeText={setNote}
+                            multiline={true}
+                            textAlignVertical="top"
+                        />
+                        <View style={styles.noteActionContainer}>
+                            <TouchableOpacity 
+                                style={styles.noteImageAction} 
+                                onPress={pickImage}
+                            >
+                                <Ionicons 
+                                    name={imageNoteBase64 ? "camera" : "camera-outline"} 
+                                    size={22} 
+                                    color="#FFF" 
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
+                    {/* Image Preview inside Note section */}
+                    {imageNoteBase64 && (
+                        <View style={styles.inlineImagePreviewContainer}>
+                            <Image 
+                                source={{ uri: `data:image/jpeg;base64,${imageNoteBase64}` }} 
+                                style={styles.inlineImagePreview} 
+                            />
+                            <TouchableOpacity 
+                                style={styles.removeImageButtonSmall} 
+                                onPress={removeImage}
+                            >
+                                <Ionicons name="close-circle" size={20} color="#FF3B30" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {/* Wallet Section */}
                     <Text style={styles.sectionTitle}>Wallet</Text>
                     <TouchableOpacity 
                         style={styles.walletSelector}
@@ -461,6 +522,7 @@ const EditTransactionScreen = () => {
                             <Text style={{ color: WHITE_GREEN }}>Select Wallet</Text>
                         )}
                     </TouchableOpacity>
+
 
                 </ScrollView>
                 
@@ -514,7 +576,69 @@ const styles = StyleSheet.create({
     scrollIndicatorHint: { position: 'absolute', top: 0, height: 60, width: 30, justifyContent: 'center' },
     scrollIndicatorHintLeft: { left: -10 },
     scrollIndicatorHintRight: { right: -10, alignItems: 'flex-end' },
-    noteInput: { backgroundColor: '#FFF', borderRadius: 12, padding: 15, fontSize: 16, color: '#333', marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+    noteInputContainer: {
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        marginBottom: 10,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        minHeight: 120,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    noteInput: {
+        flex: 1,
+        padding: 15,
+        fontSize: 16,
+        color: '#333',
+        minHeight: 80,
+    },
+    noteActionContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        paddingRight: 10,
+        paddingBottom: 10,
+    },
+    noteImageAction: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: WHITE_GREEN,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: WHITE_GREEN,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    inlineImagePreviewContainer: {
+        width: '100%',
+        height: 150,
+        borderRadius: 12,
+        overflow: 'hidden',
+        marginBottom: 20,
+        backgroundColor: '#F8F9FA',
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        position: 'relative',
+    },
+    inlineImagePreview: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    removeImageButtonSmall: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 12,
+    },
     walletSelector: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFF', borderRadius: 12, padding: 15, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
     walletSelectorInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     selectorIconContainer: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
@@ -536,7 +660,7 @@ const styles = StyleSheet.create({
     modalWalletName: { fontSize: 16, fontWeight: '600', color: '#333' },
     modalWalletBalance: { fontSize: 14, color: '#888' },
     emptyContainer: { alignItems: 'center', padding: 40 },
-    emptyText: { color: '#999', fontSize: 16 }
+    emptyText: { color: '#999', fontSize: 16 },
 });
 
 export default EditTransactionScreen;
