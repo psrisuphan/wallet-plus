@@ -287,6 +287,24 @@ const AddTransactionScreen = () => {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
             <Header title="Add Transaction" showHome={true} />
+
+            {/* Income / Expense Toggle on Top */}
+            <View style={styles.topToggleContainer}>
+                <View style={styles.typeContainer}>
+                    <TouchableOpacity 
+                        style={[styles.typeButton, type === 'expense' && styles.typeButtonExpenseActive]}
+                        onPress={() => setType('expense')}
+                    >
+                        <Text style={[styles.typeText, type === 'expense' && styles.typeTextActive]}>Expense</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.typeButton, type === 'income' && styles.typeButtonIncomeActive]}
+                        onPress={() => setType('income')}
+                    >
+                        <Text style={[styles.typeText, type === 'income' && styles.typeTextActive]}>Income</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
             
             {/* Wallet Selection Modal */}
             <Modal
@@ -390,22 +408,6 @@ const AddTransactionScreen = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                    
-                    {/* Income / Expense Toggle */}
-                    <View style={styles.typeContainer}>
-                        <TouchableOpacity 
-                            style={[styles.typeButton, type === 'expense' && styles.typeButtonExpenseActive]}
-                            onPress={() => setType('expense')}
-                        >
-                            <Text style={[styles.typeText, type === 'expense' && styles.typeTextActive]}>Expense</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                            style={[styles.typeButton, type === 'income' && styles.typeButtonIncomeActive]}
-                            onPress={() => setType('income')}
-                        >
-                            <Text style={[styles.typeText, type === 'income' && styles.typeTextActive]}>Income</Text>
-                        </TouchableOpacity>
-                    </View>
 
                     {/* Amount Input area */}
                     <View style={styles.amountContainer}>
@@ -582,12 +584,17 @@ const styles = StyleSheet.create({
         padding: 20,
         paddingBottom: 120, // Increased to account for floating footer
     },
+    topToggleContainer: {
+        paddingHorizontal: 20,
+        paddingTop: 15,
+        backgroundColor: '#F8F9FA',
+    },
     typeContainer: {
         flexDirection: 'row',
         backgroundColor: '#E9ECEF',
         borderRadius: 12,
         padding: 4,
-        marginBottom: 30,
+        marginBottom: 10,
     },
     typeButton: {
         flex: 1,
