@@ -23,6 +23,7 @@ export default function TransactionsScreen() {
     const [customDate, setCustomDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [selectedWallets, setSelectedWallets] = useState<string[]>([]);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -104,6 +105,7 @@ export default function TransactionsScreen() {
         setTimeFilter('all');
         setFilterType('all');
         setSelectedCategories([]);
+        setSelectedWallets([]);
         setSearchQuery('');
         setSortOrder('newest');
     };
@@ -139,6 +141,9 @@ export default function TransactionsScreen() {
 
             // Category filter
             if (selectedCategories.length > 0 && !selectedCategories.includes(t.categoryName || 'Other')) return false;
+
+            // Wallet filter
+            if (selectedWallets.length > 0 && !selectedWallets.includes(t.walletId || '')) return false;
 
             // Type filter
             if (filterType !== 'all' && t.type !== filterType) return false;
@@ -263,6 +268,7 @@ export default function TransactionsScreen() {
     const activeFilterCount = (timeFilter !== 'all' ? 1 : 0) + 
                                (filterType !== 'all' ? 1 : 0) + 
                                (selectedCategories.length > 0 ? 1 : 0) + 
+                               (selectedWallets.length > 0 ? 1 : 0) + 
                                (searchQuery.trim() !== '' ? 1 : 0) + 
                                (sortOrder !== 'newest' ? 1 : 0);
 
@@ -275,6 +281,18 @@ export default function TransactionsScreen() {
             prev.includes(name) 
                 ? prev.filter(c => c !== name) 
                 : [...prev, name]
+        );
+    };
+
+    const toggleWallet = (id: string) => {
+        if (id === 'all') {
+            setSelectedWallets([]);
+            return;
+        }
+        setSelectedWallets(prev => 
+            prev.includes(id) 
+                ? prev.filter(wId => wId !== id) 
+                : [...prev, id]
         );
     };
 
@@ -378,6 +396,41 @@ export default function TransactionsScreen() {
                                     <Text style={[styles.filterText, sortOrder === 'oldest' && styles.filterTextActive]}>Oldest First</Text>
                                 </TouchableOpacity>
                             </View>
+                        </View>
+
+                        <View style={styles.filterSection}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <Text style={styles.filterCategoryTitle}>Wallets</Text>
+                                {selectedWallets.length > 0 && (
+                                    <Text style={{ fontSize: 12, color: PRIMARY_GREEN, fontWeight: '600' }}>
+                                        {selectedWallets.length} selected
+                                    </Text>
+                                )}
+                            </View>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
+                                <TouchableOpacity 
+                                    style={[styles.filterPill, selectedWallets.length === 0 && styles.filterPillActive]} 
+                                    onPress={() => toggleWallet('all')}
+                                >
+                                    <Text style={[styles.filterText, selectedWallets.length === 0 && styles.filterTextActive]}>All Wallets</Text>
+                                </TouchableOpacity>
+                                {wallets.map((wallet: any) => {
+                                    const isSelected = selectedWallets.includes(wallet.id);
+                                    const isShared = wallet.userId !== userId;
+                                    return (
+                                        <TouchableOpacity 
+                                            key={wallet.id}
+                                            style={[styles.filterPill, isSelected && styles.filterPillActive]} 
+                                            onPress={() => toggleWallet(wallet.id)}
+                                        >
+                                            <Ionicons name="wallet-outline" size={14} color={isSelected ? '#FFF' : '#666'} />
+                                            <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
+                                                {wallet.name}{isShared ? ' (Shared)' : ''}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
                         </View>
 
                         <View style={styles.filterSection}>
