@@ -335,13 +335,13 @@ const SummaryScreen = () => {
                                 ) : (
                                     incomeBreakdown.map((cat) => (
                                         <View key={cat.name} style={styles.breakdownRow}>
-                                            <View style={[styles.categoryIconBg, { backgroundColor: cat.color + '20' }]}>
-                                                <Ionicons name={cat.icon as any} size={16} color={cat.color} />
+                                            <View style={[styles.categoryIconBg, { backgroundColor: INCOME_COLOR + '20' }]}>
+                                                <Ionicons name={cat.icon as any} size={16} color={INCOME_COLOR} />
                                             </View>
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.breakdownName}>{cat.name}</Text>
                                                 <View style={styles.breakdownTrack}>
-                                                    <View style={[styles.breakdownFill, { width: `${cat.percentage}%`, backgroundColor: cat.color }]} />
+                                                    <View style={[styles.breakdownFill, { width: `${cat.percentage}%`, backgroundColor: INCOME_COLOR }]} />
                                                 </View>
                                             </View>
                                             <Text style={[styles.breakdownAmount, { color: INCOME_COLOR }]}>฿{cat.total.toLocaleString()}</Text>
