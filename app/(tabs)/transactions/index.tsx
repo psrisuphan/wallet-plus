@@ -22,7 +22,7 @@ export default function TransactionsScreen() {
     const [timeFilter, setTimeFilter] = useState<string>('all');
     const [customDate, setCustomDate] = useState<Date>(new Date());
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -103,22 +103,22 @@ export default function TransactionsScreen() {
     const resetFilters = () => {
         setTimeFilter('all');
         setFilterType('all');
-        setCategoryFilter('all');
+        setSelectedCategories([]);
         setSearchQuery('');
         setSortOrder('newest');
     };
 
-    // Auto-reset category filter if it's not valid for the selected type
+    // Auto-filter selected categories if they're not valid for the selected type
     useEffect(() => {
-        if (categoryFilter === 'all') return;
+        if (selectedCategories.length === 0) return;
         
-        const isCurrentCategoryIncome = INCOME_CATEGORIES.some(c => c.name === categoryFilter);
-        const isCurrentCategoryExpense = EXPENSE_CATEGORIES.some(c => c.name === categoryFilter);
+        const incomeNames = INCOME_CATEGORIES.map(c => c.name);
+        const expenseNames = EXPENSE_CATEGORIES.map(c => c.name);
         
-        if (filterType === 'income' && !isCurrentCategoryIncome) {
-            setCategoryFilter('all');
-        } else if (filterType === 'expense' && !isCurrentCategoryExpense) {
-            setCategoryFilter('all');
+        if (filterType === 'income') {
+            setSelectedCategories(prev => prev.filter(name => incomeNames.includes(name)));
+        } else if (filterType === 'expense') {
+            setSelectedCategories(prev => prev.filter(name => expenseNames.includes(name)));
         }
     }, [filterType]);
 
@@ -136,7 +136,7 @@ export default function TransactionsScreen() {
             }
 
             // Category filter
-            if (categoryFilter !== 'all' && t.categoryName !== categoryFilter) return false;
+            if (selectedCategories.length > 0 && !selectedCategories.includes(t.categoryName || 'Other')) return false;
 
             // Type filter
             if (filterType !== 'all' && t.type !== filterType) return false;
@@ -259,10 +259,22 @@ export default function TransactionsScreen() {
     }, [filterType]);
 
     const activeFilterCount = (timeFilter !== 'all' ? 1 : 0) + 
-                              (filterType !== 'all' ? 1 : 0) + 
-                              (categoryFilter !== 'all' ? 1 : 0) + 
-                              (searchQuery.trim() !== '' ? 1 : 0) + 
-                              (sortOrder !== 'newest' ? 1 : 0);
+                               (filterType !== 'all' ? 1 : 0) + 
+                               (selectedCategories.length > 0 ? 1 : 0) + 
+                               (searchQuery.trim() !== '' ? 1 : 0) + 
+                               (sortOrder !== 'newest' ? 1 : 0);
+
+    const toggleCategory = (name: string) => {
+        if (name === 'all') {
+            setSelectedCategories([]);
+            return;
+        }
+        setSelectedCategories(prev => 
+            prev.includes(name) 
+                ? prev.filter(c => c !== name) 
+                : [...prev, name]
+        );
+    };
 
     return (
         <View style={styles.mainContainer}>
@@ -367,31 +379,41 @@ export default function TransactionsScreen() {
                         </View>
 
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterCategoryTitle}>Category</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <Text style={styles.filterCategoryTitle}>Category</Text>
+                                {selectedCategories.length > 0 && (
+                                    <Text style={{ fontSize: 12, color: PRIMARY_GREEN, fontWeight: '600' }}>
+                                        {selectedCategories.length} selected
+                                    </Text>
+                                )}
+                            </View>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterIconScroll} contentContainerStyle={styles.filterScrollContent}>
                                 <TouchableOpacity 
-                                    style={[styles.categoryIconPill, categoryFilter === 'all' && styles.categoryIconPillActive]} 
-                                    onPress={() => setCategoryFilter('all')}
+                                    style={[styles.categoryIconPill, selectedCategories.length === 0 && styles.categoryIconPillActive]} 
+                                    onPress={() => toggleCategory('all')}
                                 >
-                                    <Ionicons name="grid-outline" size={18} color={categoryFilter === 'all' ? '#FFF' : '#666'} />
-                                    <Text style={[styles.filterText, categoryFilter === 'all' && styles.filterTextActive]}>All</Text>
+                                    <Ionicons name="grid-outline" size={18} color={selectedCategories.length === 0 ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, selectedCategories.length === 0 && styles.filterTextActive]}>All</Text>
                                 </TouchableOpacity>
-                                {categoriesToDisplay.map((cat: any, idx: number) => (
-                                    <TouchableOpacity 
-                                        key={cat.id || `cat-${idx}`}
-                                        style={[styles.categoryIconPill, categoryFilter === cat.name && styles.categoryIconPillActive]} 
-                                        onPress={() => setCategoryFilter(cat.name)}
-                                    >
-                                        <Ionicons 
-                                            name={(cat.icon || 'help-outline') as any} 
-                                            size={18} 
-                                            color={categoryFilter === cat.name ? '#FFF' : '#666'} 
-                                        />
-                                        <Text style={[styles.filterText, categoryFilter === cat.name && styles.filterTextActive]}>
-                                            {cat.name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
+                                {categoriesToDisplay.map((cat: any, idx: number) => {
+                                    const isSelected = selectedCategories.includes(cat.name);
+                                    return (
+                                        <TouchableOpacity 
+                                            key={cat.id || `cat-${idx}`}
+                                            style={[styles.categoryIconPill, isSelected && styles.categoryIconPillActive]} 
+                                            onPress={() => toggleCategory(cat.name)}
+                                        >
+                                            <Ionicons 
+                                                name={(cat.icon || 'help-outline') as any} 
+                                                size={18} 
+                                                color={isSelected ? '#FFF' : '#666'} 
+                                            />
+                                            <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
+                                                {cat.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
                             </ScrollView>
                         </View>
                         
