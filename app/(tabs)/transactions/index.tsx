@@ -8,6 +8,8 @@ import { db, auth } from '../../../firebaseConfig';
 import Header from '../../../components/Header';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../../constants/Colors';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
+import { Modal, Image } from 'react-native';
+import TransactionDetailModal from '../../../components/TransactionDetailModal';
 
 export default function TransactionsScreen() {
     const router = useRouter();
@@ -22,6 +24,8 @@ export default function TransactionsScreen() {
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
     useEffect(() => {
         const user = auth.currentUser;
@@ -152,7 +156,10 @@ export default function TransactionsScreen() {
         return (
             <TouchableOpacity 
                 style={styles.transactionRow}
-                onPress={() => router.push(`/(tabs)/transactions/${item.id}`)}
+                onPress={() => {
+                    setSelectedTransaction(item);
+                    setShowDetailModal(true);
+                }}
                 activeOpacity={0.7}
             >
                 <View style={[
@@ -415,6 +422,20 @@ export default function TransactionsScreen() {
                     );
                 })()}
             </View>
+
+            {/* Transaction Detail Modal */}
+            {selectedTransaction && (
+                <TransactionDetailModal 
+                    visible={showDetailModal}
+                    transaction={selectedTransaction}
+                    walletName={wallets.find(w => w.id === selectedTransaction.walletId)?.name || 'Unknown Wallet'}
+                    onClose={() => setShowDetailModal(false)}
+                    onEdit={() => {
+                        setShowDetailModal(false);
+                        router.push(`/(tabs)/transactions/${selectedTransaction.id}`);
+                    }}
+                />
+            )}
         </View>
     );
 }

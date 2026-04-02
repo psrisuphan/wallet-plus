@@ -251,6 +251,38 @@ const AddTransactionScreen = () => {
         setImageNoteBase64(null);
     };
 
+    if (!loadingWallets && wallets.length === 0) {
+        return (
+            <View style={styles.container}>
+                <StatusBar barStyle="light-content" />
+                <Header title="Add Transaction" showHome={true} />
+                <View style={styles.emptyWalletsContainer}>
+                    <View style={styles.emptyWalletsIconContainer}>
+                        <View style={styles.emptyWalletsCircle}>
+                            <Ionicons name="wallet-outline" size={70} color={WHITE_GREEN} />
+                        </View>
+                        <View style={styles.emptyWalletsBadge}>
+                            <Ionicons name="add" size={24} color="#FFF" />
+                        </View>
+                    </View>
+                    
+                    <Text style={styles.emptyWalletsTitle}>No Wallets Available</Text>
+                    <Text style={styles.emptyWalletsSubtitle}>
+                        You haven't created any wallets yet. To start tracking your transactions, you'll need at least one wallet to store your balance.
+                    </Text>
+                    
+                    <TouchableOpacity 
+                        style={styles.createWalletButton}
+                        onPress={() => router.push('/(tabs)/wallet/add')}
+                    >
+                        <Text style={styles.createWalletButtonText}>Create Your First Wallet</Text>
+                        <Ionicons name="arrow-forward" size={20} color="#FFF" style={{ marginLeft: 10 }} />
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
@@ -548,7 +580,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 20,
-        paddingBottom: 40,
+        paddingBottom: 120, // Increased to account for floating footer
     },
     typeContainer: {
         flexDirection: 'row',
@@ -893,11 +925,12 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
     },
     footer: {
-        padding: 20,
-        paddingBottom: 40,
-        backgroundColor: '#FFF',
-        borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        padding: 24,
+        paddingBottom: 16,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
     },
     saveButton: {
         paddingVertical: 16,
@@ -959,6 +992,76 @@ const styles = StyleSheet.create({
         right: 8,
         backgroundColor: 'rgba(255,255,255,0.8)',
         borderRadius: 12,
+    },
+    // Empty Wallet state
+    emptyWalletsContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 40,
+        backgroundColor: '#F8F9FA',
+    },
+    emptyWalletsIconContainer: {
+        position: 'relative',
+        marginBottom: 32,
+    },
+    emptyWalletsCircle: {
+        width: 140,
+        height: 140,
+        borderRadius: 70,
+        backgroundColor: '#FFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: WHITE_GREEN,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    emptyWalletsBadge: {
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: WHITE_GREEN,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 4,
+        borderColor: '#F8F9FA',
+    },
+    emptyWalletsTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    emptyWalletsSubtitle: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: 40,
+    },
+    createWalletButton: {
+        flexDirection: 'row',
+        backgroundColor: WHITE_GREEN,
+        paddingHorizontal: 28,
+        paddingVertical: 18,
+        borderRadius: 16,
+        alignItems: 'center',
+        shadowColor: WHITE_GREEN,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        elevation: 8,
+    },
+    createWalletButtonText: {
+        color: '#FFF',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });
 
