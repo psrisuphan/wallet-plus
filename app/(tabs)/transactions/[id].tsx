@@ -474,8 +474,8 @@ const EditTransactionScreen = () => {
                             >
                                 <Ionicons 
                                     name={imageNoteBase64 ? "camera" : "camera-outline"} 
-                                    size={24} 
-                                    color={imageNoteBase64 ? WHITE_GREEN : "#888"} 
+                                    size={22} 
+                                    color="#FFF" 
                                 />
                             </TouchableOpacity>
                         </View>
@@ -604,7 +604,17 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     noteImageAction: {
-        padding: 8,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: WHITE_GREEN,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: WHITE_GREEN,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     inlineImagePreviewContainer: {
         width: '100%',
