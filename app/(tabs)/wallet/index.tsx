@@ -6,8 +6,7 @@ import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
-
-const WHITE_GREEN = '#699e8aff';
+import { PRIMARY as WHITE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
 interface Wallet {
   id: string;
   name: string;
@@ -253,15 +252,15 @@ const WalletScreen = () => {
 
   const renderTransactionItem = ({ item }: { item: Transaction }) => (
     <View style={styles.transactionItem}>
-      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? '#FF3B3015' : '#699E8A15' }]}>
-        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? '#FF3B30' : '#699E8A'} />
+      <View style={[styles.transactionIcon, { backgroundColor: item.type === 'expense' ? EXPENSE_COLOR + '15' : WHITE_GREEN + '15' }]}>
+        <Ionicons name={item.categoryIcon as any} size={20} color={item.type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN} />
       </View>
       <View style={styles.transactionInfo}>
         <Text style={styles.transactionCategory}>{item.categoryName}</Text>
         {item.note ? <Text style={styles.transactionNote} numberOfLines={1}>{item.note}</Text> : null}
       </View>
       <View style={styles.transactionAmountContainer}>
-        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? '#FF3B30' : '#699E8A' }]}>
+        <Text style={[styles.transactionAmount, { color: item.type === 'expense' ? EXPENSE_COLOR : WHITE_GREEN }]}>
           {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
@@ -287,8 +286,8 @@ const WalletScreen = () => {
       activeOpacity={0.7}
     >
       <View style={styles.walletHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: `${item.color?.length === 9 ? item.color.slice(0, 7) : (item.color || '#699E8A')}15` }]}>
-          <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || '#699E8A'} />
+        <View style={[styles.iconContainer, { backgroundColor: `${item.color?.length === 9 ? item.color.slice(0, 7) : (item.color || WHITE_GREEN)}15` }]}>
+          <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || WHITE_GREEN} />
         </View>
         <View style={styles.walletInfo}>
           <Text style={styles.walletName}>{item.name}</Text>

@@ -15,6 +15,7 @@ import { app, auth } from '../../firebaseConfig';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { PRIMARY } from '../../constants/Colors';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     },
     button: {
         height: 56,
-        backgroundColor: '#6eac94ff',
+        backgroundColor: PRIMARY,
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
         marginTop: -8,
     },
     forgotPasswordText: {
-        color: '#6eac94ff',
+        color: PRIMARY,
         fontSize: 14,
         fontWeight: '500',
     },
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     linkText: {
-        color: '#6eac94ff',
+        color: PRIMARY,
         textAlign: 'center',
         fontSize: 16,
         fontWeight: '500',

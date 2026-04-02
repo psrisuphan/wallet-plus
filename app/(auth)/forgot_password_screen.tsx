@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { app, auth } from '../../firebaseConfig';
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { PRIMARY } from '../../constants/Colors';
 
 export default function ForgotPasswordScreen() {
     const [email, setEmail] = useState('');
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     },
     backButtonText: {
         fontSize: 18,
-        color: 'green',
+        color: PRIMARY,
         fontWeight: '500',
     },
     main: {
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
     },
     button: {
         height: 56,
-        backgroundColor: '#6eac94ff',
+        backgroundColor: PRIMARY,
         borderRadius: 14,
         justifyContent: 'center',
         alignItems: 'center',

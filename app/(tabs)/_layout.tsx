@@ -2,12 +2,13 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { View } from 'react-native'
+import { PRIMARY } from '../../constants/Colors'
 
 const TabsLayout = () => {
     return (
         <Tabs screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: '#699e8aff',
+            tabBarActiveTintColor: PRIMARY,
             tabBarInactiveTintColor: '#888',
             tabBarLabelStyle: {
                 fontSize: 12,

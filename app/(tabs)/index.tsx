@@ -5,9 +5,7 @@ import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
-
-const PRIMARY_GREEN = '#699E8A';
-const SUBTLE_GREEN = '#699E8A20';
+import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../constants/Colors';
 
 export default function HomeScreen() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
