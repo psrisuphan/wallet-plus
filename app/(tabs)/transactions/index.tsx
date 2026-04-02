@@ -363,7 +363,15 @@ export default function TransactionsScreen() {
                                 >
                                     <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
                                     <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
-                                        {timeFilter === 'custom' ? customDate.toLocaleDateString('en-GB') : 'Custom Date'}
+                                        {timeFilter === 'custom' 
+                                            ? customDate.toLocaleDateString('en-GB', { 
+                                                year: 'numeric', 
+                                                month: '2-digit', 
+                                                day: '2-digit',
+                                                calendar: 'gregory'
+                                              } as any) 
+                                            : 'Custom Date'
+                                        }
                                     </Text>
                                 </TouchableOpacity>
                             </ScrollView>
