@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Header';
 import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp, or } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../constants/Colors';
 import TransactionDetailModal from '../../components/TransactionDetailModal';
@@ -23,6 +23,7 @@ export default function HomeScreen() {
     const [showTodayBottomArrow, setShowTodayBottomArrow] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const walletsRef = useRef<any[]>([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -39,8 +40,14 @@ export default function HomeScreen() {
             }
         };
 
-        // Listen to wallets for total balance
-        const qWallets = query(collection(db, 'wallets'), where('userId', '==', user.uid));
+        // Listen to wallets for total balance (Owner or Shared Member)
+        const qWallets = query(
+            collection(db, 'wallets'), 
+            or(
+                where('userId', '==', user.uid),
+                where('sharedWith', 'array-contains', user.uid)
+            )
+        );
         const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
             let total = 0;
             const walletsList: any[] = [];
@@ -52,6 +59,7 @@ export default function HomeScreen() {
             });
             setTotalBalance(total);
             setWallets(walletsList);
+            walletsRef.current = walletsList;
         });
 
         // Combined listener for today's transactions and total net change
@@ -60,7 +68,6 @@ export default function HomeScreen() {
 
         const qToday = query(
             collection(db, 'transactions'),
-            where('userId', '==', user.uid),
             where('date', '>=', Timestamp.fromDate(start)),
             orderBy('date', 'desc')
         );
@@ -71,13 +78,21 @@ export default function HomeScreen() {
             const deltas: {[key: string]: number} = {};
 
             snapshot.forEach((doc) => {
-                const data = doc.data();
-                const amount = data.amount || 0;
-                const type = data.type;
-                const net = type === 'income' ? amount : -amount;
-                totalNet += net;
-                if (data.walletId) deltas[data.walletId] = (deltas[data.walletId] || 0) + net;
-                list.push({ id: doc.id, ...data });
+                const data = doc.data() as any;
+                
+                // Only include if it belongs to one of user's active wallets
+                // or was created by the user
+                const isMyWallet = walletsRef.current.some((w: any) => w.id === data.walletId);
+                const isMyAction = data.userId === user.uid;
+
+                if (isMyWallet || isMyAction) {
+                    const amount = data.amount || 0;
+                    const type = data.type;
+                    const net = type === 'income' ? amount : -amount;
+                    totalNet += net;
+                    if (data.walletId) deltas[data.walletId] = (deltas[data.walletId] || 0) + net;
+                    list.push({ id: doc.id, ...data });
+                }
             });
             
             setTodayTransactions(list);

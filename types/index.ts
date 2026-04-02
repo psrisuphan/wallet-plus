@@ -10,7 +10,10 @@ export interface Wallet {
   icon: string;
   color: string;
   detail?: string;
-  userId?: string;
+  userId: string;
+  sharedWith?: string[];
+  updatedAt?: any;
+  createdAt?: any;
 }
 
 export interface Transaction {

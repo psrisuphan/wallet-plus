@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, Timestamp, or } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { useFocusEffect } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
@@ -27,6 +27,7 @@ const SummaryScreen = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [historyTransactions, setHistoryTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const walletsRef = useRef<any[]>([]);
 
     const getDateRange = useCallback((p: Period): Date => {
         const now = new Date();
@@ -47,6 +48,28 @@ const SummaryScreen = () => {
         start.setHours(0, 0, 0, 0);
         return start;
     }, []);
+    
+    // Listen to wallets for accessible wallets
+    useEffect(() => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const qWallets = query(
+            collection(db, 'wallets'), 
+            or(
+                where('userId', '==', user.uid),
+                where('sharedWith', 'array-contains', user.uid)
+            )
+        );
+        const unsubscribe = onSnapshot(qWallets, (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((doc) => {
+                list.push({ id: doc.id, ...doc.data() });
+            });
+            walletsRef.current = list;
+        });
+        return () => unsubscribe();
+    }, []);
 
     // Effect for the current period's transactions (Overview)
     useFocusEffect(
@@ -59,7 +82,6 @@ const SummaryScreen = () => {
 
             const q = query(
                 collection(db, 'transactions'),
-                where('userId', '==', user.uid),
                 where('date', '>=', Timestamp.fromDate(startDate)),
                 orderBy('date', 'desc')
             );
@@ -67,7 +89,13 @@ const SummaryScreen = () => {
             const unsubscribe = onSnapshot(q, (snapshot) => {
                 const list: Transaction[] = [];
                 snapshot.forEach((doc) => {
-                    list.push({ id: doc.id, ...doc.data() } as Transaction);
+                    const data = doc.data() as any;
+                    const isMyWallet = walletsRef.current.some(w => w.id === data.walletId);
+                    const isMyAction = data.userId === user.uid;
+
+                    if (isMyWallet || isMyAction) {
+                        list.push({ id: doc.id, ...data } as Transaction);
+                    }
                 });
                 setTransactions(list);
                 setLoading(false);
@@ -89,7 +117,6 @@ const SummaryScreen = () => {
 
         const q = query(
             collection(db, 'transactions'),
-            where('userId', '==', user.uid),
             where('date', '>=', Timestamp.fromDate(sixMonthsAgo)),
             orderBy('date', 'asc')
         );
@@ -97,7 +124,13 @@ const SummaryScreen = () => {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list: Transaction[] = [];
             snapshot.forEach((doc) => {
-                list.push({ id: doc.id, ...doc.data() } as Transaction);
+                const data = doc.data() as any;
+                const isMyWallet = walletsRef.current.some(w => w.id === data.walletId);
+                const isMyAction = data.userId === user.uid;
+
+                if (isMyWallet || isMyAction) {
+                    list.push({ id: doc.id, ...data } as Transaction);
+                }
             });
             setHistoryTransactions(list);
         });
