@@ -263,9 +263,21 @@ export default function HomeScreen() {
                                                             />
                                                         </View>
                                                         <View style={{ flex: 1, justifyContent: 'center' }}>
-                                                            <Text style={styles.walletRowName} numberOfLines={1}>
-                                                                {item.name}
-                                                        </Text>
+                                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                                <Text style={styles.walletRowName} numberOfLines={1}>
+                                                                    {item.name}
+                                                                </Text>
+                                                                {item.sharedWith && item.sharedWith.length > 0 && (
+                                                                    <View style={{ 
+                                                                        backgroundColor: `${PRIMARY_GREEN}25`, 
+                                                                        borderRadius: 8, 
+                                                                        paddingHorizontal: 4, 
+                                                                        paddingVertical: 2 
+                                                                    }}>
+                                                                        <Ionicons name="people" size={10} color={PRIMARY_GREEN} />
+                                                                    </View>
+                                                                )}
+                                                            </View>
                                                         {item.detail && (
                                                             <Text style={styles.walletRowDescription} numberOfLines={1}>
                                                                 {item.detail}

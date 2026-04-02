@@ -352,7 +352,7 @@ const WalletScreen = () => {
         <View style={styles.walletInfo}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={styles.walletName}>{item.name}</Text>
-            {item.userId !== userId && (
+            {item.sharedWith && item.sharedWith.length > 0 && (
               <View style={styles.sharedBadge}>
                 <Ionicons name="people" size={10} color={WHITE_GREEN} />
                 <Text style={styles.sharedBadgeText}>Shared</Text>
