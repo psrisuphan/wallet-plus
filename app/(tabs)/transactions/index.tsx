@@ -356,18 +356,6 @@ export default function TransactionsScreen() {
                             <Text style={styles.filterCategoryTitle}>Time Period</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
                                 <TouchableOpacity 
-                                    style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
-                                    onPress={() => setShowDatePicker(true)}
-                                >
-                                    <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
-                                    <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
-                                        {timeFilter === 'custom' 
-                                            ? customDate.toLocaleDateString('en-GB') 
-                                            : 'Custom Date'
-                                        }
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity 
                                     style={[styles.filterPill, timeFilter === 'range' && styles.filterPillActive]} 
                                     onPress={() => setShowRangePicker(true)}
                                 >
@@ -376,6 +364,18 @@ export default function TransactionsScreen() {
                                         {timeFilter === 'range' 
                                             ? `${startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })} - ${endDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}`
                                             : 'Custom Range'
+                                        }
+                                    </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                    style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
+                                    onPress={() => setShowDatePicker(true)}
+                                >
+                                    <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
+                                    <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
+                                        {timeFilter === 'custom' 
+                                            ? customDate.toLocaleDateString('en-GB') 
+                                            : 'Custom Date'
                                         }
                                     </Text>
                                 </TouchableOpacity>
