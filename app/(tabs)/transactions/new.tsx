@@ -401,7 +401,15 @@ const AddTransactionScreen = () => {
                                         <Ionicons name={item.icon as any || 'wallet'} size={24} color="#FFF" />
                                     </View>
                                     <View style={styles.modalWalletInfo}>
-                                        <Text style={styles.modalWalletName}>{item.name}</Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                            <Text style={styles.modalWalletName}>{item.name}</Text>
+                                            {item.sharedWith && item.sharedWith.length > 0 && (
+                                                <View style={styles.sharedBadge}>
+                                                    <Ionicons name="people" size={10} color={WHITE_GREEN} />
+                                                    <Text style={styles.sharedBadgeText}>Shared</Text>
+                                                </View>
+                                            )}
+                                        </View>
                                         <Text style={styles.modalWalletBalance}>฿{item.balance.toLocaleString()}</Text>
                                     </View>
                                     {selectedWallet?.id === item.id && (
@@ -548,7 +556,15 @@ const AddTransactionScreen = () => {
                                         <Ionicons name={selectedWallet.icon as any || 'wallet'} size={20} color="#FFF" />
                                     </View>
                                     <View>
-                                        <Text style={styles.walletSelectorText}>{selectedWallet.name}</Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                            <Text style={styles.walletSelectorText}>{selectedWallet.name}</Text>
+                                            {selectedWallet.sharedWith && selectedWallet.sharedWith.length > 0 && (
+                                                <View style={styles.sharedBadge}>
+                                                    <Ionicons name="people" size={10} color={WHITE_GREEN} />
+                                                    <Text style={styles.sharedBadgeText}>Shared</Text>
+                                                </View>
+                                            )}
+                                        </View>
                                         <Text style={{ fontSize: 13, color: '#888', marginTop: 2 }}>฿{selectedWallet.balance.toLocaleString()}</Text>
                                     </View>
                                 </View>
@@ -1089,6 +1105,21 @@ const styles = StyleSheet.create({
         color: '#FFF',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    sharedBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: WHITE_GREEN + '20',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        gap: 3,
+    },
+    sharedBadgeText: {
+        fontSize: 10,
+        color: WHITE_GREEN,
+        fontWeight: '700',
+        textTransform: 'uppercase',
     },
 });
 
