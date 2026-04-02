@@ -362,7 +362,7 @@ export default function TransactionsScreen() {
                                     <Ionicons name="calendar-outline" size={14} color={timeFilter === 'range' ? '#FFF' : '#666'} />
                                     <Text style={[styles.filterText, timeFilter === 'range' && styles.filterTextActive]}>
                                         {timeFilter === 'range' 
-                                            ? `${startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })} - ${endDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}`
+                                            ? `${startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} - ${endDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
                                             : 'Custom Range'
                                         }
                                     </Text>
@@ -374,7 +374,7 @@ export default function TransactionsScreen() {
                                     <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
                                     <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
                                         {timeFilter === 'custom' 
-                                            ? customDate.toLocaleDateString('en-GB') 
+                                            ? customDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
                                             : 'Custom Date'
                                         }
                                     </Text>
