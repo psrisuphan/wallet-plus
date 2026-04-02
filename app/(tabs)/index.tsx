@@ -111,6 +111,8 @@ export default function HomeScreen() {
             <Header 
                 title="Overview" 
                 showLogo={false} 
+                leftIconName="receipt-outline"
+                onLeftButtonPress={() => router.push('/(tabs)/transactions')}
                 profileImage={profileImage}
                 onProfilePress={() => {
                     router.push('/(tabs)/settings?edit=true'); 

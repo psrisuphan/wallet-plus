@@ -15,6 +15,8 @@ interface HeaderProps {
   showLogo?: boolean;
   profileImage?: string | null;
   onProfilePress?: () => void;
+  leftIconName?: keyof typeof Ionicons.glyphMap;
+  onLeftButtonPress?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -27,6 +29,8 @@ const Header: React.FC<HeaderProps> = ({
   showLogo = false,
   profileImage,
   onProfilePress,
+  leftIconName,
+  onLeftButtonPress,
 }) => {
   const router = useRouter();
 
@@ -54,6 +58,10 @@ const Header: React.FC<HeaderProps> = ({
              <View style={styles.headerLeftButton}>
                <Ionicons name="wallet" size={24} color="#FFFFFF" />
              </View>
+          ) : leftIconName ? (
+            <TouchableOpacity onPress={onLeftButtonPress} style={styles.headerLeftButton}>
+              <Ionicons name={leftIconName} size={28} color="#FFFFFF" />
+            </TouchableOpacity>
           ) : null}
 
           <Text style={styles.header}>{title}</Text>
