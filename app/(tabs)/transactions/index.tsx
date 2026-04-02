@@ -23,6 +23,8 @@ export default function TransactionsScreen() {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [selectedWallets, setSelectedWallets] = useState<string[]>([]);
+    const [minAmount, setMinAmount] = useState<string>('');
+    const [maxAmount, setMaxAmount] = useState<string>('');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -126,6 +128,8 @@ export default function TransactionsScreen() {
         setSelectedWallets([]);
         setSearchQuery('');
         setSortOrder('newest');
+        setMinAmount('');
+        setMaxAmount('');
     };
 
     const toggleCategory = (name: string) => {
@@ -187,6 +191,13 @@ export default function TransactionsScreen() {
                 const eDate = new Date(endDate);
                 eDate.setHours(23, 59, 59, 999);
                 if (dateObj < sDate || dateObj > eDate) return false;
+            }
+
+            if (minAmount !== '') {
+                if (t.amount < parseFloat(minAmount)) return false;
+            }
+            if (maxAmount !== '') {
+                if (t.amount > parseFloat(maxAmount)) return false;
             }
             
             return true;
@@ -297,7 +308,8 @@ export default function TransactionsScreen() {
                                (selectedCategories.length > 0 ? 1 : 0) + 
                                (selectedWallets.length > 0 ? 1 : 0) + 
                                (searchQuery.trim() !== '' ? 1 : 0) + 
-                               (sortOrder !== 'newest' ? 1 : 0);
+                               (sortOrder !== 'newest' ? 1 : 0) +
+                               (minAmount !== '' || maxAmount !== '' ? 1 : 0);
 
     const formatDisplayDate = (date: Date) => {
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -459,6 +471,36 @@ export default function TransactionsScreen() {
                                     <Ionicons name="arrow-up" size={14} color={sortOrder === 'oldest' ? '#FFF' : '#666'} />
                                     <Text style={[styles.filterText, sortOrder === 'oldest' && styles.filterTextActive]}>Oldest First</Text>
                                 </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Amount Range Filter */}
+                        <View style={styles.filterSection}>
+                            <Text style={styles.filterCategoryTitle}>Amount Range (฿)</Text>
+                            <View style={styles.amountRangeContainer}>
+                                <View style={styles.amountInputWrapper}>
+                                    <Text style={styles.amountInputLabel}>Min</Text>
+                                    <TextInput
+                                        style={styles.amountInput}
+                                        placeholder="0"
+                                        keyboardType="numeric"
+                                        value={minAmount}
+                                        onChangeText={setMinAmount}
+                                        placeholderTextColor="#999"
+                                    />
+                                </View>
+                                <View style={styles.amountSeparator} />
+                                <View style={styles.amountInputWrapper}>
+                                    <Text style={styles.amountInputLabel}>Max</Text>
+                                    <TextInput
+                                        style={styles.amountInput}
+                                        placeholder="Any"
+                                        keyboardType="numeric"
+                                        value={maxAmount}
+                                        onChangeText={setMaxAmount}
+                                        placeholderTextColor="#999"
+                                    />
+                                </View>
                             </View>
                         </View>
 
@@ -1118,5 +1160,36 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#1a1a1a',
+    },
+    amountRangeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        gap: 12,
+    },
+    amountInputWrapper: {
+        flex: 1,
+        backgroundColor: '#F2F2F7',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    amountInputLabel: {
+        fontSize: 10,
+        color: '#888',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        marginBottom: 2,
+    },
+    amountInput: {
+        fontSize: 16,
+        color: '#1a1a1a',
+        fontWeight: '600',
+        padding: 0,
+    },
+    amountSeparator: {
+        width: 10,
+        height: 1,
+        backgroundColor: '#CCC',
     },
 });
