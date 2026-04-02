@@ -9,11 +9,12 @@ interface TransactionDetailModalProps {
     visible: boolean;
     transaction: Transaction | null;
     walletName: string;
+    isShared: boolean;
     onClose: () => void;
     onEdit: () => void;
 }
 
-const TransactionDetailModal = ({ visible, transaction, walletName, onClose, onEdit }: TransactionDetailModalProps) => {
+const TransactionDetailModal = ({ visible, transaction, walletName, isShared, onClose, onEdit }: TransactionDetailModalProps) => {
     if (!transaction) return null;
     
     const dateObj = transaction.date?.toDate ? transaction.date.toDate() : new Date();
@@ -93,7 +94,7 @@ const TransactionDetailModal = ({ visible, transaction, walletName, onClose, onE
                                 <Text style={modalStyles.infoValue}>{timeStr}</Text>
                             </View>
 
-                            {transaction.userName && (
+                            {transaction.userName && isShared && (
                                 <View style={modalStyles.infoItem}>
                                     <Text style={modalStyles.infoLabel}>Added By</Text>
                                     <View style={modalStyles.categoryValue}>

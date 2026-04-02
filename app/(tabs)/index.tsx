@@ -378,11 +378,11 @@ export default function HomeScreen() {
                                                                 {item.note}
                                                             </Text>
                                                         ) : null}
-                                                        {item.userName && (
+                                                        {item.userName && wallets.find(w => w.id === item.walletId)?.sharedWith && (wallets.find(w => w.id === item.walletId)?.sharedWith?.length || 0) > 0 && (
                                                             <Text style={{ fontSize: 10, color: PRIMARY_GREEN, fontWeight: '600', marginTop: -1 }}>
                                                                 Added by {item.userName}
                                                             </Text>
-                                                        )}
+                                                         )}
                                                         <Text style={{ fontSize: 11, color: '#999' }}>
                                                             {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                                             {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
@@ -425,6 +425,7 @@ export default function HomeScreen() {
                 visible={showDetailModal}
                 transaction={selectedTransaction}
                 walletName={selectedTransaction?.walletId ? (wallets.find(w => w.id === selectedTransaction.walletId)?.name || 'Unknown Wallet') : 'No Wallet'}
+                isShared={!!(selectedTransaction?.walletId && (wallets.find(w => w.id === selectedTransaction.walletId)?.sharedWith?.length || 0) > 0)}
                 onClose={() => setShowDetailModal(false)}
                 onEdit={() => {
                     if (selectedTransaction) {

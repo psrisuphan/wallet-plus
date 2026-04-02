@@ -304,7 +304,7 @@ const WalletScreen = () => {
           {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
-          {item.userName ? (
+          {item.userName && selectedWalletForTransactions?.sharedWith && selectedWalletForTransactions.sharedWith.length > 0 ? (
             <Text style={{ fontWeight: '600', color: WHITE_GREEN }}>{item.userName} • </Text>
           ) : null}
           {item.date?.seconds ? (
