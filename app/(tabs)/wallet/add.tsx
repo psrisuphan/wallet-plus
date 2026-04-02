@@ -18,6 +18,7 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { collection, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { PRIMARY } from '../../../constants/Colors';
+import { HapticFeedback } from '../../../utils/haptics';
 
 const COLORS = [
   PRIMARY, // Theme Green
@@ -105,6 +106,7 @@ const AddWalletScreen = () => {
     }
 
     if (!name.trim()) {
+      HapticFeedback.error();
       Alert.alert('Error', 'Please enter a wallet name.');
       return;
     }
@@ -112,6 +114,7 @@ const AddWalletScreen = () => {
     const startingBalance = parseFloat(balance) || 0;
 
     if (startingBalance < 0) {
+      HapticFeedback.warning();
       Alert.alert(
         'Negative Balance',
         `You've entered a negative balance: ฿${startingBalance.toFixed(2)}. Do you want to continue?`,
@@ -146,6 +149,7 @@ const AddWalletScreen = () => {
         // Update
         const { sharedWith, ...updateData } = walletData;
         await updateDoc(doc(db, 'wallets', id), updateData);
+        HapticFeedback.success();
         Alert.alert('Success', 'Wallet updated successfully!');
       } else {
         // Create
@@ -153,11 +157,13 @@ const AddWalletScreen = () => {
           ...walletData,
           createdAt: new Date(),
         });
+        HapticFeedback.success();
         Alert.alert('Success', 'Wallet created successfully!');
       }
       router.replace('/(tabs)/wallet');
     } catch (error) {
       console.error('Error saving wallet:', error);
+      HapticFeedback.error();
       Alert.alert('Error', 'Failed to save wallet.');
     } finally {
       setLoading(false);
@@ -190,7 +196,10 @@ const AddWalletScreen = () => {
           <TouchableOpacity 
             activeOpacity={0.8} 
             style={[styles.mainIconContainer, { backgroundColor: color + '15', borderColor: color + '33' }]}
-            onPress={() => setPickerModalVisible(true)}
+            onPress={() => {
+              setPickerModalVisible(true);
+              HapticFeedback.selection();
+            }}
           >
             <Ionicons name={icon as any} size={64} color={color} />
             <View style={[styles.editBadge, { backgroundColor: color }]}>
@@ -276,7 +285,10 @@ const AddWalletScreen = () => {
                         styles.iconItem,
                         icon === item && { backgroundColor: color + '22', borderColor: color },
                       ]}
-                      onPress={() => setIcon(item)}
+                      onPress={() => {
+                        setIcon(item);
+                        HapticFeedback.selection();
+                      }}
                     >
                       <Ionicons name={item as any} size={24} color={icon === item ? color : '#555'} />
                     </TouchableOpacity>
@@ -295,7 +307,10 @@ const AddWalletScreen = () => {
                         { backgroundColor: item },
                         color === item && styles.selectedColor,
                       ]}
-                      onPress={() => setColor(item)}
+                      onPress={() => {
+                        setColor(item);
+                        HapticFeedback.selection();
+                      }}
                     />
                   ))}
                 </View>
@@ -303,7 +318,10 @@ const AddWalletScreen = () => {
 
               <TouchableOpacity
                 style={[styles.doneButton, { backgroundColor: color }]}
-                onPress={() => setPickerModalVisible(false)}
+                onPress={() => {
+                  setPickerModalVisible(false);
+                  HapticFeedback.medium();
+                }}
               >
                 <Text style={styles.doneButtonText}>Done</Text>
               </TouchableOpacity>

@@ -8,6 +8,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
 import { PRIMARY as WHITE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
 import { Wallet, Transaction } from '../../../types';
+import { HapticFeedback } from '../../../utils/haptics';
 
 const WalletScreen = () => {
   const router = useRouter();
@@ -196,6 +197,7 @@ const WalletScreen = () => {
       const walletSnap = await getDoc(walletRef);
 
       if (!walletSnap.exists()) {
+        HapticFeedback.error();
         Alert.alert('Error', 'Wallet not found. Please check the ID.');
         setJoining(false);
         return;
@@ -205,6 +207,7 @@ const WalletScreen = () => {
       
       // Check if already a member or owner
       if (wallet.userId === userId || wallet.sharedWith?.includes(userId)) {
+        HapticFeedback.warning();
         Alert.alert('Info', 'You are already a member of this wallet!');
         setIsJoinModalVisible(false);
         setWalletIdToJoin('');
@@ -219,16 +222,19 @@ const WalletScreen = () => {
       } as any);
 
       Alert.alert('Success', `Joined "${wallet.name}" successfully!`);
+      HapticFeedback.success();
       setIsJoinModalVisible(false);
       setWalletIdToJoin('');
     } catch (error) {
       console.error('Error joining wallet:', error);
+      HapticFeedback.error();
       Alert.alert('Error', 'Failed to join wallet. Please try again.');
     } finally {
       setJoining(false);
     }
   };
   const handleDeleteWallet = (walletId: string) => {
+    HapticFeedback.warning();
     Alert.alert(
       'Delete Wallet',
       'Are you sure you want to delete this wallet? All related transactions will also be permanently deleted.',
@@ -263,6 +269,7 @@ const WalletScreen = () => {
               // 4. Commit all deletions atomically
               await batch.commit();
 
+              HapticFeedback.success();
               Alert.alert('Success', 'Wallet and its transactions deleted successfully!');
             } catch (error) {
               console.error('Error deleting wallet:', error);
@@ -278,6 +285,7 @@ const WalletScreen = () => {
   };
 
   const handleLeaveWallet = (walletId: string) => {
+    HapticFeedback.warning();
     Alert.alert(
       "Leave Wallet",
       "Are you sure you want to leave this shared wallet? The wallet will still exist for other members, but you will no longer have access to its history.",
@@ -293,9 +301,11 @@ const WalletScreen = () => {
               await updateDoc(walletRef, {
                 sharedWith: arrayRemove(userId)
               });
+              HapticFeedback.success();
               Alert.alert("Success", "You have left the wallet.");
             } catch (error) {
               console.error('Error leaving wallet:', error);
+              HapticFeedback.error();
               Alert.alert('Error', 'Could not leave the wallet.');
             }
           } 
@@ -313,6 +323,7 @@ const WalletScreen = () => {
   };
 
   const openTransactions = (wallet: Wallet) => {
+    HapticFeedback.selection();
     setSelectedWalletForTransactions(wallet);
     setIsTransactionsModalVisible(true);
   };
@@ -440,7 +451,10 @@ const WalletScreen = () => {
           </View>
           <TouchableOpacity 
             style={styles.joinButton} 
-            onPress={() => setIsJoinModalVisible(true)}
+            onPress={() => {
+              setIsJoinModalVisible(true);
+              HapticFeedback.selection();
+            }}
           >
             <Ionicons name="people-outline" size={22} color={WHITE_GREEN} />
             <Text style={styles.joinButtonText}>Join</Text>
@@ -452,20 +466,29 @@ const WalletScreen = () => {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortScroll}>
             <TouchableOpacity 
               style={[styles.sortButton, sortType === 'name' && styles.sortButtonActive]}
-              onPress={() => setSortType('name')}
+              onPress={() => {
+                setSortType('name');
+                HapticFeedback.light();
+              }}
             >
               <Text style={[styles.sortButtonText, sortType === 'name' && styles.sortButtonTextActive]}>Name</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.sortButton, sortType === 'balanceDesc' && styles.sortButtonActive]}
-              onPress={() => setSortType('balanceDesc')}
+              onPress={() => {
+                setSortType('balanceDesc');
+                HapticFeedback.light();
+              }}
             >
               <Ionicons name="arrow-down" size={12} color={sortType === 'balanceDesc' ? WHITE_GREEN : '#888'} />
               <Text style={[styles.sortButtonText, sortType === 'balanceDesc' && styles.sortButtonTextActive]}>Highest Balance</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.sortButton, sortType === 'balanceAsc' && styles.sortButtonActive]}
-              onPress={() => setSortType('balanceAsc')}
+              onPress={() => {
+                setSortType('balanceAsc');
+                HapticFeedback.light();
+              }}
             >
               <Ionicons name="arrow-up" size={12} color={sortType === 'balanceAsc' ? WHITE_GREEN : '#888'} />
               <Text style={[styles.sortButtonText, sortType === 'balanceAsc' && styles.sortButtonTextActive]}>Lowest Balance</Text>
@@ -574,7 +597,10 @@ const WalletScreen = () => {
                       styles.modalFilterButton,
                       transactionFilter === filter && styles.modalFilterButtonActive
                     ]}
-                    onPress={() => setTransactionFilter(filter)}
+                    onPress={() => {
+                      setTransactionFilter(filter);
+                      HapticFeedback.light();
+                    }}
                   >
                     <Text style={[
                       styles.modalFilterButtonText,
@@ -598,7 +624,10 @@ const WalletScreen = () => {
               </View>
               <TouchableOpacity 
                 style={styles.modalSortToggle} 
-                onPress={() => setTransactionSort(prev => prev === 'newest' ? 'oldest' : 'newest')}
+                onPress={() => {
+                  setTransactionSort(prev => prev === 'newest' ? 'oldest' : 'newest');
+                  HapticFeedback.light();
+                }}
               >
                 <Ionicons 
                   name={transactionSort === 'newest' ? "arrow-down" : "arrow-up"} 

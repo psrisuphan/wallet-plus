@@ -11,6 +11,7 @@ import { Image } from 'react-native';
 import { PRIMARY as WHITE_GREEN, EXPENSE_COLOR, INCOME_COLOR, BORDER } from '../../../constants/Colors';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
 import type { Wallet } from '../../../types';
+import { HapticFeedback } from '../../../utils/haptics';
 
 const AddTransactionScreen = () => {
     const router = useRouter();
@@ -156,11 +157,13 @@ const AddTransactionScreen = () => {
 
     const handleSave = () => {
         if (!amount || parseFloat(amount) <= 0) {
+            HapticFeedback.error();
             Alert.alert("Invalid Amount", "Please enter a valid amount greater than zero.");
             return;
         }
 
         if (!selectedWallet) {
+            HapticFeedback.error();
             Alert.alert("Select Wallet", "Please select a wallet to proceed.");
             return;
         }
@@ -169,6 +172,7 @@ const AddTransactionScreen = () => {
 
         // Check for insufficient balance on expenses
         if (type === 'expense' && parsedAmount > selectedWallet.balance) {
+            HapticFeedback.warning();
             Alert.alert(
                 "Insufficient Balance",
                 `Your expense (฿${parsedAmount.toLocaleString()}) exceeds the balance of ${selectedWallet.name} (฿${selectedWallet.balance.toLocaleString()}). Do you want to continue anyway?`,
@@ -226,6 +230,7 @@ const AddTransactionScreen = () => {
             await updateDoc(walletRef, { balance: newBalance });
 
             // 3. Reset and navigate back
+            HapticFeedback.success();
             Alert.alert("Success", "Transaction saved successfully!");
             setAmount('');
             setNote('');
@@ -242,6 +247,7 @@ const AddTransactionScreen = () => {
             
         } catch (error) {
             console.error("Error saving transaction: ", error);
+            HapticFeedback.error();
             Alert.alert("Error", "Could not save transaction. Please try again.");
         } finally {
             setIsSaving(false);
@@ -263,11 +269,13 @@ const AddTransactionScreen = () => {
         });
 
         if (!result.canceled && result.assets[0].base64) {
+            HapticFeedback.selection();
             setImageNoteBase64(result.assets[0].base64);
         }
     };
 
     const removeImage = () => {
+        HapticFeedback.medium();
         setImageNoteBase64(null);
     };
 
@@ -313,13 +321,19 @@ const AddTransactionScreen = () => {
                 <View style={styles.typeContainer}>
                     <TouchableOpacity 
                         style={[styles.typeButton, type === 'expense' && styles.typeButtonExpenseActive]}
-                        onPress={() => setType('expense')}
+                        onPress={() => {
+                            setType('expense');
+                            HapticFeedback.light();
+                        }}
                     >
                         <Text style={[styles.typeText, type === 'expense' && styles.typeTextActive]}>Expense</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                         style={[styles.typeButton, type === 'income' && styles.typeButtonIncomeActive]}
-                        onPress={() => setType('income')}
+                        onPress={() => {
+                            setType('income');
+                            HapticFeedback.light();
+                        }}
                     >
                         <Text style={[styles.typeText, type === 'income' && styles.typeTextActive]}>Income</Text>
                     </TouchableOpacity>
@@ -370,15 +384,15 @@ const AddTransactionScreen = () => {
                             
                             {showSortDropdown && (
                                 <View style={styles.dropdownMenu}>
-                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('name'); setShowSortDropdown(false); }}>
+                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('name'); setShowSortDropdown(false); HapticFeedback.selection(); }}>
                                         <Text style={[styles.dropdownItemText, sortType === 'name' && styles.dropdownItemTextActive]}>Name</Text>
                                         {sortType === 'name' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceAsc'); setShowSortDropdown(false); }}>
+                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceAsc'); setShowSortDropdown(false); HapticFeedback.selection(); }}>
                                         <Text style={[styles.dropdownItemText, sortType === 'balanceAsc' && styles.dropdownItemTextActive]}>Low ฿</Text>
                                         {sortType === 'balanceAsc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceDesc'); setShowSortDropdown(false); }}>
+                                    <TouchableOpacity style={styles.dropdownItem} onPress={() => { setSortType('balanceDesc'); setShowSortDropdown(false); HapticFeedback.selection(); }}>
                                         <Text style={[styles.dropdownItemText, sortType === 'balanceDesc' && styles.dropdownItemTextActive]}>High ฿</Text>
                                         {sortType === 'balanceDesc' && <Ionicons name="checkmark" size={16} color={WHITE_GREEN} />}
                                     </TouchableOpacity>
@@ -395,6 +409,7 @@ const AddTransactionScreen = () => {
                                     onPress={() => {
                                         setSelectedWallet(item);
                                         setIsWalletModalVisible(false);
+                                        HapticFeedback.selection();
                                     }}
                                 >
                                     <View style={[styles.modalWalletIcon, { backgroundColor: item.color || WHITE_GREEN }]}>
@@ -464,7 +479,10 @@ const AddTransactionScreen = () => {
                                 <TouchableOpacity 
                                     key={cat.id} 
                                     style={styles.categoryButton}
-                                    onPress={() => setSelectedCategory(cat.id)}
+                                    onPress={() => {
+                                        setSelectedCategory(cat.id);
+                                        HapticFeedback.selection();
+                                    }}
                                 >
                                     <View style={[
                                         styles.iconContainer, 
