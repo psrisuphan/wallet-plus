@@ -6,6 +6,7 @@ import { auth, db } from '../../firebaseConfig';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../constants/Colors';
+import TransactionDetailModal from '../../components/TransactionDetailModal';
 
 export default function HomeScreen() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -20,6 +21,8 @@ export default function HomeScreen() {
     const [showBottomArrow, setShowBottomArrow] = useState(false);
     const [showTodayTopArrow, setShowTodayTopArrow] = useState(false);
     const [showTodayBottomArrow, setShowTodayBottomArrow] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -309,7 +312,10 @@ export default function HomeScreen() {
                                                 <TouchableOpacity 
                                                     style={styles.walletRow}
                                                     activeOpacity={0.7}
-                                                    onPress={() => router.push(`/(tabs)/transactions/${item.id}`)}
+                                                    onPress={() => {
+                                                        setSelectedTransaction(item);
+                                                        setShowDetailModal(true);
+                                                    }}
                                                 >
                                                     <View style={[
                                                         styles.walletIconContainer, 
@@ -372,6 +378,17 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </ScrollView>
+
+            <TransactionDetailModal
+                visible={showDetailModal}
+                transaction={selectedTransaction}
+                walletName={selectedTransaction?.walletId ? (wallets.find(w => w.id === selectedTransaction.walletId)?.name || 'Unknown Wallet') : 'No Wallet'}
+                onClose={() => setShowDetailModal(false)}
+                onEdit={() => {
+                    setShowDetailModal(false);
+                    router.push(`/(tabs)/transactions/${selectedTransaction.id}`);
+                }}
+            />
         </View>
     );
 }
