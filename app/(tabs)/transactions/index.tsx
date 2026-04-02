@@ -29,16 +29,6 @@ export default function TransactionsScreen() {
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
-    const normalizeDateToAD = (date: Date) => {
-        const year = date.getFullYear();
-        if (year > 2400) {
-            const newDate = new Date(date);
-            newDate.setFullYear(year - 543);
-            return newDate;
-        }
-        return date;
-    };
-
     const [userId, setUserId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -362,12 +352,7 @@ export default function TransactionsScreen() {
                                     <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
                                     <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
                                         {timeFilter === 'custom' 
-                                            ? normalizeDateToAD(customDate).toLocaleDateString('en-GB', { 
-                                                year: 'numeric', 
-                                                month: '2-digit', 
-                                                day: '2-digit',
-                                                calendar: 'gregory'
-                                              } as any) 
+                                            ? customDate.toLocaleDateString('en-GB') 
                                             : 'Custom Date'
                                         }
                                     </Text>
@@ -540,12 +525,11 @@ export default function TransactionsScreen() {
                                     </TouchableOpacity>
                                 </View>
                                 <DateTimePicker
-                                    value={normalizeDateToAD(customDate)}
+                                    value={customDate}
                                     mode="date"
                                     display="spinner"
-                                    locale="en-GB"
                                     onChange={(event, selectedDate) => {
-                                        if (selectedDate) setCustomDate(normalizeDateToAD(selectedDate));
+                                        if (selectedDate) setCustomDate(selectedDate);
                                     }}
                                 />
                                 <TouchableOpacity 
@@ -568,14 +552,13 @@ export default function TransactionsScreen() {
                     </Modal>
                 ) : (
                     <DateTimePicker
-                        value={normalizeDateToAD(customDate)}
+                        value={customDate}
                         mode="date"
                         display="default"
-                        locale="en-GB"
                         onChange={(event, selectedDate) => {
                             setShowDatePicker(false);
                             if (selectedDate) {
-                                setCustomDate(normalizeDateToAD(selectedDate));
+                                setCustomDate(selectedDate);
                                 setTimeFilter('custom');
                             }
                         }}
