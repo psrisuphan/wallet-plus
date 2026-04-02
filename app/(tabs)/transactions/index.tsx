@@ -222,7 +222,12 @@ export default function TransactionsScreen() {
 
     return (
         <View style={styles.mainContainer}>
-            <Header title="All Transactions" showBack={true} />
+            <Header 
+                title="All Transactions" 
+                showBack={true} 
+                showAdd={true} 
+                onAddPress={() => router.push('/(tabs)/transactions/new')}
+            />
             <StatusBar barStyle="light-content" />
             <View style={styles.filterContainer}>
                 <TouchableOpacity 
