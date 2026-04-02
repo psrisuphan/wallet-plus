@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent, Animated } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { StyleSheet, Text, View, StatusBar, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, FlatList, Alert, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -23,12 +23,6 @@ const AddTransactionScreen = () => {
 
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
-    
-    // Animated states for auto-hiding toggle on scroll
-    const lastScrollY = useRef(0);
-    const toggleHeight = useRef(new Animated.Value(58)).current;
-    const toggleOpacity = useRef(new Animated.Value(1)).current;
-    const isToggleVisible = useRef(true);
     
     // Reset form when the screen is focused (e.g. when switching back to this tab)
     useFocusEffect(
@@ -57,30 +51,6 @@ const AddTransactionScreen = () => {
         setCanScrollLeft(xOffset > 0);
         // 5px tolerance because precision issues can prevent exact equality
         setCanScrollRight(xOffset < contentWidth - layoutWidth - 5);
-    };
-    
-    const handleMainScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const currentY = event.nativeEvent.contentOffset.y;
-        const diff = currentY - lastScrollY.current;
-
-        // Hide toggle when scrolling down significantly after 30px
-        if (currentY > 30 && diff > 10 && isToggleVisible.current) {
-            isToggleVisible.current = false;
-            Animated.parallel([
-                Animated.timing(toggleHeight, { toValue: 0, duration: 250, useNativeDriver: false }),
-                Animated.timing(toggleOpacity, { toValue: 0, duration: 250, useNativeDriver: false })
-            ]).start();
-        } 
-        // Show toggle when scrolling up significantly
-        else if (diff < -15 && !isToggleVisible.current) {
-            isToggleVisible.current = true;
-            Animated.parallel([
-                Animated.timing(toggleHeight, { toValue: 58, duration: 250, useNativeDriver: false }),
-                Animated.timing(toggleOpacity, { toValue: 1, duration: 250, useNativeDriver: false })
-            ]).start();
-        }
-        
-        lastScrollY.current = currentY;
     };
 
     // Wallet State
@@ -320,11 +290,8 @@ const AddTransactionScreen = () => {
             <StatusBar barStyle="light-content" />
             <Header title="Add Transaction" showHome={true} />
 
-            {/* Income / Expense Toggle on Top (Animated) */}
-            <Animated.View style={[
-                styles.topToggleContainer, 
-                { height: toggleHeight, opacity: toggleOpacity, overflow: 'hidden' }
-            ]}>
+            {/* Income / Expense Toggle on Top */}
+            <View style={styles.topToggleContainer}>
                 <View style={styles.typeContainer}>
                     <TouchableOpacity 
                         style={[styles.typeButton, type === 'expense' && styles.typeButtonExpenseActive]}
@@ -339,7 +306,7 @@ const AddTransactionScreen = () => {
                         <Text style={[styles.typeText, type === 'income' && styles.typeTextActive]}>Income</Text>
                     </TouchableOpacity>
                 </View>
-            </Animated.View>
+            </View>
             
             {/* Wallet Selection Modal */}
             <Modal
@@ -442,12 +409,7 @@ const AddTransactionScreen = () => {
                 style={{ flex: 1 }} 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-                <ScrollView 
-                    contentContainerStyle={styles.scrollContent} 
-                    showsVerticalScrollIndicator={false}
-                    onScroll={handleMainScroll}
-                    scrollEventThrottle={16}
-                >
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
                     {/* Amount Input area */}
                     <View style={styles.amountContainer}>
