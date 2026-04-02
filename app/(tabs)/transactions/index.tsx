@@ -273,14 +273,32 @@ export default function TransactionsScreen() {
                 onAddPress={() => router.push('/(tabs)/transactions/new')}
             />
             <StatusBar barStyle="light-content" />
-            <View style={styles.filterContainer}>
+            <View style={styles.topControlsContainer}>
+                <View style={styles.searchSection}>
+                    <View style={styles.searchContainer}>
+                        <Ionicons name="search-outline" size={18} color="#888" />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search note or category..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            placeholderTextColor="#999"
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                <Ionicons name="close-circle" size={18} color="#888" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+
                 <TouchableOpacity 
                     style={styles.filterExpandButton} 
                     onPress={() => setShowFilters(!showFilters)}
                 >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Ionicons name="options-outline" size={18} color="#1a1a1a" />
-                        <Text style={styles.filterExpandText}>Filter & Sort</Text>
+                        <Text style={styles.filterExpandText}>Filter & Sort Options</Text>
                         {activeFilterCount > 0 && (
                             <View style={styles.filterBadge}>
                                 <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
@@ -292,24 +310,6 @@ export default function TransactionsScreen() {
 
                 {showFilters && (
                     <View style={styles.expandedFilters}>
-                        <View style={styles.filterSection}>
-                            <Text style={styles.filterCategoryTitle}>Search</Text>
-                            <View style={styles.searchContainer}>
-                                <Ionicons name="search-outline" size={18} color="#888" />
-                                <TextInput
-                                    style={styles.searchInput}
-                                    placeholder="Search note or category..."
-                                    value={searchQuery}
-                                    onChangeText={setSearchQuery}
-                                />
-                                {searchQuery.length > 0 && (
-                                    <TouchableOpacity onPress={() => setSearchQuery('')}>
-                                        <Ionicons name="close-circle" size={18} color="#888" />
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        </View>
-
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Time Period</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
@@ -538,6 +538,17 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
+    },
+    topControlsContainer: {
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
+        paddingTop: 4,
+    },
+    searchSection: {
+        paddingHorizontal: 20,
+        paddingTop: 12,
+        paddingBottom: 4,
     },
     filterExpandButton: {
         flexDirection: 'row',
