@@ -127,12 +127,14 @@ export default function TransactionsScreen() {
             const dateObj = t.date?.toDate ? t.date.toDate() : new Date();
             const today = new Date();
             
-            // Search filter (Case insensitive)
-            if (searchQuery.trim()) {
-                const search = searchQuery.toLowerCase();
-                const note = (t.note || '').toLowerCase();
-                const category = (t.categoryName || '').toLowerCase();
-                if (!note.includes(search) && !category.includes(search)) return false;
+            // Search filter (handles note, category, and amount)
+            if (searchQuery.trim() !== '') {
+                const query = searchQuery.toLowerCase();
+                const noteMatch = (t.note || '').toLowerCase().includes(query);
+                const categoryMatch = (t.categoryName || '').toLowerCase().includes(query);
+                const amountMatch = t.amount.toString().includes(query);
+                
+                if (!noteMatch && !categoryMatch && !amountMatch) return false;
             }
 
             // Category filter
