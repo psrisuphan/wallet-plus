@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../constants/Colors';
 import TransactionDetailModal from '../../components/TransactionDetailModal';
 import { Wallet, Transaction } from '../../types';
+import { HapticFeedback } from '../../utils/haptics';
 
 export default function HomeScreen() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -150,9 +151,13 @@ export default function HomeScreen() {
                 showLogo={false} 
                 leftIconName="list-outline"
                 leftButtonText="TXs"
-                onLeftButtonPress={() => router.push('/(tabs)/transactions')}
+                onLeftButtonPress={() => {
+                    HapticFeedback.selection();
+                    router.push('/(tabs)/transactions');
+                }}
                 profileImage={profileImage}
                 onProfilePress={() => {
+                    HapticFeedback.selection();
                     router.push('/(tabs)/settings?edit=true'); 
                 }}
             />
@@ -214,7 +219,10 @@ export default function HomeScreen() {
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                                 <Text style={styles.sectionTitle}>Your Wallets</Text>
                             </View>
-                            <TouchableOpacity onPress={() => router.push('/(tabs)/wallet')}>
+                            <TouchableOpacity onPress={() => {
+                                HapticFeedback.selection();
+                                router.push('/(tabs)/wallet');
+                            }}>
                                 <Text style={styles.viewAllText}>View All</Text>
                             </TouchableOpacity>
                         </View>
@@ -228,7 +236,10 @@ export default function HomeScreen() {
                                     </Text>
                                     <TouchableOpacity 
                                         style={[styles.changeBadge, { backgroundColor: PRIMARY_GREEN, alignSelf: 'center' }]}
-                                        onPress={() => router.push('/(tabs)/wallet/add')}
+                                        onPress={() => {
+                                            HapticFeedback.selection();
+                                            router.push('/(tabs)/wallet/add');
+                                        }}
                                     >
                                         <Text style={{ color: '#FFF', fontWeight: '700' }}>Get Started</Text>
                                     </TouchableOpacity>
@@ -262,6 +273,7 @@ export default function HomeScreen() {
                                                     <TouchableOpacity 
                                                         style={styles.walletRow}
                                                         onPress={() => {
+                                                            HapticFeedback.selection();
                                                             router.push({
                                                                 pathname: '/(tabs)/wallet',
                                                                 params: { search: item.name, ts: Date.now().toString() }
@@ -336,7 +348,10 @@ export default function HomeScreen() {
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                                 <Text style={styles.sectionTitle}>Today's Activity</Text>
                             </View>
-                            <TouchableOpacity onPress={() => router.push('/(tabs)/transactions')}>
+                            <TouchableOpacity onPress={() => {
+                                HapticFeedback.selection();
+                                router.push('/(tabs)/transactions');
+                            }}>
                                 <Text style={styles.viewAllText}>View All</Text>
                             </TouchableOpacity>
                         </View>
@@ -365,6 +380,7 @@ export default function HomeScreen() {
                                                     style={styles.walletRow}
                                                     activeOpacity={0.7}
                                                     onPress={() => {
+                                                        HapticFeedback.selection();
                                                         setSelectedTransaction(item);
                                                         setShowDetailModal(true);
                                                     }}

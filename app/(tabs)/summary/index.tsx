@@ -9,6 +9,7 @@ import { useFocusEffect } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
 import { CATEGORY_COLORS, getCategoryColor, getCategoryIcon } from '../../../constants/Categories';
 import type { Transaction, CategoryBreakdown } from '../../../types';
+import { HapticFeedback } from '../../../utils/haptics';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -271,13 +272,19 @@ const SummaryScreen = () => {
             <View style={styles.tabContainer}>
                 <TouchableOpacity 
                     style={[styles.tab, viewMode === 'overview' && styles.activeTab]} 
-                    onPress={() => setViewMode('overview')}
+                    onPress={() => {
+                        setViewMode('overview');
+                        HapticFeedback.light();
+                    }}
                 >
                     <Text style={[styles.tabText, viewMode === 'overview' && styles.activeTabText]}>Net</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={[styles.tab, viewMode === 'comparison' && styles.activeTab]} 
-                    onPress={() => setViewMode('comparison')}
+                    onPress={() => {
+                        setViewMode('comparison');
+                        HapticFeedback.light();
+                    }}
                 >
                     <Text style={[styles.tabText, viewMode === 'comparison' && styles.activeTabText]}>Bar Chart</Text>
                 </TouchableOpacity>
@@ -293,7 +300,10 @@ const SummaryScreen = () => {
                                     <TouchableOpacity
                                         key={p}
                                         style={[styles.periodButton, period === p && styles.periodButtonActive]}
-                                        onPress={() => setPeriod(p)}
+                                        onPress={() => {
+                                            setPeriod(p);
+                                            HapticFeedback.light();
+                                        }}
                                     >
                                         <Text style={[styles.periodText, period === p && styles.periodTextActive]}>
                                             {p === 'today' ? 'Today' : p === 'weekly' ? 'Week' : p === 'monthly' ? 'Month' : 'Year'}

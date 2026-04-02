@@ -10,6 +10,7 @@ import Header from '../../../components/Header';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../../constants/Colors';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
 import TransactionDetailModal from '../../../components/TransactionDetailModal';
+import { HapticFeedback } from '../../../utils/haptics';
 
 export default function TransactionsScreen() {
     const router = useRouter();
@@ -130,30 +131,37 @@ export default function TransactionsScreen() {
         setSortOrder('newest');
         setMinAmount('');
         setMaxAmount('');
+        HapticFeedback.warning();
     };
 
     const toggleCategory = (name: string) => {
         if (name === 'all') {
             setSelectedCategories([]);
+            HapticFeedback.light();
             return;
         }
-        setSelectedCategories(prev => 
-            prev.includes(name) 
+        setSelectedCategories(prev => {
+            const next = prev.includes(name) 
                 ? prev.filter(c => c !== name) 
-                : [...prev, name]
-        );
+                : [...prev, name];
+            HapticFeedback.light();
+            return next;
+        });
     };
 
     const toggleWallet = (id: string) => {
         if (id === 'all') {
             setSelectedWallets([]);
+            HapticFeedback.light();
             return;
         }
-        setSelectedWallets(prev => 
-            prev.includes(id) 
+        setSelectedWallets(prev => {
+            const next = prev.includes(id) 
                 ? prev.filter(wId => wId !== id) 
-                : [...prev, id]
-        );
+                : [...prev, id];
+            HapticFeedback.light();
+            return next;
+        });
     };
 
     const processTransactions = () => {
