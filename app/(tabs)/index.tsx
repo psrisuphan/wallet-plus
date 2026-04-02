@@ -378,9 +378,13 @@ export default function HomeScreen() {
                                                                 {item.note}
                                                             </Text>
                                                         ) : null}
+                                                        {item.userName && (
+                                                            <Text style={{ fontSize: 10, color: PRIMARY_GREEN, fontWeight: '600', marginTop: -1 }}>
+                                                                Added by {item.userName}
+                                                            </Text>
+                                                        )}
                                                         <Text style={{ fontSize: 11, color: '#999' }}>
                                                             {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                                                            {item.userName ? ` • Added by ${item.userName}` : ''}
                                                             {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
                                                         </Text>
                                                     </View>
