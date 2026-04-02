@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, getDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, getDoc, deleteDoc, doc, writeBatch, getDocs, or } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
@@ -88,25 +88,22 @@ const WalletScreen = () => {
 
     setLoading(true);
     // Fetch wallets where user is OWNER OR a shared member
-    const q = query(collection(db, 'wallets'));
-    
-    // Note: Firestore doesn't support complex 'OR' easily with onSnapshot simple queries 
-    // unless using the 'or' function. We'll fetch all and filter client side 
-    // OR create better queries. For now, we'll try a flexible approach.
+    const q = query(
+      collection(db, 'wallets'),
+      or(
+        where('userId', '==', userId),
+        where('sharedWith', 'array-contains', userId)
+      )
+    );
+
     const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
       const walletsData: Wallet[] = snapshot.docs
         .map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as Wallet[];
-        
-      // Filter for OWNER or SHARED MEMBER
-      const myWallets = walletsData.filter(w => 
-        w.userId === userId || 
-        w.sharedWith?.includes(userId as string)
-      );
-      
-      setWallets(myWallets);
+
+      setWallets(walletsData);
       setLoading(false);
     }, (error) => {
       console.error('Error fetching wallets:', error);

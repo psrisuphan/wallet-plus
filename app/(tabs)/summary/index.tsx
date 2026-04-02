@@ -50,6 +50,8 @@ const SummaryScreen = () => {
     }, []);
     
     // Listen to wallets for accessible wallets
+    const [accessibleWallets, setAccessibleWallets] = useState<any[]>([]);
+
     useEffect(() => {
         const user = auth.currentUser;
         if (!user) return;
@@ -67,6 +69,7 @@ const SummaryScreen = () => {
                 list.push({ id: doc.id, ...doc.data() });
             });
             walletsRef.current = list;
+            setAccessibleWallets(list);
         });
         return () => unsubscribe();
     }, []);
@@ -77,11 +80,19 @@ const SummaryScreen = () => {
             const user = auth.currentUser;
             if (!user) return;
 
+            const walletIds = accessibleWallets.map(w => w.id);
+            if (walletIds.length === 0) {
+                setTransactions([]);
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             const startDate = getDateRange(period);
 
             const q = query(
                 collection(db, 'transactions'),
+                where('walletId', 'in', walletIds.slice(0, 30)),
                 where('date', '>=', Timestamp.fromDate(startDate)),
                 orderBy('date', 'desc')
             );
@@ -89,26 +100,26 @@ const SummaryScreen = () => {
             const unsubscribe = onSnapshot(q, (snapshot) => {
                 const list: Transaction[] = [];
                 snapshot.forEach((doc) => {
-                    const data = doc.data() as any;
-                    const isMyWallet = walletsRef.current.some(w => w.id === data.walletId);
-                    const isMyAction = data.userId === user.uid;
-
-                    if (isMyWallet || isMyAction) {
-                        list.push({ id: doc.id, ...data } as Transaction);
-                    }
+                    list.push({ id: doc.id, ...doc.data() } as Transaction);
                 });
                 setTransactions(list);
                 setLoading(false);
             });
 
             return () => unsubscribe();
-        }, [period, getDateRange])
+        }, [period, getDateRange, accessibleWallets])
     );
 
     // Effect for longer-term transactions (Comparison) - last 6 months
     useEffect(() => {
         const user = auth.currentUser;
         if (!user || viewMode !== 'comparison') return;
+
+        const walletIds = accessibleWallets.map(w => w.id);
+        if (walletIds.length === 0) {
+            setHistoryTransactions([]);
+            return;
+        }
 
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -117,6 +128,7 @@ const SummaryScreen = () => {
 
         const q = query(
             collection(db, 'transactions'),
+            where('walletId', 'in', walletIds.slice(0, 30)),
             where('date', '>=', Timestamp.fromDate(sixMonthsAgo)),
             orderBy('date', 'asc')
         );
@@ -124,19 +136,13 @@ const SummaryScreen = () => {
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const list: Transaction[] = [];
             snapshot.forEach((doc) => {
-                const data = doc.data() as any;
-                const isMyWallet = walletsRef.current.some(w => w.id === data.walletId);
-                const isMyAction = data.userId === user.uid;
-
-                if (isMyWallet || isMyAction) {
-                    list.push({ id: doc.id, ...data } as Transaction);
-                }
+                list.push({ id: doc.id, ...doc.data() } as Transaction);
             });
             setHistoryTransactions(list);
         });
 
         return () => unsubscribe();
-    }, [viewMode]);
+    }, [viewMode, accessibleWallets]);
 
     // Computed stats for Comparison View
     const comparisonData = useMemo(() => {

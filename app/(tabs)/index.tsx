@@ -62,12 +62,30 @@ export default function HomeScreen() {
             walletsRef.current = walletsList;
         });
 
-        // Combined listener for today's transactions and total net change
+        fetchUserData();
+        return () => unsubscribeWallets();
+    }, []);
+
+    // Separate effect for transactions — depends on wallets being loaded
+    useEffect(() => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const walletIds = wallets.map(w => w.id);
+        if (walletIds.length === 0) {
+            setTodayTransactions([]);
+            setTodayChange(0);
+            setWalletDailyChanges({});
+            setLoading(false);
+            return;
+        }
+
         const start = new Date();
         start.setHours(0, 0, 0, 0);
 
         const qToday = query(
             collection(db, 'transactions'),
+            where('walletId', 'in', walletIds.slice(0, 30)),
             where('date', '>=', Timestamp.fromDate(start)),
             orderBy('date', 'desc')
         );
@@ -79,20 +97,12 @@ export default function HomeScreen() {
 
             snapshot.forEach((doc) => {
                 const data = doc.data() as any;
-                
-                // Only include if it belongs to one of user's active wallets
-                // or was created by the user
-                const isMyWallet = walletsRef.current.some((w: any) => w.id === data.walletId);
-                const isMyAction = data.userId === user.uid;
-
-                if (isMyWallet || isMyAction) {
-                    const amount = data.amount || 0;
-                    const type = data.type;
-                    const net = type === 'income' ? amount : -amount;
-                    totalNet += net;
-                    if (data.walletId) deltas[data.walletId] = (deltas[data.walletId] || 0) + net;
-                    list.push({ id: doc.id, ...data });
-                }
+                const amount = data.amount || 0;
+                const type = data.type;
+                const net = type === 'income' ? amount : -amount;
+                totalNet += net;
+                if (data.walletId) deltas[data.walletId] = (deltas[data.walletId] || 0) + net;
+                list.push({ id: doc.id, ...data });
             });
             
             setTodayTransactions(list);
@@ -101,12 +111,8 @@ export default function HomeScreen() {
             setLoading(false);
         });
 
-        fetchUserData();
-        return () => {
-            unsubscribeWallets();
-            unsubscribeTransactions();
-        };
-    }, []);
+        return () => unsubscribeTransactions();
+    }, [wallets]);
 
     const handleWalletScroll = (event: any) => {
         const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
