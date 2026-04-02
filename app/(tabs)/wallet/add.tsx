@@ -137,19 +137,20 @@ const AddWalletScreen = () => {
         color,
         detail: detail.trim(),
         balance: startingBalance,
-        userId: user.uid,
+        sharedWith: id ? undefined : [], // only init for NEW
+        userId: user.uid, // Keep for backward compat
         updatedAt: new Date(),
       };
 
       if (id) {
         // Update
-        await updateDoc(doc(db, 'wallets', id), walletData);
+        const { sharedWith, ...updateData } = walletData;
+        await updateDoc(doc(db, 'wallets', id), updateData);
         Alert.alert('Success', 'Wallet updated successfully!');
       } else {
         // Create
         await addDoc(collection(db, 'wallets'), {
           ...walletData,
-          userId: user.uid,
           createdAt: new Date(),
         });
         Alert.alert('Success', 'Wallet created successfully!');

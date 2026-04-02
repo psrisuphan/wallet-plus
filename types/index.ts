@@ -10,7 +10,10 @@ export interface Wallet {
   icon: string;
   color: string;
   detail?: string;
-  userId?: string;
+  userId: string;
+  sharedWith?: string[];
+  updatedAt?: any;
+  createdAt?: any;
 }
 
 export interface Transaction {
@@ -26,6 +29,7 @@ export interface Transaction {
   imageBase64?: string | null;
   date: any;
   userId?: string;
+  userName?: string;
 }
 
 export interface CategoryBreakdown {

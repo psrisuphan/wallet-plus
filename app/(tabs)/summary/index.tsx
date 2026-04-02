@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import Header from '../../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, Timestamp, or } from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { db, auth } from '../../../firebaseConfig';
 import { useFocusEffect } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
@@ -27,6 +28,23 @@ const SummaryScreen = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [historyTransactions, setHistoryTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const walletsRef = useRef<any[]>([]);
+    const [userId, setUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setUserId(user.uid);
+            } else {
+                setUserId(null);
+                setAccessibleWallets([]);
+                setTransactions([]);
+                setHistoryTransactions([]);
+                setLoading(false);
+            }
+        });
+        return () => unsubscribeAuth();
+    }, []);
 
     const getDateRange = useCallback((p: Period): Date => {
         const now = new Date();
@@ -47,19 +65,48 @@ const SummaryScreen = () => {
         start.setHours(0, 0, 0, 0);
         return start;
     }, []);
+    
+    // Listen to wallets for accessible wallets
+    const [accessibleWallets, setAccessibleWallets] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const qWallets = query(
+            collection(db, 'wallets'), 
+            or(
+                where('userId', '==', userId),
+                where('sharedWith', 'array-contains', userId)
+            )
+        );
+        const unsubscribe = onSnapshot(qWallets, (snapshot) => {
+            const list: any[] = [];
+            snapshot.forEach((doc) => {
+                list.push({ id: doc.id, ...doc.data() });
+            });
+            walletsRef.current = list;
+            setAccessibleWallets(list);
+        }, (error) => {
+            console.error("Summary Wallets Error:", error);
+        });
+        return () => unsubscribe();
+    }, [userId]);
 
     // Effect for the current period's transactions (Overview)
     useFocusEffect(
         useCallback(() => {
-            const user = auth.currentUser;
-            if (!user) return;
+            if (!userId || accessibleWallets.length === 0) {
+                setTransactions([]);
+                setLoading(false);
+                return;
+            }
 
             setLoading(true);
             const startDate = getDateRange(period);
 
             const q = query(
                 collection(db, 'transactions'),
-                where('userId', '==', user.uid),
+                where('walletId', 'in', accessibleWallets.map(w => w.id).slice(0, 30)),
                 where('date', '>=', Timestamp.fromDate(startDate)),
                 orderBy('date', 'desc')
             );
@@ -71,16 +118,21 @@ const SummaryScreen = () => {
                 });
                 setTransactions(list);
                 setLoading(false);
+            }, (error) => {
+                console.error("Summary Transactions Error:", error);
+                setLoading(false);
             });
 
             return () => unsubscribe();
-        }, [period, getDateRange])
+        }, [userId, accessibleWallets, period, getDateRange])
     );
 
     // Effect for longer-term transactions (Comparison) - last 6 months
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user || viewMode !== 'comparison') return;
+        if (!userId || viewMode !== 'comparison' || accessibleWallets.length === 0) {
+            if (viewMode === 'comparison' && accessibleWallets.length === 0) setHistoryTransactions([]);
+            return;
+        }
 
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -89,9 +141,9 @@ const SummaryScreen = () => {
 
         const q = query(
             collection(db, 'transactions'),
-            where('userId', '==', user.uid),
+            where('walletId', 'in', accessibleWallets.map(w => w.id).slice(0, 30)),
             where('date', '>=', Timestamp.fromDate(sixMonthsAgo)),
-            orderBy('date', 'asc')
+            orderBy('date', 'desc')
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -100,10 +152,12 @@ const SummaryScreen = () => {
                 list.push({ id: doc.id, ...doc.data() } as Transaction);
             });
             setHistoryTransactions(list);
+        }, (error) => {
+            console.error("Summary History Error:", error);
         });
 
         return () => unsubscribe();
-    }, [viewMode]);
+    }, [userId, viewMode, accessibleWallets]);
 
     // Computed stats for Comparison View
     const comparisonData = useMemo(() => {

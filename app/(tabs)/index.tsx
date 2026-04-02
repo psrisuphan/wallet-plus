@@ -1,46 +1,69 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Header';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp, or } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../constants/Colors';
 import TransactionDetailModal from '../../components/TransactionDetailModal';
+import { Wallet, Transaction } from '../../types';
 
 export default function HomeScreen() {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [displayName, setDisplayName] = useState<string | null>(null);
     const [totalBalance, setTotalBalance] = useState(0);
     const [todayChange, setTodayChange] = useState(0);
-    const [wallets, setWallets] = useState<any[]>([]);
-    const [todayTransactions, setTodayTransactions] = useState<any[]>([]);
+    const [wallets, setWallets] = useState<Wallet[]>([]);
+    const [todayTransactions, setTodayTransactions] = useState<Transaction[]>([]);
     const [walletDailyChanges, setWalletDailyChanges] = useState<{[key: string]: number}>({});
     const [loading, setLoading] = useState(true);
     const [showTopArrow, setShowTopArrow] = useState(false);
     const [showBottomArrow, setShowBottomArrow] = useState(false);
     const [showTodayTopArrow, setShowTodayTopArrow] = useState(false);
     const [showTodayBottomArrow, setShowTodayBottomArrow] = useState(false);
-    const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const walletsRef = useRef<Wallet[]>([]);
+    const [userId, setUserId] = useState<string | null>(null);
     const router = useRouter();
 
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) return;
+        const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
+            if (user) {
+                setUserId(user.uid);
+            } else {
+                setUserId(null);
+                setWallets([]);
+                setTodayTransactions([]);
+                setTotalBalance(0);
+                setLoading(false);
+            }
+        });
+        return () => unsubscribeAuth();
+    }, []);
 
-        // Fetch user profile
+    useEffect(() => {
+        if (!userId) return;
+
         const fetchUserData = async () => {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userDoc = await getDoc(doc(db, 'users', userId));
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 setProfileImage(data.profilePictureBase64);
                 setDisplayName(data.displayName);
             }
         };
+        fetchUserData();
 
-        // Listen to wallets for total balance
-        const qWallets = query(collection(db, 'wallets'), where('userId', '==', user.uid));
+        const qWallets = query(
+            collection(db, 'wallets'), 
+            or(
+                where('userId', '==', userId),
+                where('sharedWith', 'array-contains', userId)
+            )
+        );
         const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
             let total = 0;
             const walletsList: any[] = [];
@@ -52,15 +75,30 @@ export default function HomeScreen() {
             });
             setTotalBalance(total);
             setWallets(walletsList);
+            walletsRef.current = walletsList;
+        }, (error) => {
+            console.error("Wallets Snapshot Error:", error);
         });
 
-        // Combined listener for today's transactions and total net change
+        return () => unsubscribeWallets();
+    }, [userId]);
+
+    // Separate effect for transactions — depends on wallets being loaded
+    useEffect(() => {
+        if (!userId || wallets.length === 0) {
+            setTodayTransactions([]);
+            setTodayChange(0);
+            setWalletDailyChanges({});
+            if (!userId) setLoading(false);
+            return;
+        }
+
         const start = new Date();
         start.setHours(0, 0, 0, 0);
 
         const qToday = query(
             collection(db, 'transactions'),
-            where('userId', '==', user.uid),
+            where('walletId', 'in', wallets.map(w => w.id).slice(0, 30)),
             where('date', '>=', Timestamp.fromDate(start)),
             orderBy('date', 'desc')
         );
@@ -71,7 +109,7 @@ export default function HomeScreen() {
             const deltas: {[key: string]: number} = {};
 
             snapshot.forEach((doc) => {
-                const data = doc.data();
+                const data = doc.data() as any;
                 const amount = data.amount || 0;
                 const type = data.type;
                 const net = type === 'income' ? amount : -amount;
@@ -84,14 +122,13 @@ export default function HomeScreen() {
             setTodayChange(totalNet);
             setWalletDailyChanges(deltas);
             setLoading(false);
+        }, (error) => {
+            console.error("Transactions Snapshot Error:", error);
+            setLoading(false);
         });
 
-        fetchUserData();
-        return () => {
-            unsubscribeWallets();
-            unsubscribeTransactions();
-        };
-    }, []);
+        return () => unsubscribeTransactions();
+    }, [userId, wallets]);
 
     const handleWalletScroll = (event: any) => {
         const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -242,9 +279,21 @@ export default function HomeScreen() {
                                                             />
                                                         </View>
                                                         <View style={{ flex: 1, justifyContent: 'center' }}>
-                                                            <Text style={styles.walletRowName} numberOfLines={1}>
-                                                                {item.name}
-                                                        </Text>
+                                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                                <Text style={styles.walletRowName} numberOfLines={1}>
+                                                                    {item.name}
+                                                                </Text>
+                                                                {item.sharedWith && item.sharedWith.length > 0 && (
+                                                                    <View style={{ 
+                                                                        backgroundColor: `${PRIMARY_GREEN}25`, 
+                                                                        borderRadius: 8, 
+                                                                        paddingHorizontal: 4, 
+                                                                        paddingVertical: 2 
+                                                                    }}>
+                                                                        <Ionicons name="people" size={10} color={PRIMARY_GREEN} />
+                                                                    </View>
+                                                                )}
+                                                            </View>
                                                         {item.detail && (
                                                             <Text style={styles.walletRowDescription} numberOfLines={1}>
                                                                 {item.detail}
@@ -344,6 +393,20 @@ export default function HomeScreen() {
                                                                 {item.note}
                                                             </Text>
                                                         ) : null}
+                                                        {(() => {
+                                                            const wallet = wallets.find(w => w.id === item.walletId);
+                                                            const isCurrentlyShared = (wallet?.sharedWith?.length || 0) > 0;
+                                                            const isFromOtherUser = wallet && item.userId !== wallet.userId;
+                                                            
+                                                            if (item.userName && (isCurrentlyShared || isFromOtherUser)) {
+                                                                return (
+                                                                    <Text style={{ fontSize: 10, color: PRIMARY_GREEN, fontWeight: '600', marginTop: -1 }}>
+                                                                        Added by {item.userName}
+                                                                    </Text>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
                                                         <Text style={{ fontSize: 11, color: '#999' }}>
                                                             {item.date?.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                                             {item.walletId ? ` • ${wallets.find((w: any) => w.id === item.walletId)?.name || 'Unknown Wallet'}` : ''}
@@ -386,10 +449,17 @@ export default function HomeScreen() {
                 visible={showDetailModal}
                 transaction={selectedTransaction}
                 walletName={selectedTransaction?.walletId ? (wallets.find(w => w.id === selectedTransaction.walletId)?.name || 'Unknown Wallet') : 'No Wallet'}
+                isShared={(() => {
+                    if (!selectedTransaction) return false;
+                    const w = wallets.find(wal => wal.id === selectedTransaction.walletId);
+                    return !!((w?.sharedWith?.length || 0) > 0 || (w && selectedTransaction.userId !== w.userId));
+                })()}
                 onClose={() => setShowDetailModal(false)}
                 onEdit={() => {
-                    setShowDetailModal(false);
-                    router.push(`/(tabs)/transactions/${selectedTransaction.id}`);
+                    if (selectedTransaction) {
+                        setShowDetailModal(false);
+                        router.push(`/(tabs)/transactions/${selectedTransaction.id}`);
+                    }
                 }}
             />
         </View>

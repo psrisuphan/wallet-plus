@@ -2,31 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, getDoc, deleteDoc, doc, writeBatch, getDocs, or, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
 import { PRIMARY as WHITE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
-interface Wallet {
-  id: string;
-  name: string;
-  balance: number;
-  icon: string;
-  color: string;
-  detail?: string;
-  userId: string;
-}
-
-interface Transaction {
-  id: string;
-  type: 'expense' | 'income';
-  amount: number;
-  categoryName: string;
-  categoryIcon: string;
-  date: any;
-  note?: string;
-  walletId: string;
-}
+import { Wallet, Transaction } from '../../../types';
 
 const WalletScreen = () => {
   const router = useRouter();
@@ -42,6 +23,11 @@ const WalletScreen = () => {
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [transactionSort, setTransactionSort] = useState<'newest' | 'oldest'>('newest');
   const [transactionFilter, setTransactionFilter] = useState<'all' | 'day' | 'week' | 'month'>('all');
+  
+  // Shared Wallet States
+  const [isJoinModalVisible, setIsJoinModalVisible] = useState(false);
+  const [walletIdToJoin, setWalletIdToJoin] = useState('');
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -81,12 +67,22 @@ const WalletScreen = () => {
     }
 
     setLoading(true);
-    const q = query(collection(db, 'wallets'), where('userId', '==', userId));
+    // Fetch wallets where user is OWNER OR a shared member
+    const q = query(
+      collection(db, 'wallets'),
+      or(
+        where('userId', '==', userId),
+        where('sharedWith', 'array-contains', userId)
+      )
+    );
+
     const unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-      const walletsData: Wallet[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Wallet[];
+      const walletsData: Wallet[] = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Wallet[];
+
       setWallets(walletsData);
       setLoading(false);
     }, (error) => {
@@ -107,8 +103,7 @@ const WalletScreen = () => {
     setLoadingTransactions(true);
     const q = query(
       collection(db, 'transactions'),
-      where('walletId', '==', selectedWalletForTransactions.id),
-      where('userId', '==', userId)
+      where('walletId', '==', selectedWalletForTransactions.id)
     );
 
     const unsubscribeTransactions = onSnapshot(q, (snapshot) => {
@@ -187,6 +182,52 @@ const WalletScreen = () => {
     return result;
   }, [wallets, searchQuery, sortType]);
 
+  const handleJoinWallet = async () => {
+    if (!walletIdToJoin.trim()) {
+      Alert.alert('Error', 'Please enter a Wallet ID.');
+      return;
+    }
+
+    if (!userId) return;
+
+    setJoining(true);
+    try {
+      const walletRef = doc(db, 'wallets', walletIdToJoin.trim());
+      const walletSnap = await getDoc(walletRef);
+
+      if (!walletSnap.exists()) {
+        Alert.alert('Error', 'Wallet not found. Please check the ID.');
+        setJoining(false);
+        return;
+      }
+
+      const wallet = walletSnap.data() as Wallet;
+      
+      // Check if already a member or owner
+      if (wallet.userId === userId || wallet.sharedWith?.includes(userId)) {
+        Alert.alert('Info', 'You are already a member of this wallet!');
+        setIsJoinModalVisible(false);
+        setWalletIdToJoin('');
+        setJoining(false);
+        return;
+      }
+
+      // Add user to sharedWith
+      const currentShared = wallet.sharedWith || [];
+      await updateDoc(walletRef, {
+        sharedWith: [...currentShared, userId]
+      } as any);
+
+      Alert.alert('Success', `Joined "${wallet.name}" successfully!`);
+      setIsJoinModalVisible(false);
+      setWalletIdToJoin('');
+    } catch (error) {
+      console.error('Error joining wallet:', error);
+      Alert.alert('Error', 'Failed to join wallet. Please try again.');
+    } finally {
+      setJoining(false);
+    }
+  };
   const handleDeleteWallet = (walletId: string) => {
     Alert.alert(
       'Delete Wallet',
@@ -198,6 +239,7 @@ const WalletScreen = () => {
         },
         {
           text: 'Delete',
+          style: 'destructive',
           onPress: async () => {
             setLoading(true);
             try {
@@ -206,8 +248,7 @@ const WalletScreen = () => {
               // 1. Query all transactions associated with this wallet
               const transactionsQuery = query(
                 collection(db, 'transactions'), 
-                where('walletId', '==', walletId),
-                where('userId', '==', userId)
+                where('walletId', '==', walletId)
               );
               const transactionsSnapshot = await getDocs(transactionsQuery);
 
@@ -230,10 +271,36 @@ const WalletScreen = () => {
               setLoading(false);
             }
           },
-          style: 'destructive',
         },
       ],
       { cancelable: false }
+    );
+  };
+
+  const handleLeaveWallet = (walletId: string) => {
+    Alert.alert(
+      "Leave Wallet",
+      "Are you sure you want to leave this shared wallet? The wallet will still exist for other members, but you will no longer have access to its history.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Leave", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              if (!userId) return;
+              const walletRef = doc(db, 'wallets', walletId);
+              await updateDoc(walletRef, {
+                sharedWith: arrayRemove(userId)
+              });
+              Alert.alert("Success", "You have left the wallet.");
+            } catch (error) {
+              console.error('Error leaving wallet:', error);
+              Alert.alert('Error', 'Could not leave the wallet.');
+            }
+          } 
+        }
+      ]
     );
   };
 
@@ -264,6 +331,9 @@ const WalletScreen = () => {
           {item.type === 'expense' ? '-' : '+'}฿{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
         </Text>
         <Text style={styles.transactionDate}>
+          {item.userName && ((selectedWalletForTransactions?.sharedWith?.length || 0) > 0 || item.userId !== selectedWalletForTransactions?.userId) ? (
+            <Text style={{ fontWeight: '600', color: WHITE_GREEN }}>{item.userName} • </Text>
+          ) : null}
           {item.date?.seconds ? (
             `${new Date(item.date.seconds * 1000).toLocaleDateString('en-US', { 
               day: 'numeric', 
@@ -290,17 +360,33 @@ const WalletScreen = () => {
           <Ionicons name={item.icon as any || 'wallet'} size={24} color={item.color || WHITE_GREEN} />
         </View>
         <View style={styles.walletInfo}>
-          <Text style={styles.walletName}>{item.name}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.walletName}>{item.name}</Text>
+            {item.sharedWith && item.sharedWith.length > 0 && (
+              <View style={styles.sharedBadge}>
+                <Ionicons name="people" size={10} color={WHITE_GREEN} />
+                <Text style={styles.sharedBadgeText}>Shared</Text>
+              </View>
+            )}
+          </View>
           {item.detail ? <Text style={styles.walletDetail} numberOfLines={1}>{item.detail}</Text> : null}
         </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={() => openEditPage(item.id)} style={styles.actionIconButton}>
-            <Ionicons name="create" size={20} color="#666" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={[styles.actionIconButton, { marginLeft: 8 }]}>
-            <Ionicons name="trash" size={20} color="#DC3545" />
-          </TouchableOpacity>
-        </View>
+        {item.userId === userId ? (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity onPress={() => openEditPage(item.id)} style={styles.actionIconButton}>
+              <Ionicons name="create" size={20} color="#666" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDeleteWallet(item.id)} style={[styles.actionIconButton, { marginLeft: 8 }]}>
+              <Ionicons name="trash" size={20} color="#DC3545" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity onPress={() => handleLeaveWallet(item.id)} style={styles.actionIconButton}>
+              <Ionicons name="log-out" size={20} color="#DC3545" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
       <View style={styles.walletBody}>
         <Text style={styles.balanceLabel}>Balance</Text>
@@ -336,20 +422,29 @@ const WalletScreen = () => {
         onAddPress={openAddPage} 
       />
       <View style={styles.content}>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search-outline" size={20} color="#888" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search wallets by name..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#AAA"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color="#AAA" />
-            </TouchableOpacity>
-          )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <View style={[styles.searchContainer, { marginBottom: 0, flex: 1 }]}>
+            <Ionicons name="search-outline" size={20} color="#888" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search wallets..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#AAA"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={18} color="#AAA" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity 
+            style={styles.joinButton} 
+            onPress={() => setIsJoinModalVisible(true)}
+          >
+            <Ionicons name="people-outline" size={22} color={WHITE_GREEN} />
+            <Text style={styles.joinButtonText}>Join</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.sortContainer}>
@@ -444,6 +539,29 @@ const WalletScreen = () => {
                 ฿{selectedWalletForTransactions?.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </Text>
             </View>
+
+            {/* Share Wallet ID Section (Only for Owner) */}
+            {selectedWalletForTransactions?.userId === userId && (
+              <View style={styles.shareSection}>
+                <Text style={styles.shareLabel}>Wallet ID (Share to invite others)</Text>
+                <View style={styles.idContainer}>
+                  <Text style={styles.walletIdText} numberOfLines={1} ellipsizeMode="middle">
+                    {selectedWalletForTransactions?.id}
+                  </Text>
+                  <TouchableOpacity 
+                    style={[styles.copyButton, { backgroundColor: selectedWalletForTransactions?.color }]}
+                    onPress={() => {
+                      const Clipboard = require('react-native').Clipboard;
+                      Clipboard.setString(selectedWalletForTransactions?.id || '');
+                      Alert.alert('Copied', 'Wallet ID copied to clipboard!');
+                    }}
+                  >
+                    <Ionicons name="copy-outline" size={16} color="#FFF" />
+                    <Text style={styles.copyButtonText}>Copy</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
 
           <View style={styles.modalBody}>
@@ -515,6 +633,59 @@ const WalletScreen = () => {
                 </Text>
               </View>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Join Wallet Modal */}
+      <Modal
+        visible={isJoinModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsJoinModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { padding: 30 }]}>
+            <View style={styles.joinHeaderIcon}>
+              <Ionicons name="people-circle" size={60} color={WHITE_GREEN} />
+            </View>
+            <Text style={styles.modalTitle}>Join Shared Wallet</Text>
+            <Text style={styles.modalSubMessage}>
+              Enter the unique Wallet ID shared by the owner to gain access.
+            </Text>
+            
+            <TextInput
+              style={styles.joinInput}
+              placeholder="Paste Wallet ID here..."
+              value={walletIdToJoin}
+              onChangeText={setWalletIdToJoin}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholderTextColor="#AAA"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => {
+                  setIsJoinModalVisible(false);
+                  setWalletIdToJoin('');
+                }}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, { backgroundColor: WHITE_GREEN }]} 
+                onPress={handleJoinWallet}
+                disabled={joining}
+              >
+                {joining ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.buttonText}>Join Now</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -797,6 +968,113 @@ const styles = StyleSheet.create({
   },
   modalBalanceSection: {
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  shareSection: {
+    marginTop: 10,
+    backgroundColor: '#F1F3F5',
+    padding: 12,
+    borderRadius: 12,
+  },
+  shareLabel: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '600',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  idContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  walletIdText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#333',
+    fontFamily: 'monospace',
+    backgroundColor: '#E9ECEF',
+    padding: 6,
+    borderRadius: 6,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
+  copyButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  joinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: WHITE_GREEN + '15',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: WHITE_GREEN + '30',
+  },
+  joinButtonText: {
+    color: WHITE_GREEN,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  sharedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: WHITE_GREEN + '20',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 3,
+  },
+  sharedBadgeText: {
+    fontSize: 10,
+    color: WHITE_GREEN,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  joinHeaderIcon: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalSubMessage: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  joinInput: {
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 14,
+    color: '#333',
+    fontFamily: 'monospace',
+    marginBottom: 25,
+    textAlign: 'center',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   modalBalanceLabel: {
     fontSize: 14,

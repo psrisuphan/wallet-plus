@@ -3,15 +3,19 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, Image, Pla
 import { Ionicons } from '@expo/vector-icons';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../constants/Colors';
 
+import { auth } from '../firebaseConfig';
+import { Transaction } from '../types';
+
 interface TransactionDetailModalProps {
     visible: boolean;
-    transaction: any;
+    transaction: Transaction | null;
     walletName: string;
+    isShared: boolean;
     onClose: () => void;
     onEdit: () => void;
 }
 
-const TransactionDetailModal = ({ visible, transaction, walletName, onClose, onEdit }: TransactionDetailModalProps) => {
+const TransactionDetailModal = ({ visible, transaction, walletName, isShared, onClose, onEdit }: TransactionDetailModalProps) => {
     if (!transaction) return null;
     
     const dateObj = transaction.date?.toDate ? transaction.date.toDate() : new Date();
@@ -90,6 +94,16 @@ const TransactionDetailModal = ({ visible, transaction, walletName, onClose, onE
                                 <Text style={modalStyles.infoLabel}>Time</Text>
                                 <Text style={modalStyles.infoValue}>{timeStr}</Text>
                             </View>
+
+                            {transaction.userName && isShared && (
+                                <View style={modalStyles.infoItem}>
+                                    <Text style={modalStyles.infoLabel}>Added By</Text>
+                                    <View style={modalStyles.categoryValue}>
+                                        <Ionicons name="person-outline" size={16} color="#666" style={{ marginRight: 8 }} />
+                                        <Text style={modalStyles.infoValue}>{transaction.userName}</Text>
+                                    </View>
+                                </View>
+                            )}
                         </View>
                         
                         {transaction.note && (
@@ -111,10 +125,12 @@ const TransactionDetailModal = ({ visible, transaction, walletName, onClose, onE
                     </ScrollView>
                     
                     <View style={modalStyles.footer}>
-                        <TouchableOpacity style={modalStyles.editButton} onPress={onEdit}>
-                            <Ionicons name="create-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-                            <Text style={modalStyles.editButtonText}>Edit Transaction</Text>
-                        </TouchableOpacity>
+                        {auth.currentUser?.uid === transaction.userId && (
+                            <TouchableOpacity style={modalStyles.editButton} onPress={onEdit}>
+                                <Ionicons name="create-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                                <Text style={modalStyles.editButtonText}>Edit Transaction</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </View>
             </View>

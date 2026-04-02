@@ -3,7 +3,8 @@ import { StyleSheet, Text, View, ActivityIndicator, StatusBar, TouchableOpacity,
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, or } from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { db, auth } from '../../../firebaseConfig';
 import Header from '../../../components/Header';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../../constants/Colors';
@@ -27,46 +28,77 @@ export default function TransactionsScreen() {
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
+    const [userId, setUserId] = useState<string | null>(null);
+
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) {
-            setLoading(false);
-            return;
-        }
-
-        const q = query(
-            collection(db, 'transactions'),
-            where('userId', '==', user.uid),
-            orderBy('date', 'desc')
-        );
-
-        const unsubscribeTransactions = onSnapshot(q, (snapshot) => {
-            const list: any[] = [];
-            snapshot.forEach((doc) => {
-                list.push({ id: doc.id, ...doc.data() });
-            });
-            setTransactions(list);
-            setLoading(false);
+        const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
+            if (user) {
+                setUserId(user.uid);
+            } else {
+                setUserId(null);
+                setTransactions([]);
+                setWallets([]);
+                setLoading(false);
+            }
         });
+        return () => unsubscribeAuth();
+    }, []);
 
+    useEffect(() => {
+        if (!userId) return;
+
+        // 1. Fetch ALL wallets (Owned or Shared)
         const qWallets = query(
             collection(db, 'wallets'),
-            where('userId', '==', user.uid)
+            or(
+                where('userId', '==', userId),
+                where('sharedWith', 'array-contains', userId)
+            )
         );
 
         const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
-            const list: any[] = [];
+            const walletList: any[] = [];
             snapshot.forEach((doc) => {
-                list.push({ id: doc.id, ...doc.data() });
+                const data = { id: doc.id, ...doc.data() };
+                walletList.push(data);
             });
-            setWallets(list);
+            setWallets(walletList);
+        }, (error) => {
+            console.error("Wallets Snapshot Error:", error);
         });
 
-        return () => {
-            unsubscribeTransactions();
-            unsubscribeWallets();
-        };
-    }, []);
+        return () => unsubscribeWallets();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId || wallets.length === 0) {
+            setTransactions([]);
+            if (!userId) setLoading(false);
+            return;
+        }
+
+        // 2. Fetch ALL transactions for these wallets
+        const walletIds = wallets.map(w => w.id);
+        const qTransactions = query(
+            collection(db, 'transactions'),
+            where('walletId', 'in', walletIds.slice(0, 30)),
+            orderBy('date', 'desc')
+        );
+
+        const unsubscribeTransactions = onSnapshot(qTransactions, (snap) => {
+            const list: any[] = [];
+            snap.forEach((d) => {
+                list.push({ id: d.id, ...d.data() });
+            });
+            setTransactions(list);
+            setLoading(false);
+        }, (err) => {
+            console.error("Transactions Snapshot Error:", err);
+            setLoading(false);
+        });
+
+        return () => unsubscribeTransactions();
+    }, [userId, wallets]);
 
     const resetFilters = () => {
         setTimeFilter('all');
@@ -189,6 +221,18 @@ export default function TransactionsScreen() {
                     <Text style={styles.transactionTime}>
                         {dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · {timeStr}
                     </Text>
+                    {(() => {
+                        const wallet = wallets.find(w => w.id === item.walletId);
+                        const isShared = (wallet?.sharedWith?.length || 0) > 0 || (wallet && item.userId !== wallet.userId);
+                        if (item.userName && isShared) {
+                            return (
+                                <Text style={{ fontSize: 11, color: PRIMARY_GREEN, fontWeight: '600', marginTop: 1 }}>
+                                    Added by {item.userName}
+                                </Text>
+                            );
+                        }
+                        return null;
+                    })()}
                     {item.walletId && (
                         <View style={styles.walletTagContainer}>
                             <Ionicons name="wallet-outline" size={12} color="#888" />
@@ -434,6 +478,10 @@ export default function TransactionsScreen() {
                     visible={showDetailModal}
                     transaction={selectedTransaction}
                     walletName={wallets.find(w => w.id === selectedTransaction.walletId)?.name || 'Unknown Wallet'}
+                    isShared={(() => {
+                        const wallet = wallets.find(w => w.id === selectedTransaction.walletId);
+                        return !!((wallet?.sharedWith?.length || 0) > 0 || (wallet && selectedTransaction.userId !== wallet.userId));
+                    })()}
                     onClose={() => setShowDetailModal(false)}
                     onEdit={() => {
                         setShowDetailModal(false);
