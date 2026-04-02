@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, StatusBar, TouchableOpacity, ScrollView, SectionList, Platform, TextInput } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, StatusBar, TouchableOpacity, ScrollView, SectionList, Platform, TextInput, Modal } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,6 @@ import { db, auth } from '../../../firebaseConfig';
 import Header from '../../../components/Header';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../../constants/Colors';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
-import { Modal, Image } from 'react-native';
 import TransactionDetailModal from '../../../components/TransactionDetailModal';
 
 export default function TransactionsScreen() {
@@ -35,6 +34,12 @@ export default function TransactionsScreen() {
     const [showRangePicker, setShowRangePicker] = useState(false);
     const [editingRange, setEditingRange] = useState<'start' | 'end'>('start');
 
+    // Scroll Indicator States
+    const [timeScroll, setTimeScroll] = useState({ left: false, right: true });
+    const [typeScroll, setTypeScroll] = useState({ left: false, right: true });
+    const [walletScroll, setWalletScroll] = useState({ left: false, right: true });
+    const [categoryScroll, setCategoryScroll] = useState({ left: false, right: true });
+
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
             if (user) {
@@ -52,7 +57,6 @@ export default function TransactionsScreen() {
     useEffect(() => {
         if (!userId) return;
 
-        // 1. Fetch ALL wallets (Owned or Shared)
         const qWallets = query(
             collection(db, 'wallets'),
             or(
@@ -82,7 +86,6 @@ export default function TransactionsScreen() {
             return;
         }
 
-        // 2. Fetch ALL transactions for these wallets
         const walletIds = wallets.map(w => w.id);
         const qTransactions = query(
             collection(db, 'transactions'),
@@ -105,6 +108,17 @@ export default function TransactionsScreen() {
         return () => unsubscribeTransactions();
     }, [userId, wallets]);
 
+    const handleScroll = (key: 'time' | 'type' | 'wallet' | 'category') => (event: any) => {
+        const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+        const left = contentOffset.x > 5;
+        const right = contentOffset.x < contentSize.width - layoutMeasurement.width - 5;
+        
+        if (key === 'time') setTimeScroll({ left, right });
+        else if (key === 'type') setTypeScroll({ left, right });
+        else if (key === 'wallet') setWalletScroll({ left, right });
+        else if (key === 'category') setCategoryScroll({ left, right });
+    };
+
     const resetFilters = () => {
         setTimeFilter('all');
         setFilterType('all');
@@ -114,45 +128,48 @@ export default function TransactionsScreen() {
         setSortOrder('newest');
     };
 
-    // Auto-filter selected categories if they're not valid for the selected type
-    useEffect(() => {
-        if (selectedCategories.length === 0) return;
-        
-        const incomeNames = INCOME_CATEGORIES.map(c => c.name);
-        const expenseNames = EXPENSE_CATEGORIES.map(c => c.name);
-        
-        if (filterType === 'income') {
-            setSelectedCategories(prev => prev.filter(name => incomeNames.includes(name)));
-        } else if (filterType === 'expense') {
-            setSelectedCategories(prev => prev.filter(name => expenseNames.includes(name)));
+    const toggleCategory = (name: string) => {
+        if (name === 'all') {
+            setSelectedCategories([]);
+            return;
         }
-    }, [filterType]);
+        setSelectedCategories(prev => 
+            prev.includes(name) 
+                ? prev.filter(c => c !== name) 
+                : [...prev, name]
+        );
+    };
+
+    const toggleWallet = (id: string) => {
+        if (id === 'all') {
+            setSelectedWallets([]);
+            return;
+        }
+        setSelectedWallets(prev => 
+            prev.includes(id) 
+                ? prev.filter(wId => wId !== id) 
+                : [...prev, id]
+        );
+    };
 
     const processTransactions = () => {
         let filtered = transactions.filter(t => {
             const dateObj = t.date?.toDate ? t.date.toDate() : new Date();
             const today = new Date();
             
-            // Search filter (handles note, category, and amount)
             if (searchQuery.trim() !== '') {
-                const query = searchQuery.toLowerCase();
-                const noteMatch = (t.note || '').toLowerCase().includes(query);
-                const categoryMatch = (t.categoryName || '').toLowerCase().includes(query);
-                const amountMatch = t.amount.toString().includes(query);
+                const queryStr = searchQuery.toLowerCase();
+                const noteMatch = (t.note || '').toLowerCase().includes(queryStr);
+                const categoryMatch = (t.categoryName || '').toLowerCase().includes(queryStr);
+                const amountMatch = t.amount.toString().includes(queryStr);
                 
                 if (!noteMatch && !categoryMatch && !amountMatch) return false;
             }
 
-            // Category filter
             if (selectedCategories.length > 0 && !selectedCategories.includes(t.categoryName || 'Other')) return false;
-
-            // Wallet filter
             if (selectedWallets.length > 0 && !selectedWallets.includes(t.walletId || '')) return false;
-
-            // Type filter
             if (filterType !== 'all' && t.type !== filterType) return false;
             
-            // Time filter
             if (timeFilter === 'today') {
                 if (dateObj.toDateString() !== today.toDateString()) return false;
             } else if (timeFilter === 'thisWeek') {
@@ -265,7 +282,7 @@ export default function TransactionsScreen() {
                 ]}>
                     {item.type === 'income' ? '+' : '-'}฿{(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </Text>
-                </TouchableOpacity>
+            </TouchableOpacity>
         );
     };
 
@@ -282,28 +299,8 @@ export default function TransactionsScreen() {
                                (searchQuery.trim() !== '' ? 1 : 0) + 
                                (sortOrder !== 'newest' ? 1 : 0);
 
-    const toggleCategory = (name: string) => {
-        if (name === 'all') {
-            setSelectedCategories([]);
-            return;
-        }
-        setSelectedCategories(prev => 
-            prev.includes(name) 
-                ? prev.filter(c => c !== name) 
-                : [...prev, name]
-        );
-    };
-
-    const toggleWallet = (id: string) => {
-        if (id === 'all') {
-            setSelectedWallets([]);
-            return;
-        }
-        setSelectedWallets(prev => 
-            prev.includes(id) 
-                ? prev.filter(wId => wId !== id) 
-                : [...prev, id]
-        );
+    const formatDisplayDate = (date: Date) => {
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
     return (
@@ -321,7 +318,7 @@ export default function TransactionsScreen() {
                         <Ionicons name="search-outline" size={18} color="#888" />
                         <TextInput
                             style={styles.searchInput}
-                            placeholder="Search note or category..."
+                            placeholder="Search note, category, or amount..."
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             placeholderTextColor="#999"
@@ -352,63 +349,105 @@ export default function TransactionsScreen() {
 
                 {showFilters && (
                     <View style={styles.expandedFilters}>
+                        {/* Time Period Filter */}
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Time Period</Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
-                                <TouchableOpacity 
-                                    style={[styles.filterPill, timeFilter === 'range' && styles.filterPillActive]} 
-                                    onPress={() => setShowRangePicker(true)}
+                            <View style={styles.scrollWrapper}>
+                                <ScrollView 
+                                    horizontal 
+                                    showsHorizontalScrollIndicator={false} 
+                                    style={styles.filterPillScroll} 
+                                    contentContainerStyle={styles.filterScrollContent}
+                                    onScroll={handleScroll('time')}
+                                    scrollEventThrottle={16}
                                 >
-                                    <Ionicons name="calendar-outline" size={14} color={timeFilter === 'range' ? '#FFF' : '#666'} />
-                                    <Text style={[styles.filterText, timeFilter === 'range' && styles.filterTextActive]}>
-                                        {timeFilter === 'range' 
-                                            ? `${startDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })} - ${endDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
-                                            : 'Custom Range'
-                                        }
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity 
-                                    style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
-                                    onPress={() => setShowDatePicker(true)}
-                                >
-                                    <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
-                                    <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
-                                        {timeFilter === 'custom' 
-                                            ? customDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
-                                            : 'Custom Date'
-                                        }
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'all' && styles.filterPillActive]} onPress={() => setTimeFilter('all')}>
-                                    <Text style={[styles.filterText, timeFilter === 'all' && styles.filterTextActive]}>All Time</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'today' && styles.filterPillActive]} onPress={() => setTimeFilter('today')}>
-                                    <Text style={[styles.filterText, timeFilter === 'today' && styles.filterTextActive]}>Today</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisWeek' && styles.filterPillActive]} onPress={() => setTimeFilter('thisWeek')}>
-                                    <Text style={[styles.filterText, timeFilter === 'thisWeek' && styles.filterTextActive]}>This Week</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, timeFilter === 'thisMonth' && styles.filterPillActive]} onPress={() => setTimeFilter('thisMonth')}>
-                                    <Text style={[styles.filterText, timeFilter === 'thisMonth' && styles.filterTextActive]}>This Month</Text>
-                                </TouchableOpacity>
-                            </ScrollView>
+                                    <TouchableOpacity 
+                                        style={[styles.filterPill, timeFilter === 'range' && styles.filterPillActive]} 
+                                        onPress={() => setShowRangePicker(true)}
+                                    >
+                                        <Ionicons name="calendar-outline" size={14} color={timeFilter === 'range' ? '#FFF' : '#666'} />
+                                        <Text style={[styles.filterText, timeFilter === 'range' && styles.filterTextActive]}>
+                                            {timeFilter === 'range' 
+                                                ? `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`
+                                                : 'Custom Range'
+                                            }
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity 
+                                        style={[styles.filterPill, timeFilter === 'custom' && styles.filterPillActive]} 
+                                        onPress={() => setShowDatePicker(true)}
+                                    >
+                                        <Ionicons name="calendar-outline" size={14} color={timeFilter === 'custom' ? '#FFF' : '#666'} />
+                                        <Text style={[styles.filterText, timeFilter === 'custom' && styles.filterTextActive]}>
+                                            {timeFilter === 'custom' 
+                                                ? formatDisplayDate(customDate) 
+                                                : 'Custom Date'
+                                            }
+                                        </Text>
+                                    </TouchableOpacity>
+                                    {(['all', 'today', 'thisWeek', 'thisMonth'] as const).map((period) => (
+                                        <TouchableOpacity 
+                                            key={period}
+                                            style={[styles.filterPill, timeFilter === period && styles.filterPillActive]} 
+                                            onPress={() => setTimeFilter(period)}
+                                        >
+                                            <Text style={[styles.filterText, timeFilter === period && styles.filterTextActive]}>
+                                                {period === 'all' ? 'All Time' : period === 'today' ? 'Today' : period === 'thisWeek' ? 'This Week' : 'This Month'}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                                {timeScroll.left && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorLeft]}>
+                                        <Ionicons name="chevron-back" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                                {timeScroll.right && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorRight]}>
+                                        <Ionicons name="chevron-forward" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                            </View>
                         </View>
 
+                        {/* Transaction Type Filter */}
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Transaction Type</Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
-                                <TouchableOpacity style={[styles.filterPill, filterType === 'all' && styles.filterPillActive]} onPress={() => setFilterType('all')}>
-                                    <Text style={[styles.filterText, filterType === 'all' && styles.filterTextActive]}>All Types</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, filterType === 'income' && styles.filterPillActive]} onPress={() => setFilterType('income')}>
-                                    <Text style={[styles.filterText, filterType === 'income' && styles.filterTextActive]}>Income</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.filterPill, filterType === 'expense' && styles.filterPillActive]} onPress={() => setFilterType('expense')}>
-                                    <Text style={[styles.filterText, filterType === 'expense' && styles.filterTextActive]}>Expense</Text>
-                                </TouchableOpacity>
-                            </ScrollView>
+                            <View style={styles.scrollWrapper}>
+                                <ScrollView 
+                                    horizontal 
+                                    showsHorizontalScrollIndicator={false} 
+                                    style={styles.filterPillScroll} 
+                                    contentContainerStyle={styles.filterScrollContent}
+                                    onScroll={handleScroll('type')}
+                                    scrollEventThrottle={16}
+                                >
+                                    {(['all', 'expense', 'income'] as const).map((type) => (
+                                        <TouchableOpacity 
+                                            key={type}
+                                            style={[styles.filterPill, filterType === type && styles.filterPillActive]} 
+                                            onPress={() => setFilterType(type)}
+                                        >
+                                            <Text style={[styles.filterText, filterType === type && styles.filterTextActive]}>
+                                                {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                                {typeScroll.left && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorLeft]}>
+                                        <Ionicons name="chevron-back" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                                {typeScroll.right && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorRight]}>
+                                        <Ionicons name="chevron-forward" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                            </View>
                         </View>
                         
+                        {/* Sort Order Filter */}
                         <View style={styles.filterSection}>
                             <Text style={styles.filterCategoryTitle}>Sort Order</Text>
                             <View style={styles.filterRowContainer}>
@@ -423,6 +462,7 @@ export default function TransactionsScreen() {
                             </View>
                         </View>
 
+                        {/* Wallets Filter */}
                         <View style={styles.filterSection}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                 <Text style={styles.filterCategoryTitle}>Wallets</Text>
@@ -432,50 +472,65 @@ export default function TransactionsScreen() {
                                     </Text>
                                 )}
                             </View>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillScroll} contentContainerStyle={styles.filterScrollContent}>
-                                <TouchableOpacity 
-                                    style={[styles.filterPill, selectedWallets.length === 0 && styles.filterPillActive]} 
-                                    onPress={() => toggleWallet('all')}
+                            <View style={styles.scrollWrapper}>
+                                <ScrollView 
+                                    horizontal 
+                                    showsHorizontalScrollIndicator={false} 
+                                    style={styles.filterPillScroll} 
+                                    contentContainerStyle={styles.filterScrollContent}
+                                    onScroll={handleScroll('wallet')}
+                                    scrollEventThrottle={16}
                                 >
-                                    <Text style={[styles.filterText, selectedWallets.length === 0 && styles.filterTextActive]}>All Wallets</Text>
-                                </TouchableOpacity>
-                                {wallets.map((wallet: any) => {
-                                    const isSelected = selectedWallets.includes(wallet.id);
-                                    const isShared = wallet.userId !== userId;
-                                    const wColor = wallet.color || '#666';
-                                    return (
-                                        <TouchableOpacity 
-                                            key={wallet.id}
-                                            style={[
-                                                styles.filterPill, 
-                                                { borderColor: wColor + '80' }, // Subtle transparent border
-                                                isSelected && { backgroundColor: wColor, borderColor: wColor }
-                                            ]} 
-                                            onPress={() => toggleWallet(wallet.id)}
-                                        >
-                                            <Ionicons 
-                                                name={isShared ? "people-outline" : "wallet-outline"} 
-                                                size={14} 
-                                                color={isSelected ? '#FFF' : wColor} 
-                                            />
-                                            <Text style={[
-                                                styles.filterText, 
-                                                { color: wColor },
-                                                isSelected && { color: '#FFF' }
-                                            ]}>
-                                                {wallet.name}
-                                                {isShared && (
-                                                    <Text style={{ fontSize: 10, opacity: 0.8 }}>
-                                                        {` (Shared)`}
-                                                    </Text>
-                                                )}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </ScrollView>
+                                    <TouchableOpacity 
+                                        style={[styles.filterPill, selectedWallets.length === 0 && styles.filterPillActive]} 
+                                        onPress={() => toggleWallet('all')}
+                                    >
+                                        <Text style={[styles.filterText, selectedWallets.length === 0 && styles.filterTextActive]}>All Wallets</Text>
+                                    </TouchableOpacity>
+                                    {wallets.map((wallet: any) => {
+                                        const isSelected = selectedWallets.includes(wallet.id);
+                                        const isShared = wallet.userId !== userId;
+                                        const wColor = wallet.color || '#666';
+                                        return (
+                                            <TouchableOpacity 
+                                                key={wallet.id}
+                                                style={[
+                                                    styles.filterPill, 
+                                                    { borderColor: wColor + '80' },
+                                                    isSelected && { backgroundColor: wColor, borderColor: wColor }
+                                                ]} 
+                                                onPress={() => toggleWallet(wallet.id)}
+                                            >
+                                                <Ionicons 
+                                                    name={isShared ? "people-outline" : "wallet-outline"} 
+                                                    size={14} 
+                                                    color={isSelected ? '#FFF' : wColor} 
+                                                />
+                                                <Text style={[
+                                                    styles.filterText, 
+                                                    { color: wColor },
+                                                    isSelected && { color: '#FFF' }
+                                                ]}>
+                                                    {wallet.name}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
+                                {walletScroll.left && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorLeft]}>
+                                        <Ionicons name="chevron-back" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                                {walletScroll.right && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorRight]}>
+                                        <Ionicons name="chevron-forward" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                            </View>
                         </View>
 
+                        {/* Category Filter */}
                         <View style={styles.filterSection}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                 <Text style={styles.filterCategoryTitle}>Category</Text>
@@ -485,40 +540,56 @@ export default function TransactionsScreen() {
                                     </Text>
                                 )}
                             </View>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterIconScroll} contentContainerStyle={styles.filterScrollContent}>
-                                <TouchableOpacity 
-                                    style={[styles.categoryIconPill, selectedCategories.length === 0 && styles.categoryIconPillActive]} 
-                                    onPress={() => toggleCategory('all')}
+                            <View style={styles.scrollWrapper}>
+                                <ScrollView 
+                                    horizontal 
+                                    showsHorizontalScrollIndicator={false} 
+                                    style={styles.filterIconScroll} 
+                                    contentContainerStyle={styles.filterScrollContent}
+                                    onScroll={handleScroll('category')}
+                                    scrollEventThrottle={16}
                                 >
-                                    <Ionicons name="grid-outline" size={18} color={selectedCategories.length === 0 ? '#FFF' : '#666'} />
-                                    <Text style={[styles.filterText, selectedCategories.length === 0 && styles.filterTextActive]}>All</Text>
-                                </TouchableOpacity>
-                                {categoriesToDisplay.map((cat: any, idx: number) => {
-                                    const isSelected = selectedCategories.includes(cat.name);
-                                    return (
-                                        <TouchableOpacity 
-                                            key={cat.id || `cat-${idx}`}
-                                            style={[styles.categoryIconPill, isSelected && styles.categoryIconPillActive]} 
-                                            onPress={() => toggleCategory(cat.name)}
-                                        >
-                                            <Ionicons 
-                                                name={(cat.icon || 'help-outline') as any} 
-                                                size={18} 
-                                                color={isSelected ? '#FFF' : '#666'} 
-                                            />
-                                            <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
-                                                {cat.name}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </ScrollView>
+                                    <TouchableOpacity 
+                                        style={[styles.categoryIconPill, selectedCategories.length === 0 && styles.categoryIconPillActive]} 
+                                        onPress={() => toggleCategory('all')}
+                                    >
+                                        <Ionicons name="grid-outline" size={18} color={selectedCategories.length === 0 ? '#FFF' : '#666'} />
+                                        <Text style={[styles.filterText, selectedCategories.length === 0 && styles.filterTextActive]}>All</Text>
+                                    </TouchableOpacity>
+                                    {categoriesToDisplay.map((cat: any, idx: number) => {
+                                        const isSelected = selectedCategories.includes(cat.name);
+                                        return (
+                                            <TouchableOpacity 
+                                                key={cat.id || `cat-${idx}`}
+                                                style={[styles.categoryIconPill, isSelected && styles.categoryIconPillActive]} 
+                                                onPress={() => toggleCategory(cat.name)}
+                                            >
+                                                <Ionicons 
+                                                    name={(cat.icon || 'help-outline') as any} 
+                                                    size={18} 
+                                                    color={isSelected ? '#FFF' : '#666'} 
+                                                />
+                                                <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
+                                                    {cat.name}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
+                                {categoryScroll.left && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorLeft]}>
+                                        <Ionicons name="chevron-back" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                                {categoryScroll.right && (
+                                    <View style={[styles.scrollIndicator, styles.scrollIndicatorRight]}>
+                                        <Ionicons name="chevron-forward" size={14} color="#bbb" />
+                                    </View>
+                                )}
+                            </View>
                         </View>
                         
-                        <TouchableOpacity 
-                            style={styles.resetFilterButton}
-                            onPress={resetFilters}
-                        >
+                        <TouchableOpacity style={styles.resetFilterButton} onPress={resetFilters}>
                             <Ionicons name="refresh-outline" size={16} color="#C62828" />
                             <Text style={styles.resetFilterText}>Reset Filters</Text>
                         </TouchableOpacity>
@@ -526,48 +597,29 @@ export default function TransactionsScreen() {
                 )}
             </View>
 
+            {/* Modals for Custom Date & Range */}
             {showDatePicker && (
                 Platform.OS === 'ios' ? (
-                    <Modal
-                        transparent={true}
-                        animationType="slide"
-                        visible={showDatePicker}
-                        onRequestClose={() => setShowDatePicker(false)}
-                    >
-                        <TouchableOpacity 
-                            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-                            activeOpacity={1}
-                            onPress={() => setShowDatePicker(false)}
-                        >
-                            <View style={{ backgroundColor: '#FFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                                    <Text style={{ fontSize: 18, fontWeight: '600' }}>Select Date</Text>
+                    <Modal transparent visible onRequestClose={() => setShowDatePicker(false)} animationType="slide">
+                        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowDatePicker(false)}>
+                            <View style={styles.bottomSheet}>
+                                <View style={styles.sheetHeader}>
+                                    <Text style={styles.sheetTitle}>Select Date</Text>
                                     <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                                        <Text style={{ color: '#888', fontWeight: '500', fontSize: 16 }}>Cancel</Text>
+                                        <Text style={styles.cancelText}>Cancel</Text>
                                     </TouchableOpacity>
                                 </View>
                                 <DateTimePicker
                                     value={customDate}
                                     mode="date"
                                     display="spinner"
-                                    onChange={(event, selectedDate) => {
-                                        if (selectedDate) setCustomDate(selectedDate);
-                                    }}
+                                    onChange={(_, d) => d && setCustomDate(d)}
                                 />
                                 <TouchableOpacity 
-                                    style={{ 
-                                        backgroundColor: PRIMARY_GREEN, 
-                                        padding: 16, 
-                                        borderRadius: 12, 
-                                        alignItems: 'center',
-                                        marginTop: 20
-                                    }}
-                                    onPress={() => {
-                                        setShowDatePicker(false);
-                                        setTimeFilter('custom');
-                                    }}
+                                    style={styles.confirmButton}
+                                    onPress={() => { setShowDatePicker(false); setTimeFilter('custom'); }}
                                 >
-                                    <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>Confirm Date</Text>
+                                    <Text style={styles.confirmButtonText}>Confirm Date</Text>
                                 </TouchableOpacity>
                             </View>
                         </TouchableOpacity>
@@ -577,68 +629,39 @@ export default function TransactionsScreen() {
                         value={customDate}
                         mode="date"
                         display="default"
-                        onChange={(event, selectedDate) => {
-                            setShowDatePicker(false);
-                            if (selectedDate) {
-                                setCustomDate(selectedDate);
-                                setTimeFilter('custom');
-                            }
-                        }}
+                        onChange={(_, d) => { setShowDatePicker(false); if (d) { setCustomDate(d); setTimeFilter('custom'); } }}
                     />
                 )
             )}
 
             {showRangePicker && (
-                <Modal
-                    transparent={true}
-                    animationType="slide"
-                    visible={showRangePicker}
-                    onRequestClose={() => setShowRangePicker(false)}
-                >
-                    <TouchableOpacity 
-                        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-                        activeOpacity={1}
-                        onPress={() => setShowRangePicker(false)}
-                    >
-                        <View style={{ backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, minHeight: 450 }}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                                <Text style={{ fontSize: 20, fontWeight: '700', color: '#1a1a1a' }}>Select Date Range</Text>
+                <Modal transparent visible onRequestClose={() => setShowRangePicker(false)} animationType="slide">
+                    <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowRangePicker(false)}>
+                        <View style={styles.bottomSheet}>
+                            <View style={styles.sheetHeader}>
+                                <Text style={styles.sheetTitle}>Select Date Range</Text>
                                 <TouchableOpacity onPress={() => setShowRangePicker(false)}>
-                                    <Text style={{ color: '#888', fontWeight: '500', fontSize: 16 }}>Cancel</Text>
+                                    <Text style={styles.cancelText}>Cancel</Text>
                                 </TouchableOpacity>
                             </View>
 
-                            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                            <View style={styles.rangeInputs}>
                                 <TouchableOpacity 
                                     onPress={() => setEditingRange('start')}
-                                    style={{ 
-                                        flex: 1, 
-                                        padding: 12, 
-                                        borderRadius: 12, 
-                                        backgroundColor: editingRange === 'start' ? PRIMARY_GREEN + '15' : '#F5F5F5',
-                                        borderWidth: 1,
-                                        borderColor: editingRange === 'start' ? PRIMARY_GREEN : '#EEE'
-                                    }}
+                                    style={[styles.rangeBox, editingRange === 'start' && styles.rangeBoxActive]}
                                 >
-                                    <Text style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>From</Text>
-                                    <Text style={{ fontSize: 16, fontWeight: '600', color: editingRange === 'start' ? PRIMARY_GREEN : '#333' }}>
-                                        {startDate.toLocaleDateString('en-GB')}
+                                    <Text style={styles.rangeLabel}>From</Text>
+                                    <Text style={[styles.rangeValue, editingRange === 'start' && { color: PRIMARY_GREEN }]}>
+                                        {formatDisplayDate(startDate)}
                                     </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity 
                                     onPress={() => setEditingRange('end')}
-                                    style={{ 
-                                        flex: 1, 
-                                        padding: 12, 
-                                        borderRadius: 12, 
-                                        backgroundColor: editingRange === 'end' ? PRIMARY_GREEN + '15' : '#F5F5F5',
-                                        borderWidth: 1,
-                                        borderColor: editingRange === 'end' ? PRIMARY_GREEN : '#EEE'
-                                    }}
+                                    style={[styles.rangeBox, editingRange === 'end' && styles.rangeBoxActive]}
                                 >
-                                    <Text style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>To</Text>
-                                    <Text style={{ fontSize: 16, fontWeight: '600', color: editingRange === 'end' ? PRIMARY_GREEN : '#333' }}>
-                                        {endDate.toLocaleDateString('en-GB')}
+                                    <Text style={styles.rangeLabel}>To</Text>
+                                    <Text style={[styles.rangeValue, editingRange === 'end' && { color: PRIMARY_GREEN }]}>
+                                        {formatDisplayDate(endDate)}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -647,45 +670,32 @@ export default function TransactionsScreen() {
                                 value={editingRange === 'start' ? startDate : endDate}
                                 mode="date"
                                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                onChange={(event, selectedDate) => {
-                                    if (selectedDate) {
+                                onChange={(_, d) => {
+                                    if (d) {
                                         if (editingRange === 'start') {
-                                            setStartDate(selectedDate);
-                                            if (selectedDate > endDate) setEndDate(selectedDate);
+                                            setStartDate(d);
+                                            if (d > endDate) setEndDate(d);
                                         } else {
-                                            setEndDate(selectedDate);
-                                            if (selectedDate < startDate) setStartDate(selectedDate);
+                                            setEndDate(d);
+                                            if (d < startDate) setStartDate(d);
                                         }
                                     }
-                                    if (Platform.OS !== 'ios' && event.type === 'set') setShowRangePicker(false);
+                                    if (Platform.OS !== 'ios') setShowRangePicker(false);
                                 }}
                             />
 
                             <TouchableOpacity 
-                                style={{ 
-                                    backgroundColor: PRIMARY_GREEN, 
-                                    paddingVertical: 16, 
-                                    borderRadius: 14, 
-                                    alignItems: 'center',
-                                    marginTop: 'auto',
-                                    shadowColor: PRIMARY_GREEN,
-                                    shadowOffset: { width: 0, height: 4 },
-                                    shadowOpacity: 0.2,
-                                    shadowRadius: 8,
-                                    elevation: 4
-                                }}
-                                onPress={() => {
-                                    setShowRangePicker(false);
-                                    setTimeFilter('range');
-                                }}
+                                style={styles.confirmButton}
+                                onPress={() => { setShowRangePicker(false); setTimeFilter('range'); }}
                             >
-                                <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 16 }}>Confirm Range</Text>
+                                <Text style={styles.confirmButtonText}>Confirm Range</Text>
                             </TouchableOpacity>
                         </View>
                     </TouchableOpacity>
                 </Modal>
             )}
 
+            {/* Content Body */}
             <View style={styles.content}>
                 {loading ? (
                     <View style={styles.centerContainer}>
@@ -694,12 +704,12 @@ export default function TransactionsScreen() {
                 ) : transactions.length === 0 ? (
                     <View style={styles.centerContainer}>
                         <Ionicons name="receipt-outline" size={64} color="#E0E0E0" />
-                        <Text style={styles.emptyText}>No transactions yet</Text>
+                        <Text style={styles.emptyTitle}>No transactions yet</Text>
                     </View>
                 ) : processTransactions().length === 0 ? (
                     <View style={styles.centerContainer}>
                         <Ionicons name="filter-outline" size={64} color="#E0E0E0" />
-                        <Text style={styles.emptyText}>No transactions match filters</Text>
+                        <Text style={styles.emptyTitle}>No matches found</Text>
                         <TouchableOpacity onPress={resetFilters} style={styles.clearFiltersButton}>
                             <Text style={styles.clearFiltersText}>Clear all filters</Text>
                         </TouchableOpacity>
@@ -734,7 +744,6 @@ export default function TransactionsScreen() {
                 })()}
             </View>
 
-            {/* Transaction Detail Modal */}
             {selectedTransaction && (
                 <TransactionDetailModal 
                     visible={showDetailModal}
@@ -758,255 +767,356 @@ export default function TransactionsScreen() {
 const styles = StyleSheet.create({
     mainContainer: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#F2F2F7',
+    },
+    topControlsContainer: {
+        backgroundColor: '#FFF',
+        paddingTop: 10,
+        paddingBottom: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: '#EBEBEB',
+        zIndex: 10,
+    },
+    searchSection: {
+        paddingHorizontal: 16,
+        marginBottom: 10,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F2F2F7',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        height: 44,
+    },
+    searchInput: {
+        flex: 1,
+        marginLeft: 8,
+        fontSize: 16,
+        color: '#1a1a1a',
+    },
+    filterExpandButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#F2F2F7',
+    },
+    filterExpandText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#1a1a1a',
+    },
+    filterBadge: {
+        backgroundColor: PRIMARY_GREEN,
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+    },
+    filterBadgeText: {
+        color: '#FFF',
+        fontSize: 11,
+        fontWeight: 'bold',
+    },
+    expandedFilters: {
+        backgroundColor: '#FFF',
+        paddingBottom: 16,
+    },
+    filterSection: {
+        marginBottom: 8,
+    },
+    filterCategoryTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#888',
+        marginLeft: 16,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    scrollWrapper: {
+        position: 'relative',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    scrollIndicator: {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        width: 24,
+        zIndex: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        pointerEvents: 'none',
+    },
+    scrollIndicatorLeft: {
+        left: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    },
+    scrollIndicatorRight: {
+        right: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    },
+    filterPillScroll: {
+        paddingLeft: 0,
+    },
+    filterScrollContent: {
+        paddingHorizontal: 16,
+        gap: 8,
+    },
+    filterPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F2F2F7',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#F2F2F7',
+        gap: 6,
+    },
+    filterPillActive: {
+        backgroundColor: PRIMARY_GREEN,
+        borderColor: PRIMARY_GREEN,
+    },
+    filterText: {
+        fontSize: 14,
+        color: '#666',
+        fontWeight: '500',
+    },
+    filterTextActive: {
+        color: '#FFF',
+        fontWeight: '600',
+    },
+    filterRowContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        paddingHorizontal: 16,
+        gap: 8,
+    },
+    filterIconScroll: {
+        paddingLeft: 0,
+    },
+    categoryIconPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F2F2F7',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 16,
+        marginRight: 8,
+        gap: 8,
+        borderWidth: 1,
+        borderColor: '#F2F2F7',
+    },
+    categoryIconPillActive: {
+        backgroundColor: PRIMARY_GREEN,
+        borderColor: PRIMARY_GREEN,
+    },
+    resetFilterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 12,
+        paddingVertical: 8,
+        gap: 6,
+    },
+    resetFilterText: {
+        fontSize: 14,
+        color: '#C62828',
+        fontWeight: '600',
     },
     content: {
         flex: 1,
     },
+    centerContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 40,
+    },
+    emptyTitle: {
+        fontSize: 18,
+        color: '#888',
+        marginTop: 16,
+        fontWeight: '600',
+    },
+    listHeader: {
+        paddingTop: 16,
+        paddingBottom: 8,
+        paddingHorizontal: 16,
+    },
+    transactionCountText: {
+        fontSize: 13,
+        color: '#888',
+        fontWeight: '500',
+    },
     listContainer: {
         paddingBottom: 40,
-        paddingHorizontal: 20,
-    },
-    sectionHeader: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: '#999',
-        marginHorizontal: 12,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     dateHeaderContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 32,
-        marginBottom: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#F2F2F7',
     },
     dateHeaderLine: {
         flex: 1,
         height: 1,
         backgroundColor: '#E0E0E0',
     },
-    listHeader: {
-        alignItems: 'flex-start',
-        marginTop: 20,
-        marginBottom: 0,
-    },
-    transactionCountText: {
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#888',
-    },
-    filterContainer: {
-        backgroundColor: '#FFFFFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    topControlsContainer: {
-        backgroundColor: '#FFFFFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-        paddingTop: 4,
-    },
-    searchSection: {
-        paddingHorizontal: 20,
-        paddingTop: 12,
-        paddingBottom: 4,
-    },
-    filterExpandButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-    },
-    filterExpandText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1a1a1a',
-    },
-    filterBadge: {
-        backgroundColor: PRIMARY_GREEN,
-        borderRadius: 12,
-        minWidth: 20,
-        height: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 6,
-        marginLeft: 4,
-    },
-    filterBadgeText: {
-        color: '#FFFFFF',
+    sectionHeader: {
         fontSize: 12,
         fontWeight: '700',
-    },
-    expandedFilters: {
-        padding: 20,
-        gap: 16,
-    },
-    filterSection: {
-        marginBottom: 8,
-    },
-    searchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F0F0F0',
-        borderRadius: 12,
-        paddingHorizontal: 12,
-        height: 44,
-        gap: 8,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 15,
-        color: '#1a1a1a',
-    },
-    filterPillScroll: {
-        marginHorizontal: -20,
-    },
-    filterRowContainer: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    filterIconScroll: {
-        marginHorizontal: -20,
-    },
-    categoryIconPill: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 25,
-        backgroundColor: '#F5F5F5',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    categoryIconPillActive: {
-        backgroundColor: PRIMARY_GREEN,
-    },
-    resetFilterButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        gap: 6,
-        marginTop: 16,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        backgroundColor: '#FFEBEE',
-        borderRadius: 20,
-    },
-    resetFilterText: {
-        color: '#C62828',
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    filterCategoryTitle: {
-        fontSize: 13,
-        fontWeight: '700',
         color: '#888',
-        marginTop: 10,
-        marginBottom: 8,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    filterScrollContent: {
-        paddingHorizontal: 20,
-        gap: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    filterPill: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: '#F5F5F5',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    filterPillActive: {
-        backgroundColor: PRIMARY_GREEN,
-    },
-    filterText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#666',
-    },
-    filterTextActive: {
-        color: '#FFFFFF',
+        letterSpacing: 1,
+        paddingHorizontal: 12,
     },
     transactionRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#FFF',
         padding: 16,
+        marginHorizontal: 16,
+        marginBottom: 8,
         borderRadius: 16,
-        marginBottom: 12,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
-        shadowRadius: 5,
+        shadowRadius: 2,
         elevation: 2,
     },
     iconContainer: {
         width: 44,
         height: 44,
         borderRadius: 12,
-        alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 16,
+        alignItems: 'center',
     },
     transactionDetails: {
         flex: 1,
+        marginLeft: 14,
     },
     transactionName: {
         fontSize: 16,
         fontWeight: '600',
         color: '#1a1a1a',
-        marginBottom: 2,
     },
     transactionNote: {
         fontSize: 14,
         color: '#666',
-        marginBottom: 4,
+        marginTop: 2,
     },
     transactionTime: {
-        fontSize: 13,
-        color: '#888',
+        fontSize: 12,
+        color: '#999',
+        marginTop: 4,
+    },
+    transactionAmount: {
+        fontSize: 16,
+        fontWeight: '700',
     },
     walletTagContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 4,
         gap: 4,
+        backgroundColor: '#F5F5F7',
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
     },
     walletTagText: {
-        fontSize: 12,
-        color: '#888',
+        fontSize: 11,
+        color: '#666',
         fontWeight: '500',
-    },
-    transactionAmount: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    centerContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: -50,
-    },
-    emptyText: {
-        fontSize: 16,
-        color: '#888',
-        marginTop: 8,
     },
     clearFiltersButton: {
         marginTop: 16,
         paddingHorizontal: 20,
         paddingVertical: 10,
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
     },
     clearFiltersText: {
-        fontSize: 15,
         color: PRIMARY_GREEN,
+        fontWeight: '600',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        justifyContent: 'flex-end',
+    },
+    bottomSheet: {
+        backgroundColor: '#FFF',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    },
+    sheetHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    sheetTitle: {
+        fontSize: 20,
         fontWeight: '700',
+        color: '#1a1a1a',
+    },
+    cancelText: {
+        color: '#888',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    confirmButton: {
+        backgroundColor: PRIMARY_GREEN,
+        padding: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    confirmButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    rangeInputs: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 16,
+    },
+    rangeBox: {
+        flex: 1,
+        padding: 12,
+        backgroundColor: '#F5F5F7',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#EBEBEB',
+    },
+    rangeBoxActive: {
+        borderColor: PRIMARY_GREEN,
+        backgroundColor: PRIMARY_GREEN + '10',
+    },
+    rangeLabel: {
+        fontSize: 12,
+        color: '#888',
+        marginBottom: 4,
+    },
+    rangeValue: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1a1a1a',
     },
 });
