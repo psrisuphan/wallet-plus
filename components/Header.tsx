@@ -16,6 +16,7 @@ interface HeaderProps {
   profileImage?: string | null;
   onProfilePress?: () => void;
   leftIconName?: keyof typeof Ionicons.glyphMap;
+  leftButtonText?: string;
   onLeftButtonPress?: () => void;
 }
 
@@ -30,6 +31,7 @@ const Header: React.FC<HeaderProps> = ({
   profileImage,
   onProfilePress,
   leftIconName,
+  leftButtonText,
   onLeftButtonPress,
 }) => {
   const router = useRouter();
@@ -60,7 +62,10 @@ const Header: React.FC<HeaderProps> = ({
              </View>
           ) : leftIconName ? (
             <TouchableOpacity onPress={onLeftButtonPress} style={styles.headerLeftButton}>
-              <Ionicons name={leftIconName} size={28} color="#FFFFFF" />
+              <View style={styles.leftButtonContent}>
+                <Ionicons name={leftIconName} size={28} color="#FFFFFF" />
+                {leftButtonText && <Text style={styles.leftButtonText}>{leftButtonText}</Text>}
+              </View>
             </TouchableOpacity>
           ) : null}
 
@@ -139,6 +144,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+  leftButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  leftButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
