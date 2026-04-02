@@ -6,6 +6,8 @@ import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, writeBatc
 import { db, auth } from '../../../firebaseConfig';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { onAuthStateChanged } from 'firebase/auth';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 import { PRIMARY as WHITE_GREEN, EXPENSE_COLOR, INCOME_COLOR } from '../../../constants/Colors';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
 import type { Wallet } from '../../../types';
@@ -21,6 +23,7 @@ const EditTransactionScreen = () => {
     const [type, setType] = useState<'expense' | 'income'>('expense');
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
+    const [imageNoteBase64, setImageNoteBase64] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState(EXPENSE_CATEGORIES[0].id);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -82,6 +85,7 @@ const EditTransactionScreen = () => {
                     setType(data.type);
                     setAmount(data.amount.toString());
                     setNote(data.note || '');
+                    setImageNoteBase64(data.imageBase64 || null);
                     setSelectedCategory(data.categoryId || (data.type === 'expense' ? EXPENSE_CATEGORIES[0].id : INCOME_CATEGORIES[0].id));
                 } else {
                     Alert.alert("Error", "Transaction not found");
@@ -245,6 +249,7 @@ const EditTransactionScreen = () => {
                 categoryName: categoryData?.name || 'Unknown',
                 categoryIcon: categoryData?.icon || 'help',
                 note: note.trim() || null,
+                imageBase64: imageNoteBase64 ?? null,
             });
 
             await batch.commit();
@@ -257,6 +262,29 @@ const EditTransactionScreen = () => {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const pickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Required', 'Please allow access to your photos to add an image note.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            quality: 0.3,
+            base64: true,
+        });
+
+        if (!result.canceled && result.assets[0].base64) {
+            setImageNoteBase64(result.assets[0].base64);
+        }
+    };
+
+    const removeImage = () => {
+        setImageNoteBase64(null);
     };
 
     const handleCategoryScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -437,6 +465,7 @@ const EditTransactionScreen = () => {
                         onChangeText={setNote}
                     />
 
+                    {/* Wallet Section */}
                     <Text style={styles.sectionTitle}>Wallet</Text>
                     <TouchableOpacity 
                         style={styles.walletSelector}
@@ -461,6 +490,33 @@ const EditTransactionScreen = () => {
                             <Text style={{ color: WHITE_GREEN }}>Select Wallet</Text>
                         )}
                     </TouchableOpacity>
+
+                    {/* Image Note */}
+                    <Text style={styles.sectionTitle}>Image Note (Optional)</Text>
+                    <View style={styles.imagePickerContainer}>
+                        {imageNoteBase64 ? (
+                            <View style={styles.imagePreviewContainer}>
+                                <Image 
+                                    source={{ uri: `data:image/jpeg;base64,${imageNoteBase64}` }} 
+                                    style={styles.imagePreview} 
+                                />
+                                <TouchableOpacity 
+                                    style={styles.removeImageButton} 
+                                    onPress={removeImage}
+                                >
+                                    <Ionicons name="close-circle" size={24} color="#FF3B30" />
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <TouchableOpacity 
+                                style={styles.imagePickerPlaceholder} 
+                                onPress={pickImage}
+                            >
+                                <Ionicons name="camera-outline" size={32} color="#888" />
+                                <Text style={styles.imagePickerText}>Add a photo receipt or note</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
                 </ScrollView>
                 
@@ -536,7 +592,47 @@ const styles = StyleSheet.create({
     modalWalletName: { fontSize: 16, fontWeight: '600', color: '#333' },
     modalWalletBalance: { fontSize: 14, color: '#888' },
     emptyContainer: { alignItems: 'center', padding: 40 },
-    emptyText: { color: '#999', fontSize: 16 }
+    emptyText: { color: '#999', fontSize: 16 },
+    imagePickerContainer: {
+        marginBottom: 20,
+    },
+    imagePickerPlaceholder: {
+        height: 120,
+        backgroundColor: '#FFF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+        borderStyle: 'dashed',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imagePickerText: {
+        marginTop: 8,
+        fontSize: 14,
+        color: '#888',
+    },
+    imagePreviewContainer: {
+        position: 'relative',
+        width: '100%',
+        height: 200,
+        borderRadius: 12,
+        overflow: 'hidden',
+        backgroundColor: '#FFF',
+        borderWidth: 1,
+        borderColor: '#EAEAEA',
+    },
+    imagePreview: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 15,
+    },
 });
 
 export default EditTransactionScreen;

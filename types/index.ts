@@ -23,6 +23,7 @@ export interface Transaction {
   walletId: string;
   walletName?: string;
   note?: string;
+  imageBase64?: string | null;
   date: any;
   userId?: string;
 }

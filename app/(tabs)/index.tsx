@@ -322,9 +322,14 @@ export default function HomeScreen() {
                                                         />
                                                     </View>
                                                     <View style={{ flex: 1 }}>
-                                                        <Text style={styles.walletRowName} numberOfLines={1}>
-                                                            {item.categoryName || 'Transaction'}
-                                                        </Text>
+                                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                                            <Text style={styles.walletRowName} numberOfLines={1}>
+                                                                {item.categoryName || 'Transaction'}
+                                                            </Text>
+                                                            {item.imageBase64 && (
+                                                                <Ionicons name="camera" size={14} color={PRIMARY_GREEN} />
+                                                            )}
+                                                        </View>
                                                         {item.note ? (
                                                             <Text style={{ fontSize: 13, color: '#444', fontWeight: '500', marginBottom: 2 }}>
                                                                 {item.note}
