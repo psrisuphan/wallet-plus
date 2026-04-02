@@ -556,7 +556,7 @@ const EditTransactionScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8F9FA' },
-    scrollContent: { padding: 20, paddingBottom: 40 },
+    scrollContent: { padding: 20, paddingBottom: 120 },
     typeContainer: { flexDirection: 'row', backgroundColor: '#E9ECEF', borderRadius: 12, padding: 4, marginBottom: 30 },
     typeButton: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 10 },
     typeButtonExpenseActive: { backgroundColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
@@ -643,7 +643,16 @@ const styles = StyleSheet.create({
     walletSelectorInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     selectorIconContainer: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
     walletSelectorText: { fontSize: 16, fontWeight: '600', color: '#333' },
-    footer: { padding: 20, backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#EEE', flexDirection: 'row', gap: 12 },
+    footer: { 
+        padding: 24, 
+        paddingBottom: 40,
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row', 
+        gap: 12 
+    },
     deleteButton: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', borderColor: '#FF3B30', borderWidth: 1 },
     saveButton: { flex: 1, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
     saveButtonText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },

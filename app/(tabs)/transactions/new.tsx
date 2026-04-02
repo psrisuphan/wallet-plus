@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 20,
-        paddingBottom: 40,
+        paddingBottom: 120, // Increased to account for floating footer
     },
     typeContainer: {
         flexDirection: 'row',
@@ -893,11 +893,12 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
     },
     footer: {
-        padding: 20,
+        padding: 24,
         paddingBottom: 40,
-        backgroundColor: '#FFF',
-        borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
     },
     saveButton: {
         paddingVertical: 16,
