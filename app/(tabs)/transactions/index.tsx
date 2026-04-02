@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { collection, query, where, onSnapshot, orderBy, or } from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { db, auth } from '../../../firebaseConfig';
 import Header from '../../../components/Header';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../../constants/Colors';
@@ -28,65 +29,68 @@ export default function TransactionsScreen() {
     const [showDetailModal, setShowDetailModal] = useState(false);
 
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) {
-            setLoading(false);
-            return;
-        }
-
-        // 1. Fetch ALL wallets (Owned or Shared)
-        const qWallets = query(
-            collection(db, 'wallets'),
-            or(
-                where('userId', '==', user.uid),
-                where('sharedWith', 'array-contains', user.uid)
-            )
-        );
-
-        const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
-            const walletList: any[] = [];
-            const walletIds: string[] = [];
-            
-            snapshot.forEach((doc) => {
-                const data = { id: doc.id, ...doc.data() };
-                walletList.push(data);
-                walletIds.push(doc.id);
-            });
-            
-            setWallets(walletList);
-
-            // 2. Fetch ALL transactions for these wallets (Up to 30)
-            if (walletIds.length > 0) {
-                const qTransactions = query(
-                    collection(db, 'transactions'),
-                    where('walletId', 'in', walletIds.slice(0, 30)),
-                    orderBy('date', 'desc')
-                );
-
-                const unsubscribeTransactions = onSnapshot(qTransactions, (snap) => {
-                    const list: any[] = [];
-                    snap.forEach((d) => {
-                        list.push({ id: d.id, ...d.data() });
-                    });
-                    setTransactions(list);
-                    setLoading(false);
-                }, (err) => {
-                    console.error("Transactions Error:", err);
-                    setLoading(false);
-                });
-
-                return () => {
-                    unsubscribeTransactions();
-                };
-            } else {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
+            if (!user) {
                 setTransactions([]);
+                setWallets([]);
                 setLoading(false);
+                return;
             }
+
+            // 1. Fetch ALL wallets (Owned or Shared)
+            const qWallets = query(
+                collection(db, 'wallets'),
+                or(
+                    where('userId', '==', user.uid),
+                    where('sharedWith', 'array-contains', user.uid)
+                )
+            );
+
+            const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
+                const walletList: any[] = [];
+                const walletIds: string[] = [];
+                
+                snapshot.forEach((doc) => {
+                    const data = { id: doc.id, ...doc.data() };
+                    walletList.push(data);
+                    walletIds.push(doc.id);
+                });
+                
+                setWallets(walletList);
+
+                // 2. Fetch ALL transactions for these wallets
+                if (walletIds.length > 0) {
+                    const qTransactions = query(
+                        collection(db, 'transactions'),
+                        where('walletId', 'in', walletIds.slice(0, 30)),
+                        orderBy('date', 'desc')
+                    );
+
+                    const unsubscribeTransactions = onSnapshot(qTransactions, (snap) => {
+                        const list: any[] = [];
+                        snap.forEach((d) => {
+                            list.push({ id: d.id, ...d.data() });
+                        });
+                        setTransactions(list);
+                        setLoading(false);
+                    }, (err) => {
+                        console.error("Transactions Error:", err);
+                        setLoading(false);
+                    });
+
+                    return unsubscribeTransactions;
+                } else {
+                    setTransactions([]);
+                    setLoading(false);
+                }
+            });
+
+            return () => {
+                unsubscribeWallets();
+            };
         });
 
-        return () => {
-            unsubscribeWallets();
-        };
+        return () => unsubscribeAuth();
     }, []);
 
     const resetFilters = () => {

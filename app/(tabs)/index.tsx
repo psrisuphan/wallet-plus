@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import Header from '../../components/Header';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '../../firebaseConfig';
 import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp, or } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
@@ -28,43 +29,50 @@ export default function HomeScreen() {
     const router = useRouter();
 
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        // Fetch user profile
-        const fetchUserData = async () => {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-                const data = userDoc.data();
-                setProfileImage(data.profilePictureBase64);
-                setDisplayName(data.displayName);
+        const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
+            if (!user) {
+                setWallets([]);
+                setTodayTransactions([]);
+                setTotalBalance(0);
+                setLoading(false);
+                return;
             }
-        };
 
-        // Listen to wallets for total balance (Owner or Shared Member)
-        const qWallets = query(
-            collection(db, 'wallets'), 
-            or(
-                where('userId', '==', user.uid),
-                where('sharedWith', 'array-contains', user.uid)
-            )
-        );
-        const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
-            let total = 0;
-            const walletsList: any[] = [];
-            snapshot.forEach((doc) => {
-                const docData = doc.data() as any;
-                const data = { id: doc.id, ...docData };
-                total += data.balance || 0;
-                walletsList.push(data);
+            const fetchUserData = async () => {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    setProfileImage(data.profilePictureBase64);
+                    setDisplayName(data.displayName);
+                }
+            };
+            fetchUserData();
+
+            const qWallets = query(
+                collection(db, 'wallets'), 
+                or(
+                    where('userId', '==', user.uid),
+                    where('sharedWith', 'array-contains', user.uid)
+                )
+            );
+            const unsubscribeWallets = onSnapshot(qWallets, (snapshot) => {
+                let total = 0;
+                const walletsList: any[] = [];
+                snapshot.forEach((doc) => {
+                    const docData = doc.data() as any;
+                    const data = { id: doc.id, ...docData };
+                    total += data.balance || 0;
+                    walletsList.push(data);
+                });
+                setTotalBalance(total);
+                setWallets(walletsList);
+                walletsRef.current = walletsList;
             });
-            setTotalBalance(total);
-            setWallets(walletsList);
-            walletsRef.current = walletsList;
+
+            return () => unsubscribeWallets();
         });
 
-        fetchUserData();
-        return () => unsubscribeWallets();
+        return () => unsubscribeAuth();
     }, []);
 
     // Separate effect for transactions — depends on wallets being loaded
