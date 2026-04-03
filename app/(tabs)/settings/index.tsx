@@ -21,6 +21,7 @@ import { doc, getDoc, updateDoc, writeBatch, collection, getDocs, query, where, 
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { PRIMARY as ACCENT } from '../../../constants/Colors';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../../constants/Categories';
 
 const SettingsIndex = () => {
     const [loading, setLoading] = useState(true);
@@ -222,15 +223,15 @@ const SettingsIndex = () => {
 
             // Step 2: Create Transactions in a separate batch
             const transBatch = writeBatch(db);
-            const expenseCategories = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Bills'];
-            const incomeCategories = ['Salary', 'Business', 'Bonus', 'Investment'];
+            const expenseNames = EXPENSE_CATEGORIES.map(c => c.name);
+            const incomeNames = INCOME_CATEGORIES.map(c => c.name);
 
             for (let i = 0; i < 80; i++) {
                 const isExpense = Math.random() > 0.25;
                 const amount = isExpense ? Math.floor(Math.random() * 500) + 20 : Math.floor(Math.random() * 3000) + 1000;
                 const category = isExpense 
-                    ? expenseCategories[Math.floor(Math.random() * expenseCategories.length)] 
-                    : incomeCategories[Math.floor(Math.random() * incomeCategories.length)];
+                    ? expenseNames[Math.floor(Math.random() * expenseNames.length)] 
+                    : incomeNames[Math.floor(Math.random() * incomeNames.length)];
                 
                 const randomWalletId = walletIdList[Math.floor(Math.random() * walletIdList.length)];
                 const date = new Date();
