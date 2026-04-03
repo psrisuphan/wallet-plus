@@ -8,7 +8,6 @@ service cloud.firestore {
       return exists(walletPath) && get(walletPath).data.userId == request.auth.uid;
     }
     
-    // Helper function to check if user is member of the wallet
     function isWalletMember(walletId) {
       let walletPath = /databases/$(database)/documents/wallets/$(walletId);
       return exists(walletPath) && 
@@ -16,12 +15,10 @@ service cloud.firestore {
              request.auth.uid in get(walletPath).data.sharedWith;
     }
 
-    // 1. Users can read and write their own profile
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // 2. Wallets: Owner can do anything. Members can read and update (for balance/sharing).
     match /wallets/{walletId} {
       allow read, update: if request.auth != null && (
         resource.data.userId == request.auth.uid || 
@@ -31,7 +28,6 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
-    // 3. Transactions: Creator or Wallet Owner can manage. Wallet members can read/create.
     match /transactions/{transactionId} {
       allow read: if request.auth != null && (
         resource.data.userId == request.auth.uid || 

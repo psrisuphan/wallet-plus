@@ -4,7 +4,7 @@ import { StyleSheet, Text, View, StatusBar, ScrollView, TouchableOpacity } from 
 import Header from '../../components/Header';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp, or } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, onSnapshot, orderBy, Timestamp, or, limit } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { PRIMARY as PRIMARY_GREEN, PRIMARY_LIGHT as SUBTLE_GREEN } from '../../constants/Colors';
 import TransactionDetailModal from '../../components/TransactionDetailModal';
@@ -99,10 +99,10 @@ export default function HomeScreen() {
 
         const qToday = query(
             collection(db, 'transactions'),
-            where('userId', '==', userId), // Rule: Allow read if userId matches
             where('walletId', 'in', wallets.map(w => w.id).slice(0, 30)),
             where('date', '>=', Timestamp.fromDate(start)),
-            orderBy('date', 'desc')
+            orderBy('date', 'desc'),
+            limit(20) // Keep rules lookup within limit and improve performance
         );
 
         const unsubscribeTransactions = onSnapshot(qToday, (snapshot) => {
