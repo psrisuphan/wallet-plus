@@ -200,7 +200,11 @@ const SettingsIndex = () => {
             const wallets = [
                 { name: 'Main Savings', balance: 5000, color: ACCENT, icon: 'wallet' },
                 { name: 'Daily Spending', balance: 1200, color: '#F5A623', icon: 'car' },
-                { name: 'Vacation Fund', balance: 800, color: '#4A90E2', icon: 'airplane' }
+                { name: 'Vacation Fund', balance: 800, color: '#4A90E2', icon: 'airplane' },
+                { name: 'Emergency Fund', balance: 15000, color: '#E24A4A', icon: 'card' },
+                { name: 'Shared House', balance: 2500, color: '#9013FE', icon: 'home' },
+                { name: 'Gift Fund', balance: 450, color: '#50E3C2', icon: 'gift' },
+                { name: 'Work Account', balance: 7200, color: '#4A4A4A', icon: 'business' }
             ];
 
             const walletIdList: string[] = [];
