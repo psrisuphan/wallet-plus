@@ -17,7 +17,7 @@ import { auth, db } from '../../../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { doc, getDoc, updateDoc, writeBatch, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, writeBatch, collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { PRIMARY as ACCENT } from '../../../constants/Colors';
@@ -29,6 +29,7 @@ const SettingsIndex = () => {
     const [isClearModalVisible, setIsClearModalVisible] = useState(false);
     const [confirmText, setConfirmText] = useState('');
     const [isClearing, setIsClearing] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     
     // Auth Data
     const [displayName, setDisplayName] = useState('');
@@ -189,6 +190,70 @@ const SettingsIndex = () => {
         }
     };
 
+    const handleGenerateMockData = async () => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        setIsGenerating(true);
+        try {
+            const batch = writeBatch(db);
+            const wallets = [
+                { name: '💰 Main Savings', balance: 5000, color: '#4CD964' },
+                { name: '🚗 Daily Spending', balance: 1200, color: '#FF9500' },
+                { name: '🏠 Vacation Fund', balance: 800, color: '#5AC8FA' }
+            ];
+
+            const walletRefs: any[] = [];
+            for (const w of wallets) {
+                const wRef = doc(collection(db, 'wallets'));
+                batch.set(wRef, {
+                    name: w.name,
+                    balance: w.balance,
+                    color: w.color,
+                    userId: user.uid,
+                    sharedWith: [],
+                    createdAt: Timestamp.now()
+                });
+                walletRefs.push({ ref: wRef, id: wRef.id });
+            }
+
+            const expenseCategories = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Bills'];
+            const incomeCategories = ['Salary', 'Business', 'Bonus', 'Investment'];
+
+            // Generate 80 transactions (~1.3 per day for 60 days)
+            for (let i = 0; i < 80; i++) {
+                const isExpense = Math.random() > 0.25;
+                const amount = isExpense ? Math.floor(Math.random() * 500) + 20 : Math.floor(Math.random() * 3000) + 1000;
+                const category = isExpense 
+                    ? expenseCategories[Math.floor(Math.random() * expenseCategories.length)] 
+                    : incomeCategories[Math.floor(Math.random() * incomeCategories.length)];
+                
+                const wallet = walletRefs[Math.floor(Math.random() * walletRefs.length)];
+                const date = new Date();
+                date.setDate(date.getDate() - Math.floor(Math.random() * 60)); // Random date in last 60 days
+
+                const tRef = doc(collection(db, 'transactions'));
+                batch.set(tRef, {
+                    amount,
+                    category,
+                    date: Timestamp.fromDate(date),
+                    description: `Mock ${category} transaction`,
+                    type: isExpense ? 'expense' : 'income',
+                    userId: user.uid,
+                    walletId: wallet.id,
+                    createdAt: Timestamp.now()
+                });
+            }
+
+            await batch.commit();
+            Alert.alert('Success', 'Generated 3 wallets and 80 transactions for testing!');
+        } catch (error: any) {
+            Alert.alert('Error', error.message);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -250,6 +315,28 @@ const SettingsIndex = () => {
                             <Text style={[styles.menuText, { color: '#FF3B30' }]}>Clear All Personal Data</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color="#DDD" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Developer Tools Section */}
+                <Text style={styles.menuTitle}>DEVELOPER TOOLS</Text>
+                <View style={styles.menuSection}>
+                    <TouchableOpacity 
+                        style={styles.menuItem} 
+                        onPress={handleGenerateMockData}
+                        disabled={isGenerating}
+                    >
+                        <View style={styles.menuItemLeft}>
+                            <View style={[styles.iconBox, { backgroundColor: ACCENT + '15' }]}>
+                                <Ionicons name="flask-outline" size={20} color={ACCENT} />
+                            </View>
+                            <Text style={styles.menuText}>Generate Mock Data</Text>
+                        </View>
+                        {isGenerating ? (
+                            <ActivityIndicator size="small" color={ACCENT} />
+                        ) : (
+                            <Ionicons name="chevron-forward" size={20} color="#DDD" />
+                        )}
                     </TouchableOpacity>
                 </View>
 
