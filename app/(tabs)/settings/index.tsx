@@ -236,8 +236,15 @@ const SettingsIndex = () => {
                 
                 const amount = isExpense ? Math.floor(Math.random() * 500) + 20 : Math.floor(Math.random() * 3000) + 1000;
                 const randomWalletId = walletIdList[Math.floor(Math.random() * walletIdList.length)];
+                
+                // Spread dates: force some to be today/yesterday
                 const date = new Date();
-                date.setDate(date.getDate() - Math.floor(Math.random() * 60));
+                let daysAgo = 0;
+                if (i === 0) daysAgo = 0; // At least one today
+                else if (i === 1) daysAgo = 1; // At least one yesterday
+                else daysAgo = Math.floor(Math.random() * 60); // Rest random over last 2 months
+                
+                date.setDate(date.getDate() - daysAgo);
 
                 const tRef = doc(collection(db, 'transactions'));
                 transBatch.set(tRef, {
@@ -249,14 +256,14 @@ const SettingsIndex = () => {
                     note: `Mock ${category.name} transaction`,
                     type: isExpense ? 'expense' : 'income',
                     userId: user.uid,
-                    userName: displayName || 'Me', // Use actual display name
+                    userName: displayName || 'Me',
                     walletId: randomWalletId,
                     createdAt: Timestamp.now()
                 });
             }
 
             await transBatch.commit();
-            Alert.alert('Success', 'Generated 3 wallets and 80 transactions with full data!');
+            Alert.alert('Success', 'Generated 7 wallets and 80 transactions across 2 months!');
         } catch (error: any) {
             Alert.alert('Error', error.message);
         } finally {
