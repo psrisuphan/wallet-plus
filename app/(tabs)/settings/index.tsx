@@ -196,17 +196,19 @@ const SettingsIndex = () => {
 
         setIsGenerating(true);
         try {
-            const batch = writeBatch(db);
             const wallets = [
                 { name: '💰 Main Savings', balance: 5000, color: '#4CD964' },
                 { name: '🚗 Daily Spending', balance: 1200, color: '#FF9500' },
                 { name: '🏠 Vacation Fund', balance: 800, color: '#5AC8FA' }
             ];
 
-            const walletRefs: any[] = [];
+            const walletIdList: string[] = [];
+            
+            // Step 1: Create Wallets (Wait for them to exist so transaction rules pass)
+            const walletsBatch = writeBatch(db);
             for (const w of wallets) {
                 const wRef = doc(collection(db, 'wallets'));
-                batch.set(wRef, {
+                walletsBatch.set(wRef, {
                     name: w.name,
                     balance: w.balance,
                     color: w.color,
@@ -214,13 +216,15 @@ const SettingsIndex = () => {
                     sharedWith: [],
                     createdAt: Timestamp.now()
                 });
-                walletRefs.push({ ref: wRef, id: wRef.id });
+                walletIdList.push(wRef.id);
             }
+            await walletsBatch.commit();
 
+            // Step 2: Create Transactions in a separate batch
+            const transBatch = writeBatch(db);
             const expenseCategories = ['Food', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Bills'];
             const incomeCategories = ['Salary', 'Business', 'Bonus', 'Investment'];
 
-            // Generate 80 transactions (~1.3 per day for 60 days)
             for (let i = 0; i < 80; i++) {
                 const isExpense = Math.random() > 0.25;
                 const amount = isExpense ? Math.floor(Math.random() * 500) + 20 : Math.floor(Math.random() * 3000) + 1000;
@@ -228,24 +232,24 @@ const SettingsIndex = () => {
                     ? expenseCategories[Math.floor(Math.random() * expenseCategories.length)] 
                     : incomeCategories[Math.floor(Math.random() * incomeCategories.length)];
                 
-                const wallet = walletRefs[Math.floor(Math.random() * walletRefs.length)];
+                const randomWalletId = walletIdList[Math.floor(Math.random() * walletIdList.length)];
                 const date = new Date();
-                date.setDate(date.getDate() - Math.floor(Math.random() * 60)); // Random date in last 60 days
+                date.setDate(date.getDate() - Math.floor(Math.random() * 60));
 
                 const tRef = doc(collection(db, 'transactions'));
-                batch.set(tRef, {
+                transBatch.set(tRef, {
                     amount,
                     category,
                     date: Timestamp.fromDate(date),
                     description: `Mock ${category} transaction`,
                     type: isExpense ? 'expense' : 'income',
                     userId: user.uid,
-                    walletId: wallet.id,
+                    walletId: randomWalletId,
                     createdAt: Timestamp.now()
                 });
             }
 
-            await batch.commit();
+            await transBatch.commit();
             Alert.alert('Success', 'Generated 3 wallets and 80 transactions for testing!');
         } catch (error: any) {
             Alert.alert('Error', error.message);
