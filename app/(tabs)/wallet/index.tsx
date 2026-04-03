@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Text, StyleSheet, View, FlatList, TextInput, TouchableOpacity, Modal, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, getDoc, deleteDoc, doc, writeBatch, getDocs, or, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, getDoc, deleteDoc, doc, writeBatch, getDocs, or, arrayRemove, arrayUnion } from 'firebase/firestore';
 import { db, auth } from '../../../firebaseConfig';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Header from '../../../components/Header';
@@ -215,11 +215,10 @@ const WalletScreen = () => {
         return;
       }
 
-      // Add user to sharedWith
-      const currentShared = wallet.sharedWith || [];
+      // Add user to sharedWith using atomic arrayUnion
       await updateDoc(walletRef, {
-        sharedWith: [...currentShared, userId]
-      } as any);
+        sharedWith: arrayUnion(userId)
+      });
 
       Alert.alert('Success', `Joined "${wallet.name}" successfully!`);
       HapticFeedback.success();

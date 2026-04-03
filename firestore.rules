@@ -21,11 +21,19 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // 2. Wallets: Owner can do anything. Members can read and update (for balance/sharing).
+    // 2. Wallets: Owner can do anything. Members can read/update. 
+    // Join: Anyone authenticated can read (to verify ID) and add themselves to sharedWith.
     match /wallets/{walletId} {
-      allow read, update: if request.auth != null && (
+      allow read: if request.auth != null;
+      allow update: if request.auth != null && (
         resource.data.userId == request.auth.uid || 
-        (resource.data.sharedWith != null && request.auth.uid in resource.data.sharedWith)
+        (resource.data.sharedWith != null && request.auth.uid in resource.data.sharedWith) ||
+        // Allow joining: user is adding only themselves to the sharedWith array
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedWith']) &&
+          request.resource.data.sharedWith.hasAll(resource.data.get('sharedWith', [])) &&
+          request.auth.uid in request.resource.data.sharedWith
+        )
       );
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
