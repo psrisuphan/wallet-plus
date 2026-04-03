@@ -207,7 +207,7 @@ const SettingsIndex = () => {
                 { name: 'Work Account', balance: 7200, color: '#4A4A4A', icon: 'business' }
             ];
 
-            // Use a single atomic batch for better stability and to avoid permission race conditions
+            // Create wallets in one batch first
             const batch = writeBatch(db);
             const walletIdList: string[] = [];
             
@@ -225,6 +225,10 @@ const SettingsIndex = () => {
                 });
             }
 
+            await batch.commit();
+
+            // Then create transactions (this is where the permission race condition happens on first load)
+            const tBatch = writeBatch(db);
             for (let i = 0; i < 80; i++) {
                 const isExpense = Math.random() > 0.25;
                 const pool = isExpense ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
@@ -242,7 +246,7 @@ const SettingsIndex = () => {
                 date.setDate(date.getDate() - daysAgo);
 
                 const tRef = doc(collection(db, 'transactions'));
-                batch.set(tRef, {
+                tBatch.set(tRef, {
                     amount,
                     categoryName: category.name,
                     categoryIcon: category.icon,
@@ -257,8 +261,8 @@ const SettingsIndex = () => {
                 });
             }
 
-            await batch.commit();
-            Alert.alert('Success', 'Generated 7 wallets and 80 transactions atomically!');
+            await tBatch.commit();
+            Alert.alert('Success', 'Generated wallets and transactions (Note: You may need to reload the app to see all data)');
         } catch (error: any) {
             Alert.alert('Error', error.message);
         } finally {
