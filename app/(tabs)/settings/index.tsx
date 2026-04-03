@@ -198,9 +198,9 @@ const SettingsIndex = () => {
         setIsGenerating(true);
         try {
             const wallets = [
-                { name: '💰 Main Savings', balance: 5000, color: '#4CD964' },
-                { name: '🚗 Daily Spending', balance: 1200, color: '#FF9500' },
-                { name: '🏠 Vacation Fund', balance: 800, color: '#5AC8FA' }
+                { name: '💰 Main Savings', balance: 5000, color: ACCENT, icon: 'wallet' },
+                { name: '🚗 Daily Spending', balance: 1200, color: '#F5A623', icon: 'car' },
+                { name: '🏠 Vacation Fund', balance: 800, color: '#4A90E2', icon: 'airplane' }
             ];
 
             const walletIdList: string[] = [];
@@ -213,6 +213,7 @@ const SettingsIndex = () => {
                     name: w.name,
                     balance: w.balance,
                     color: w.color,
+                    icon: w.icon,
                     userId: user.uid,
                     sharedWith: [],
                     createdAt: Timestamp.now()
