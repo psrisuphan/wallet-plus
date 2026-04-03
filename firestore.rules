@@ -4,12 +4,16 @@ service cloud.firestore {
     
     // Helper function to check if user is owner of the wallet
     function isWalletOwner(walletId) {
-      return get(/databases/$(database)/documents/wallets/$(walletId)).data.userId == request.auth.uid;
+      let walletPath = /databases/$(database)/documents/wallets/$(walletId);
+      return exists(walletPath) && get(walletPath).data.userId == request.auth.uid;
     }
     
     // Helper function to check if user is member of the wallet
     function isWalletMember(walletId) {
-      return request.auth.uid in get(/databases/$(database)/documents/wallets/$(walletId)).data.sharedWith;
+      let walletPath = /databases/$(database)/documents/wallets/$(walletId);
+      return exists(walletPath) && 
+             "sharedWith" in get(walletPath).data && 
+             request.auth.uid in get(walletPath).data.sharedWith;
     }
 
     // 1. Users can read and write their own profile
@@ -31,16 +35,20 @@ service cloud.firestore {
     match /transactions/{transactionId} {
       allow read: if request.auth != null && (
         resource.data.userId == request.auth.uid || 
-        isWalletOwner(resource.data.walletId) || 
-        isWalletMember(resource.data.walletId)
+        (
+          "walletId" in resource.data && 
+          (isWalletOwner(resource.data.walletId) || isWalletMember(resource.data.walletId))
+        )
       );
+      
       allow create: if request.auth != null && 
         request.resource.data.userId == request.auth.uid && 
+        "walletId" in request.resource.data && 
         (isWalletOwner(request.resource.data.walletId) || isWalletMember(request.resource.data.walletId));
         
       allow update, delete: if request.auth != null && (
         resource.data.userId == request.auth.uid || 
-        isWalletOwner(resource.data.walletId)
+        ("walletId" in resource.data && isWalletOwner(resource.data.walletId))
       );
     }
   }
