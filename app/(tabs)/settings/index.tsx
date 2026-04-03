@@ -207,13 +207,14 @@ const SettingsIndex = () => {
                 { name: 'Work Account', balance: 7200, color: '#4A4A4A', icon: 'business' }
             ];
 
+            // Use a single atomic batch for better stability and to avoid permission race conditions
+            const batch = writeBatch(db);
             const walletIdList: string[] = [];
             
-            // Step 1: Create Wallets (Wait for them to exist so transaction rules pass)
-            const walletsBatch = writeBatch(db);
             for (const w of wallets) {
                 const wRef = doc(collection(db, 'wallets'));
-                walletsBatch.set(wRef, {
+                walletIdList.push(wRef.id);
+                batch.set(wRef, {
                     name: w.name,
                     balance: w.balance,
                     color: w.color,
@@ -222,13 +223,8 @@ const SettingsIndex = () => {
                     sharedWith: [],
                     createdAt: Timestamp.now()
                 });
-                walletIdList.push(wRef.id);
             }
-            await walletsBatch.commit();
 
-            // Step 2: Create Transactions in a separate batch
-            const transBatch = writeBatch(db);
-            
             for (let i = 0; i < 80; i++) {
                 const isExpense = Math.random() > 0.25;
                 const pool = isExpense ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
@@ -237,17 +233,16 @@ const SettingsIndex = () => {
                 const amount = isExpense ? Math.floor(Math.random() * 500) + 20 : Math.floor(Math.random() * 3000) + 1000;
                 const randomWalletId = walletIdList[Math.floor(Math.random() * walletIdList.length)];
                 
-                // Spread dates: force some to be today/yesterday
                 const date = new Date();
                 let daysAgo = 0;
-                if (i === 0) daysAgo = 0; // At least one today
-                else if (i === 1) daysAgo = 1; // At least one yesterday
-                else daysAgo = Math.floor(Math.random() * 60); // Rest random over last 2 months
+                if (i === 0) daysAgo = 0;
+                else if (i === 1) daysAgo = 1;
+                else daysAgo = Math.floor(Math.random() * 60);
                 
                 date.setDate(date.getDate() - daysAgo);
 
                 const tRef = doc(collection(db, 'transactions'));
-                transBatch.set(tRef, {
+                batch.set(tRef, {
                     amount,
                     categoryName: category.name,
                     categoryIcon: category.icon,
@@ -262,8 +257,8 @@ const SettingsIndex = () => {
                 });
             }
 
-            await transBatch.commit();
-            Alert.alert('Success', 'Generated 7 wallets and 80 transactions across 2 months!');
+            await batch.commit();
+            Alert.alert('Success', 'Generated 7 wallets and 80 transactions atomically!');
         } catch (error: any) {
             Alert.alert('Error', error.message);
         } finally {

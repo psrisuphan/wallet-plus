@@ -99,6 +99,7 @@ export default function HomeScreen() {
 
         const qToday = query(
             collection(db, 'transactions'),
+            where('userId', '==', userId), // Rule: Allow read if userId matches
             where('walletId', 'in', wallets.map(w => w.id).slice(0, 30)),
             where('date', '>=', Timestamp.fromDate(start)),
             orderBy('date', 'desc')
