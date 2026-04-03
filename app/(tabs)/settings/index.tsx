@@ -223,16 +223,13 @@ const SettingsIndex = () => {
 
             // Step 2: Create Transactions in a separate batch
             const transBatch = writeBatch(db);
-            const expenseNames = EXPENSE_CATEGORIES.map(c => c.name);
-            const incomeNames = INCOME_CATEGORIES.map(c => c.name);
-
+            
             for (let i = 0; i < 80; i++) {
                 const isExpense = Math.random() > 0.25;
-                const amount = isExpense ? Math.floor(Math.random() * 500) + 20 : Math.floor(Math.random() * 3000) + 1000;
-                const category = isExpense 
-                    ? expenseNames[Math.floor(Math.random() * expenseNames.length)] 
-                    : incomeNames[Math.floor(Math.random() * incomeNames.length)];
+                const pool = isExpense ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+                const category = pool[Math.floor(Math.random() * pool.length)];
                 
+                const amount = isExpense ? Math.floor(Math.random() * 500) + 20 : Math.floor(Math.random() * 3000) + 1000;
                 const randomWalletId = walletIdList[Math.floor(Math.random() * walletIdList.length)];
                 const date = new Date();
                 date.setDate(date.getDate() - Math.floor(Math.random() * 60));
@@ -240,18 +237,21 @@ const SettingsIndex = () => {
                 const tRef = doc(collection(db, 'transactions'));
                 transBatch.set(tRef, {
                     amount,
-                    category,
+                    categoryName: category.name,
+                    categoryIcon: category.icon,
+                    categoryId: category.id,
                     date: Timestamp.fromDate(date),
-                    description: `Mock ${category} transaction`,
+                    note: `Mock ${category.name} transaction`,
                     type: isExpense ? 'expense' : 'income',
                     userId: user.uid,
+                    userName: displayName || 'Me', // Use actual display name
                     walletId: randomWalletId,
                     createdAt: Timestamp.now()
                 });
             }
 
             await transBatch.commit();
-            Alert.alert('Success', 'Generated 3 wallets and 80 transactions for testing!');
+            Alert.alert('Success', 'Generated 3 wallets and 80 transactions with full data!');
         } catch (error: any) {
             Alert.alert('Error', error.message);
         } finally {
